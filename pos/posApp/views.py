@@ -2,7 +2,7 @@ from pickle import FALSE
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems
+from posApp.models import Category, Products, Sales, salesItems, MeasurementType
 from django.db.models import Count, Sum
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -10,7 +10,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 import json, sys
 from datetime import date, datetime
-
 # Login
 def login_user(request):
     logout(request)
@@ -83,9 +82,11 @@ def category(request):
         'category':category_list,
     }
     return render(request, 'posApp/category.html',context)
+
 @login_required
 def manage_category(request):
     category = {}
+    measurements = MeasurementType.MEASUREMENT_CHOICES
     if request.method == 'GET':
         data =  request.GET
         id = ''
@@ -95,23 +96,37 @@ def manage_category(request):
             category = Category.objects.filter(id=id).first()
     
     context = {
-        'category' : category
+        'category' : category,
+        'measurement_types': measurements,
     }
     return render(request, 'posApp/manage_category.html',context)
 
 @login_required
 def save_category(request):
-    data =  request.POST
-    resp = {'status':'failed'}
+    data = request.POST
+    print(f"\n{data}\n")
+    resp = {'status': 'failed'}
     try:
-        if (data['id']).isnumeric() and int(data['id']) > 0 :
-            save_category = Category.objects.filter(id = data['id']).update(name=data['name'], description = data['description'],status = data['status'])
+        if data['id'].isnumeric() and int(data['id']) > 0:
+            Category.objects.filter(id=data['id']).update(
+                name=data['name'],
+                description=data['description'],
+                measurement_type=data['measurement_type'],
+                status=data['status']
+            )
         else:
-            save_category = Category(name=data['name'], description = data['description'],status = data['status'])
-            save_category.save()
+            new_category = Category(
+                name=data['name'],
+                description=data['description'],
+                measurement_type=data['measurement_type'],
+                status=data['status']
+            )
+            print(f"\n{new_category}\n")
+            new_category.save()
         resp['status'] = 'success'
         messages.success(request, 'Category Successfully saved.')
-    except:
+    except Exception as e:
+        print(f"Error: {e}")
         resp['status'] = 'failed'
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
@@ -136,6 +151,7 @@ def products(request):
         'products':product_list,
     }
     return render(request, 'posApp/products.html',context)
+
 @login_required
 def manage_products(request):
     product = {}
@@ -159,6 +175,7 @@ def test(request):
         'categories' : categories
     }
     return render(request, 'posApp/test.html',context)
+
 @login_required
 def save_product(request):
     data =  request.POST
@@ -174,12 +191,33 @@ def save_product(request):
         resp['msg'] = "Product Code Already Exists in the database"
     else:
         category = Category.objects.filter(id = data['category_id']).first()
+        measurement_value = MeasurementType.objects.filter(id = data['measurement_value']).first()
         try:
             if (data['id']).isnumeric() and int(data['id']) > 0 :
-                save_product = Products.objects.filter(id = data['id']).update(code=data['code'], category_id=category, name=data['name'], description = data['description'], price = float(data['price']),status = data['status'])
+                save_product = Products.objects.filter(id = data['id']).update(
+                    code=data['code'], 
+                    category_id=category, 
+                    name=data['name'], 
+                    description = data['description'], 
+                    measurement_value = measurement_value,
+                    available_quantity = data['available_quantity'], 
+                    price = float(data['price']),
+                    status = data['status']
+                )
             else:
-                save_product = Products(code=data['code'], category_id=category, name=data['name'], description = data['description'], price = float(data['price']),status = data['status'])
+                save_product = Products(
+                    code=data['code'], 
+                    category_id=category, 
+                    name=data['name'], 
+                    description = data['description'], 
+                    measurement_value = measurement_value, 
+                    available_quantity = data['available_quantity'], 
+                    price = float(data['price']),
+                    status = data['status']
+                )
+                print(f"\n{save_product}\n")
                 save_product.save()
+                
             resp['status'] = 'success'
             messages.success(request, 'Product Successfully saved.')
         except:
@@ -197,6 +235,7 @@ def delete_product(request):
     except:
         resp['status'] = 'failed'
     return HttpResponse(json.dumps(resp), content_type="application/json")
+
 @login_required
 def pos(request):
     products = Products.objects.filter(status = 1)
@@ -311,3 +350,14 @@ def delete_sale(request):
         resp['msg'] = "An error occured"
         print("Unexpected error:", sys.exc_info()[0])
     return HttpResponse(json.dumps(resp), content_type='application/json')
+
+@login_required
+def get_measurements(request, category_id):
+    category = Category.objects.get(id=category_id)
+    measurement_type = category.measurement_type
+    measurements = MeasurementType.objects.filter(type=measurement_type)
+    data = {
+        'measurements': list(measurements.values('id', 'name', 'short_name'))
+    }
+    print(f"\n{data}\n")
+    return HttpResponse(json.dumps(data), content_type="application/json")

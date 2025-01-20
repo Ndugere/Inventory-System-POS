@@ -7,33 +7,44 @@
 <div class="container-fluid">
     <div id="outprint">
         <div class="lh-1">
-            <center><small class="fw-bold">Grocery POS</small></center>
-            <center><small class="fw-bold">Unofficial Receipt</small></center>
+            <center><small class="fw-bold">Store Name POS</small></center>
+            <center><small class="fw-bold">Receipt</small></center>
         </div>
         <hr>
         <div class="lh-1">
             <div>
-                <span>Data:</span> {{ transaction.date_added|date:"M d Y" }} <br>
+                <span>Date:</span> {{ transaction.date_added|date:"M d Y" }} <br>
                 <span>Transaction Code:</span> {{ transaction.code }}
             </div>
         </div>
         <div class="clear-fix py-3"></div>
         <div class="lh-1">
-            <div class="d-flex w-100 align-items-end border-bottom">
-                <div class="col-2 text-center fw-bold">Qty</div>
-                <div class="col-6 text-center fw-bold">Product</div>
-                <div class="col-4 text-center fw-bold">Amount</div>
+            <div class="d-flex w-100 align-items-end border-bottom pt-2">
+                <div class="col-4 text-left fw-bold">Product</div>
+                <div class="col-4 text-left fw-bold">description</div>                
+                <div class="col-2 text-center fw-bold">Price</div>
+                <div class="col-3 text-center fw-bold">Qty</div>
+                <div class="col-3 text-right fw-bold">Amount</div>
             </div>
             {% for item in salesItems %}
             <div class="d-flex w-100 align-items-end">
-                <div class="col-2 text-center fw-bold">{{ item.qty|intcomma|floatformat:0 }}</div>
-                <div class="col-6 fw-bold">
-                    <div class="lh-1">
-                        <small>{{ item.product_id }}</small><br>
+                <div class="col-4 fw-bold">
+                    <div class="lh-1 pt-2">
+                        <small>{{ item.product_id.name }}</small><br>
+                    </div>
+                </div>
+                <div class="col-4 fw-bold">
+                    <div class="lh-1 pt-2">
+                        <small>{{ item.product_id.description }}</small><br>
+                    </div>
+                </div>
+                <div class="col-2 fw-bold text-center">
+                    <div class="lh-1 pt-2">
                         <small>{{ item.price|intcomma }}</small><br>
                     </div>
                 </div>
-                <div class="col-4 text-end fw-bold">{{ item.total|intcomma }}</div>
+                <div class="col-3 text-center fw-bold pt-2">{{ item.qty|intcomma|floatformat:0 }}</div>
+                <div class="col-3 text-end fw-bold pt-2">{{ item.total|intcomma }}</div>
             </div>
             {% endfor %}
             <hr>
@@ -42,16 +53,16 @@
                 <div class="col-6 text-end fw-bold">{{ transaction.grand_total|intcomma }}</div>
             </div>
             <div class="d-flex w-100 align-items-end">
-                <div class="col-6 text-start fw-bold">Tax <small>(inclusive)</small>: {{ transaction.tax|intcomma }}%</div>
-                <div class="col-6 text-end fw-bold">{{ transaction.tax_amount|intcomma|floatformat:2 }}</div>
+                <div class="col-6 text-start fw-bold  pt-2">Tax <small>(inclusive)</small>: {{ transaction.tax|intcomma }}%</div>
+                <div class="col-6 text-end fw-bold pt-2">{{ transaction.tax_amount|intcomma|floatformat:2 }}</div>
             </div>
             <div class="d-flex w-100 align-items-end">
-                <div class="col-6 text-start fw-bold">Tenedered</div>
-                <div class="col-6 text-end fw-bold">{{ transaction.tendered_amount|intcomma }}</div>
+                <div class="col-6 text-start fw-bold pt-2">Tendered</div>
+                <div class="col-6 text-end fw-bold pt-2">{{ transaction.tendered_amount|intcomma }}</div>
             </div>
             <div class="d-flex w-100 align-items-end">
-                <div class="col-6 text-start fw-bold">Change</div>
-                <div class="col-6 text-end fw-bold">{{ transaction.amount_change|intcomma }}</div>
+                <div class="col-6 text-start fw-bold pt-2">Change</div>
+                <div class="col-6 text-end fw-bold pt-2">{{ transaction.amount_change|intcomma }}</div>
             </div>
         </div>
     </div>
@@ -65,24 +76,26 @@
 <script>
     $(function() {
         $('#receipt_print').click(function() {
-            var head = $('head').clone()
-            var p = $('#outprint').clone()
-            var el = $("<div>")
-            head.append('<style>body{background-color:unset !important}</style>')
-            el.append(head)
-            el.find('title').text("Receipt - Print View")
-            el.append(p)
-            start_loader()
-            var nw = window.open('', '_blank', "width=800,height=800,left=300, top = 200")
-            nw.document.write(el.html())
-            nw.document.close()
+            console.log("Print button clicked");
+            var head = $('head').clone();
+            var p = $('#outprint').clone();
+            var el = $("<div>");
+            head.append('<style>body{background-color:unset !important}</style>');
+            el.append(head);
+            el.find('title').text("Receipt - Print View");
+            el.append(p);
+            start_loader();
+            var nw = window.open('', '_blank', "width=800,height=800,left=300, top = 200");
+            nw.document.write(el.html());
+            nw.document.close();
             setTimeout(() => {
-                nw.print()
+                console.log("Printing...");
+                nw.print();
                 setTimeout(() => {
-                    nw.close()
-                    end_loader()
-                }, 250)
-            }, 300)
-        })
-    })
+                    nw.close();
+                    end_loader();
+                }, 250);
+            }, 300);
+        });
+    });
 </script>

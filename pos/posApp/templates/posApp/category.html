@@ -25,6 +25,7 @@
                         <th class="text-center py-1">#</th>
                         <th class="text-center py-1">category Name</th>
                         <th class="text-center py-1">Description</th>
+                        <th class="text-center py-1">Measurement</th>
                         <th class="text-center py-1">Status</th>
                         <th class="text-center py-1">Action</th>
                     </tr>
@@ -35,6 +36,7 @@
                         <td class="px-2 py-1 text-center">{{ cat.id }}</td>
                         <td class="px-2 py-1 text-start">{{ cat.name }}</td>
                         <td class="px-2 py-1 text-start">{{ cat.description }}</td>
+                        <td class="px-2 py-1 text-start">{{ cat.measurement_type }}</td>
                         <td class="px-2 py-1 text-center">
                             {% if cat.status == 1 %}
                             <span class="badge bg-primary rounded-pill px-3">Active</span> {% else %}
