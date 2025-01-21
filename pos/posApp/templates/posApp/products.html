@@ -28,6 +28,7 @@
                         <th class="text-center py-1">Product Code</th>
                         <th class="text-center py-1">Product</th>
                         <th class="text-center py-1">Measure</th>
+                        <th class="text-center py-1">Description</th>
                         <th class="text-center py-1">Available QTY</th>
                         <th class="text-center py-1">Status</th>
                         <th class="text-center py-1">Action</th>
@@ -40,7 +41,8 @@
                         <td class="px-2 py-1 text-start">{{ product.category_id }}</td>
                         <td class="px-2 py-1 text-start">{{ product.code }}</td>
                         <td class="px-2 py-1 text-start">{{ product.name }}</td>
-                        <td class="px-2 py-1 text-center">{{ product.measurement_value.name }} ({{ product.measurement_value.short_name }})</td>     
+                        <td class="px-2 py-1 text-center">{{ product.measurement_value.name }} ({{ product.measurement_value.short_name }})</td>   
+                        <td class="px-2 py-1 text-center">{{ product.description }}</td>     
                         <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>
                         <td class="px-2 py-1 text-center">
                             {% if product.status == 1 %}

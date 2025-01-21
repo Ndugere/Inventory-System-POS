@@ -12,7 +12,7 @@
             <fieldset>
                 <legend>Add Products</legend>
                 <div class="row align-items-end">
-                    <div class="col-lg-5 col-md-5 col-sm-12">
+                    <div class="col-lg-5 col-md-8 col-12">
                         <div class="form-group mb-3">
                             <label for="product-id">Select Product</label>
                             <select id="product-id" class="form-select form-select-sm">
@@ -23,13 +23,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-5 col-md-12">
+                    <div class="col-lg-3 col-md-2 col-12">
                         <div class="form-group mb-3">
                             <label for="product-qty">Qty</label>
                             <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" value="1">
                         </div>
                     </div>
-                    <div class="col-lg-4 col-md-2 col-md-12">
+                    <div class="col-lg-4 col-md-2 col-12">
                         <div class="form-group mb-3">
                             <button class="btn btn-light btn-sm bg-gradient border rounded-0 text-start" type="button" id="add_item"><i class="mdi mdi-plus"></i> Add Item</button>
                         </div>
@@ -39,20 +39,22 @@
             </fieldset>
             <fieldset>
                 <div class="d-flex w-100" id="POS-field">
-                    <div class="col-8 bg-gradient bg-light border h-100">
+                    <div class="col-10 col-md-9 col-lg-8 bg-gradient bg-light border h-100">
                         <table class="table table-bordered">
                             <colgroup>
                                 <col width="5%">
+                                <col width="10%">
+                                <col width="30%">                                
+                                <col width="20%">
                                 <col width="15%">
-                                <col width="40%">
-                                <col width="20%">
-                                <col width="20%">
+                                <col width="15%">
                             </colgroup>
                             <thead>
                                 <tr class="bg-dark bg-gradient bg-opacity-50 text-light">
                                     <th class="py-1 px-2 text-center  text-light"></th>
                                     <th class="py-1 px-2 text-center  text-light">QTY</th>
                                     <th class="py-1 px-2 text-center  text-light">Product</th>
+                                    <th class="py-1 px-2 text-center  text-light">Description</th>
                                     <th class="py-1 px-2 text-center  text-light">Price</th>
                                     <th class="py-1 px-2 text-center  text-light">Total</th>
                                 </tr>
@@ -61,7 +63,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="col-4 bg-gradient bg-dark bg-opacity-50 border h-100">
+                    <div class="col-2 col-md-3 col-lg-4 bg-gradient bg-dark bg-opacity-50 border h-100">
                         <div class="col-12 py-4 px-2">
                             <dl>
                                 <dt class="h4 fw-bold text-light">Sub Total</dt>
@@ -103,7 +105,7 @@
 <noscript id="item-clone">
     <tr>
         <td class="px-2 py-1 text-center">
-            <button class="btn btn-sm btn-outline-danger rounded-0 rem-item" type="button"><i class="mdi mdi-close"></i></button>
+            <button class="btn btn-sm btn-outline-danger rounded-0 rem-item" type="button"><i class="mdi mdi-close icon-sm"></i></button>
         </td>
         <td class="px-2 py-1">
             <input type="hidden" name="product_id[]">
@@ -111,6 +113,7 @@
             <input type="number" name="qty[]" min="0" class="form-control form-control-sm rounded-0 text-center">
         </td>
         <td class="px-2 py-1 product_name text-start"></td>
+        <td class="px-2 py-1 product_description text-start"></td>
         <td class="px-2 py-1 product_price text-end"></td>
         <td class="px-2 py-1 product_total text-end"></td>
     </tr>
@@ -171,11 +174,13 @@
                     return false;
                 }
                 data = prod_arr[id]
+                console.log(data)
                 var tr = $($('noscript#item-clone').html()).clone()
                 tr.find('[name="qty[]"]').val(qty)
                 tr.find('[name="product_id[]"]').val(id)
                 tr.find('[name="price[]"]').val(data.price)
                 tr.find('.product_name').text(data.name)
+                tr.find('.product_description').text(data.description)
                 tr.find('.product_price').text(parseFloat(data.price).toLocaleString('en-US'))
                 tr.find('.product_total').text(parseFloat(data.price * qty).toLocaleString('en-US'))
                 $('#POS-field table tbody').append(tr)

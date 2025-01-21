@@ -5,7 +5,7 @@
     }
 </style>
 <div class="container-fluid">
-    <div id="outprint">
+    <div id="outprint"class="p-2">
         <div class="lh-1">
             <center><small class="fw-bold">Store Name POS</small></center>
             <center><small class="fw-bold">Receipt</small></center>
@@ -21,7 +21,7 @@
         <div class="lh-1">
             <div class="d-flex w-100 align-items-end border-bottom pt-2">
                 <div class="col-4 text-left fw-bold">Product</div>
-                <div class="col-4 text-left fw-bold">description</div>                
+                <div class="col-4 text-left fw-bold">Description</div>                
                 <div class="col-2 text-center fw-bold">Price</div>
                 <div class="col-3 text-center fw-bold">Qty</div>
                 <div class="col-3 text-right fw-bold">Amount</div>
@@ -75,17 +75,20 @@
 </div>
 <script>
     $(function() {
-        $('#receipt_print').click(function() {
-            console.log("Print button clicked");
+        $('#receipt_print').click(function(e) {
             var head = $('head').clone();
             var p = $('#outprint').clone();
             var el = $("<div>");
+
             head.append('<style>body{background-color:unset !important}</style>');
-            el.append(head);
-            el.find('title').text("Receipt - Print View");
-            el.append(p);
+
+            el.append(head.html());
+            el.find('title').text("Sales Receipt - Print View");
+            el.append(p.html());
+
             start_loader();
-            var nw = window.open('', '_blank', "width=800,height=800,left=300, top = 200");
+            
+            var nw = window.open('', '_blank', "width=800,height=800,left=300,top=200");
             nw.document.write(el.html());
             nw.document.close();
             setTimeout(() => {
@@ -93,9 +96,10 @@
                 nw.print();
                 setTimeout(() => {
                     nw.close();
-                    end_loader();
-                }, 250);
-            }, 300);
+                }, 1000);
+            
+                end_loader();
+            }, 1000);
         });
     });
 </script>
