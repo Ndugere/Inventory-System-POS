@@ -178,7 +178,7 @@
                 <h5 class="modal-title"></h5>
             </div>
             <div class="modal-body">
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;" id="">
                     <!-- Table content will be inserted here -->
                 </div>
             </div>
@@ -250,6 +250,37 @@
                 alert("An error occurred.", 'error');
             });
         }
+        
+        window.printReport = function(button){
+            console.log(`print report ${button.dataset.id}`);
+            let reportId = button.dataset.id;
+
+            fetch(`/get_report/${reportId}/`)
+            .then(response => {
+                if(response.ok){
+                    return response.text();
+                }
+                throw new Error('Network response was not ok.');
+            })
+            .then(html => {
+                var printWindow = window.open('', '_blank');
+                printWindow.document.write('<html><head><title>Print Report</title>');
+                printWindow.document.write(document.head.innerHTML); // Copy the head content
+                printWindow.document.write('</head><body>');
+                printWindow.document.write(html); // Append the fetched report content
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            })
+            .catch(error => {
+                alert("An error occurred.", 'error');
+            });
+        }
+
+
 
         window.deleteReport = function(button){
             let reportId = button.dataset.id;

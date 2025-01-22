@@ -1,12 +1,13 @@
+{% load humanize %}
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
         <header class="mdc-card-header pt-4 pb-4 text-center"><h2>{{report.time_range|capfirst}} Sales Report <br> <small>{{report.generated_on}}</small></h2></header>
-        <h3 class="p2"> Summary</h3>
+        <h3 class="mt-2 p2"> Summary</h3>
         <div class="table-responsive">            
             <table class="table table-striped table-bordered">
                 <colgroup>
                     <col width="5%">
-                    <col width="20%">
+                    <col width="70%">
                     <col width="20%">
                     <col width="25%">
                     <col width="15%">
@@ -23,23 +24,86 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for sale in report.json %}
-                        {% if not sale.total %}
+                    {% for sale in report.json.sales %}
                             <tr>
                                 <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
                                 <td class="px-2 py-1 text-start">{{ sale.sale_code }}</td>
                                 <td class="px-2 py-1 text-center">{{ sale.date_of_sale }}</td>
-                                <td class="px-2 py-1 text-center">{{ sale.sub_total }}</td>
+                                <td class="px-2 py-1 text-center">{{ sale.sub_total|floatformat:2|intcomma }}</td>
                                 <td class="px-2 py-1 text-center">{{ sale.tax_amount|floatformat:2 }}</td>
-                                <td class="px-2 py-1 text-center">{{ sale.grand_total }}</td>
+                                <td class="px-2 py-1 text-center">{{ sale.grand_total|floatformat:2|intcomma }}</td>
                             </tr>
-                        {% endif %}
                     {% endfor %}
+                </tbody>
+            </table>
+            <table class="table table-striped table-bordered">
+                <colgroup>
+                    <col width="5%">
+                    <col width="70%">
+                    <col width="25%">
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td class="px-2 py-1 text-center"></td>
+                        <td class="px-2 py-1 text-start"><strong>Total Sales</strong></td>
+                        <td class="px-2 py-1 text-right">{{ report.json.total_sales_amount|floatformat:2|intcomma }}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
 
-        <h3 class="p2">Sales Details </h3>
+        <h3 class="mt-4 p-2 text-center">Sales Details </h3>
+        {% for sale in report.json.sales %}
+            <h4>{{forloop.counter}}. Sale #{{sale.sale_code}} </h4>
+            <div class="table-responsive">            
+                <table class="table table-striped table-bordered">
+                    <colgroup>
+                        <col width="5%">
+                        <col width= "20%">
+                        <col width="20%">
+                        <col width="25%">
+                        <col width="15%">
+                        <col width="15%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="text-center py-1">#</th>
+                            <th class="text-center py-1">Product Code</th>
+                            <th class="text-center py-1">Product Name</th>
+                            <th class="text-center py-1">Quantity</th>
+                            <th class="text-center py-1">Price</th>
+                            <th class="text-center py-1">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in sale.items %}
+                                <tr>
+                                    <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                                    <td class="px-2 py-1 text-start">{{ item.product_code }}</td>
+                                    <td class="px-2 py-1 text-start">{{ item.product_name }}</td>
+                                    <td class="px-2 py-1 text-center">{{ item.quantity }}</td>
+                                    <td class="px-2 py-1 text-center">{{ item.price|floatformat:2 }}</td>
+                                    <td class="px-2 py-1 text-center">{{ item.total|floatformat:2|intcomma }}</td>
+                                </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <table class="table table-striped table-bordered mb-8">
+                    <colgroup>
+                        <col width="5%">
+                        <col width="70%">
+                        <col width="25%">
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td class="px-2 py-1 text-center"></td>
+                            <td class="px-2 py-1 text-start"><strong>Sale Total</strong> ({{sale.tax_amount|floatformat:2|intcomma}} Tax inclusive)</td>
+                            <td class="px-2 py-1 text-right">{{ sale.grand_total|floatformat:2|intcomma }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>    
+        {% endfor %}
         
         
     </div>

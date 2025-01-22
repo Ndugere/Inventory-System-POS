@@ -437,29 +437,34 @@ def generate_report(request):
                     output_field=FloatField()
                 )
             )
-            report_data = [
-                {
-                    "sale_code": sale.code,
-                    "date_of_sale": sale.date_added.isoformat(),
-                    "sub_total": sale.sub_total,
-                    "grand_total": sale.grand_total,
-                    "tax_amount": sale.tax_amount,
-                    "tendered_amount": sale.tendered_amount,
-                    "amount_change": sale.amount_change,
-                    "items": [
+            
+            total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
+
+            report_data ={ 
+                    "total_sales_amount": total_sales_amount,
+                    "sales": [
                         {
-                            "product_code": item.product_id.code,
-                            "product_name": item.product_id.name,
-                            "quantity": item.qty,
-                            "price": item.price,
-                            "total": item.total
+                            "sale_code": sale.code,
+                            "date_of_sale": sale.date_added.isoformat(),
+                            "sub_total": sale.sub_total,
+                            "grand_total": sale.grand_total,
+                            "tax_amount": sale.tax_amount,
+                            "tendered_amount": sale.tendered_amount,
+                            "amount_change": sale.amount_change,
+                            "items": [
+                                {
+                                    "product_code": item.product_id.code,
+                                    "product_name": item.product_id.name,
+                                    "quantity": item.qty,
+                                    "price": item.price,
+                                    "total": item.total
+                                }
+                                for item in sale.salesitems_set.all()
+                            ]
                         }
-                        for item in sale.salesitems_set.all()
+                        for sale in sales
                     ]
                 }
-                for sale in sales
-            ]
-
             report = Report(
                 name=f"Sales Report {time_period.capitalize()} {str(datetime.now().astimezone())}",
                 type=Report.ReportType.SALES,
@@ -480,6 +485,7 @@ def get_report(request, id: int):
             "name": report.name,
             "generated_on": report.generated_on.strftime("%Y-%m-%d %H:%M:%S"),
             "type": report.type,
+            "time_range": report.time_range,
             "json": json.loads(report.json)
         }
         if report.type == Report.ReportType.SALES:
