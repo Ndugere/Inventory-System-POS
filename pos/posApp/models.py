@@ -152,7 +152,7 @@ class Report(models.Model):
     name = models.CharField("Title", max_length=100, blank=False)
     generated_on = models.DateTimeField(auto_now_add=True)
     type = models.CharField("Report Type", choices = ReportType.choices, default = ReportType.INVENTORY, max_length=10)
-    time_range = models.CharField("Time Range", choices = ReportTimeRange.choices, default=ReportTimeRange.DAILY, max_length=10)
+    time_range = models.CharField("Time Range", choices = ReportTimeRange.choices, max_length=10, blank=True, null=True)
     json = models.TextField("Report Data", blank=False)
     
     def is_new(self):

@@ -11,7 +11,7 @@
         <div class="container">            
             <form method="get" action="{% url 'reports-page' %}">
                 <div class="row">
-                    <div class="col-4">
+                    <div class="col-md-4">
                         <div class="form-group">                                
                             <label for="report_type">Report Type:</label>
                             <select name="report_type" id="report_type" class="form-select form-select-sm">                                
@@ -21,7 +21,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-md-4">
                         <div class="form-group">                                
                             <label for="time_period">Select Time Period:</label>
                             <select name="time_period" id="time_period" class="form-select form-select-sm">                                
@@ -33,7 +33,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-4 pt-4 text-right">
+                    <div class="col-md-4 pt-4 text-right">
                         <button type="submit" id="generate_report_btn" class="btn btn-primary btn-sm rounded-0">Generate Report</button>
                     </div>
                 </div>

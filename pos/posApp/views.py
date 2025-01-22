@@ -405,7 +405,7 @@ def generate_report(request):
             ]
 
             report = Report(
-                name="Inventory Report "+ str(datetime.now().astimezone()),
+                name="Inventory Report " + str(datetime.now().astimezone()),
                 type=Report.ReportType.INVENTORY,
                 json=json.dumps(report_data)
             )
@@ -415,7 +415,7 @@ def generate_report(request):
             today = datetime.now().astimezone()
 
             if time_period == 'daily':
-                start_date = today - timedelta(hours=23, minutes=59, seconds=59)
+                start_date = today - timedelta(days=1)
                 time_range = Report.ReportTimeRange.DAILY
             elif time_period == 'weekly':
                 start_date = today - timedelta(weeks=1)
@@ -452,7 +452,7 @@ def generate_report(request):
                             "product_name": item.product_id.name,
                             "quantity": item.qty,
                             "price": item.price,
-                            "total": item.total,
+                            "total": item.total
                         }
                         for item in sale.salesitems_set.all()
                     ]
@@ -460,20 +460,17 @@ def generate_report(request):
                 for sale in sales
             ]
 
-            report_total = sales.aggregate(total=Sum('sale_total'))['total'] or 0.0
-            report_data.append({"report_total": report_total})
-
             report = Report(
-                name="Sales Report " + str(datetime.now().astimezone()),
+                name=f"Sales Report {time_period.capitalize()} {str(datetime.now().astimezone())}",
                 type=Report.ReportType.SALES,
-                time_range = time_range,
+                time_range=time_range,
                 json=json.dumps(report_data)
             )
             report.save()
 
-        return HttpResponse(json.dumps({"status": "success"}), content_type="application/json")
+        return JsonResponse({"status": "success", "message": "Report generated successfully."})
     else:
-        return HttpResponse(json.dumps({"status": "failed", "message": "Invalid request method"}), content_type="application/json")
+        return JsonResponse({"status": "failed", "message": "Invalid request method."}, status=400)
 
 @login_required
 def get_report(request, id: int):
@@ -509,4 +506,3 @@ def delete_report(request):
     
     else:
         return HttpResponse(json.dumps({"status": "failed", "message": "Invalid request method"}), content_type="application/json")
-    
