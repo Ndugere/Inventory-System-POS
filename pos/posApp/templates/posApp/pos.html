@@ -12,11 +12,7 @@
             <fieldset>
                 <legend>Add Products</legend>
                 <div class="row align-items-end">
-                    <div class="col-lg-5 col-md-8 col-12">
-                        <div class="form-group mb-3">
-                            <label for="product-filter">Filter Products</label>
-                            <input type="text" id="product-filter" class="form-control form-control-sm" placeholder="Type to filter products">
-                        </div>
+                    <div class="col-lg-5 col-md-5 col-sm-12">
                         <div class="form-group mb-3">
                             <label for="product-id">Select Product</label>
                             <select id="product-id" class="form-select form-select-sm">
@@ -27,26 +23,27 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-2 col-12">
+                    <div class="col-lg-3 col-md-5 col-md-12">
                         <div class="form-group mb-3">
                             <label for="product-qty">Qty</label>
-                            <input type="number" class="form-control form-control-sm text-center" min="0" step="any" id="product-qty" value="1">
+                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" value="1">
                         </div>
                     </div>
-                    <div class="col-lg-4 col-md-2 col-12">
+                    <div class="col-lg-4 col-md-2 col-md-12">
                         <div class="form-group mb-3">
-                            <button type="button" id="add-product" class="btn btn-primary">Add to Sale</button>
+                            <button class="btn btn-light btn-sm bg-gradient border rounded-0 text-start" type="button" id="add_item"><i class="mdi mdi-plus"></i> Add Item</button>
                         </div>
                     </div>
+
                 </div>
             </fieldset>
             <fieldset>
                 <div class="d-flex w-100" id="POS-field">
-                    <div class="col-10 col-md-9 col-lg-8 bg-gradient bg-light border h-100">
+                    <div class="col-12 col-md-8 bg-gradient bg-light border h-100">
                         <table class="table table-bordered">
                             <colgroup>
-                                <col width="5%">
-                                <col width="10%">
+                                <col width="4%">
+                                <col width="16%">
                                 <col width="30%">                                
                                 <col width="20%">
                                 <col width="15%">
@@ -66,7 +63,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="col-2 col-md-3 col-lg-4 bg-gradient bg-dark bg-opacity-50 border h-100">
+                    <div class="col-12 col-md-4 bg-gradient bg-dark bg-opacity-50 border h-100">
                         <div class="col-12 py-4 px-2">
                             <dl>
                                 <dt class="h4 fw-bold text-light">Sub Total</dt>
@@ -108,7 +105,7 @@
 <noscript id="item-clone">
     <tr>
         <td class="px-2 py-1 text-center">
-            <button class="btn btn-sm btn-outline-danger rounded-0 rem-item" type="button"><i class="mdi mdi-close icon-sm"></i></button>
+            <button class="btn btn-sm btn-small btn-danger rounded-4 rem-item" type="button" title="Remove"><i class="mdi mdi-close icon-small"></i></button>
         </td>
         <td class="px-2 py-1">
             <input type="hidden" name="product_id[]">
@@ -116,110 +113,128 @@
             <input type="number" name="qty[]" min="0" class="form-control form-control-sm rounded-0 text-center">
         </td>
         <td class="px-2 py-1 product_name text-start"></td>
-        <td class="px-2 py-1 product_description text-start"></td>
+        <td class="px-2 py-1 product_description text-end"></td>
         <td class="px-2 py-1 product_price text-end"></td>
         <td class="px-2 py-1 product_total text-end"></td>
     </tr>
 </noscript> {% endblock pageContent %} {% block ScriptBlock %}
+
 <script>
-    var product_json = '{{ product_json }}'
-    if (product_json == "" || product_json == "{}") {
-        product_json = {}
-    } else {
-        product_json = product_json.replaceAll('&quot;', '"')
-        product_json = $.parseJSON(product_json)
-    }
-    var prod_arr = {}
-    if (Object.keys(product_json).length > 0) {
-        Object.keys(product_json).map(k => {
-            prod_arr[product_json[k].id] = product_json[k]
+    $(document).ready(function() {
+        fetch("{% url 'get_product_json' %}")
+        .then(response => {
+            if(response.ok){
+                return response.json();
+            }
+            throw new Error('Network response was not ok.');
         })
-    }
+        .then(data => {            
+            console.log("Parsed product_json:", data);
 
-    function calc() {
-        var sub_total = 0;
-        var grand_total = 0;
-        $('#POS-field table tbody tr').each(function() {
-            price = $(this).find('[name="price[]"]').val()
-            qty = $(this).find('[name="qty[]"]').val()
-            qty = qty > 0 ? qty : 0
-            total = parseFloat(price) * parseFloat(qty)
-            $(this).find('.product_total').text(parseFloat(total).toLocaleString('en-US'))
-            sub_total += parseFloat(total)
+            var prod_arr = {};
+            if (data.length > 0) {
+                data.forEach(product => {
+                    prod_arr[product.id] = product;
+                });
+            }
+
+            // Store prod_arr in a global variable for later use
+            window.prod_arr = prod_arr;
         })
-        tax = $('[name="tax"]').val()
-        tax = tax / 100;
-        var tax_amount = parseFloat(sub_total) * parseFloat(tax);
-        $('#tax_amount').text(parseFloat(tax_amount).toLocaleString('en-US'))
-        $('[name="tax_amount"]').val(parseFloat(tax_amount))
-        $('#grand_total').text(parseFloat(sub_total).toLocaleString('en-US'))
-        $('[name="grand_total"]').val(parseFloat(sub_total))
-        $('#sub_total').text(parseFloat(sub_total).toLocaleString('en-US'))
-        $('[name="sub_total"]').val(parseFloat(sub_total))
+        .catch(error => {
+            console.log(error);
+        });
 
-    }
-    $(function() {
+        function calc() {
+            var sub_total = 0;
+            var grand_total = 0;
+            $('#POS-field table tbody tr').each(function() {
+                var price = $(this).find('[name="price[]"]').val();
+                var qty = $(this).find('[name="qty[]"]').val();
+                qty = qty > 0 ? qty : 0;
+                var total = parseFloat(price) * parseFloat(qty);
+                $(this).find('.product_total').text(parseFloat(total).toLocaleString('en-US'));
+                sub_total += parseFloat(total);
+            });
+            var tax = $('[name="tax"]').val();
+            tax = tax / 100;
+            var tax_amount = parseFloat(sub_total) * parseFloat(tax);
+            $('#tax_amount').text(parseFloat(tax_amount).toLocaleString('en-US'));
+            $('[name="tax_amount"]').val(parseFloat(tax_amount));
+            $('#grand_total').text(parseFloat(sub_total).toLocaleString('en-US'));
+            $('[name="grand_total"]').val(parseFloat(sub_total));
+            $('#sub_total').text(parseFloat(sub_total).toLocaleString('en-US'));
+            $('[name="sub_total"]').val(parseFloat(sub_total));
+        }
+
+        function addItemToPOS(id, qty) {
+            if ($('#POS-field table tbody input[name="product_id[]"][value="' + id + '"]').length > 0) {
+                alert('Item Already in the List.');
+                return false;
+            }
+            var data = window.prod_arr[id];
+            var tr = $($('noscript#item-clone').html()).clone();
+            tr.find('[name="qty[]"]').val(qty);
+            tr.find('[name="product_id[]"]').val(id);
+            tr.find('[name="price[]"]').val(data.price);
+            tr.find('.product_name').text(data.name);
+            tr.find('.product_description').text(data.description);
+            tr.find('.product_price').text(parseFloat(data.price).toLocaleString('en-US'));
+            tr.find('.product_total').text(parseFloat(data.price * qty).toLocaleString('en-US'));
+            $('#POS-field table tbody').append(tr);
+            $('#product-id').val('').trigger('change');
+            $('#product-qty').val(1);
+            calc();
+            tr.find('[name="qty[]"]').on('input keypress keyup keydown', function() {
+                calc();
+            });
+            tr.find('.rem-item').click(function() {
+                if (confirm("Are you sure to remove " + data.name + " product from list?") == true) {
+                    tr.remove();
+                    calc();
+                }
+            });
+        }
+
         $('#product-id').select2({
             placeholder: "Please Select Product here",
             width: '100%'
-        })
+        });
+
         $('#add_item').click(function() {
-            var id = $('#product-id').val()
-            var qty = $('#product-qty').val()
-            console.log(id, qty)
+            var id = $('#product-id').val();
+            var qty = $('#product-qty').val();
+            console.log(id, qty);
             if (id == '' || qty == '' || id == null || qty == null) {
-                alert("Product and Quantity Field is required!")
-                return false
+                alert("Product and Quantity Field is required!");
+                return false;
             }
-            if (!!prod_arr[id]) {
-                if ($('#POS-field table tbody input[name="product_id[]"][value="' + id + '"]').length > 0) {
-                    alert('Item Already in the List.')
-                    return false;
-                }
-                data = prod_arr[id]
-                console.log(data)
-                var tr = $($('noscript#item-clone').html()).clone()
-                tr.find('[name="qty[]"]').val(qty)
-                tr.find('[name="product_id[]"]').val(id)
-                tr.find('[name="price[]"]').val(data.price)
-                tr.find('.product_name').text(data.name)
-                tr.find('.product_description').text(data.description)
-                tr.find('.product_price').text(parseFloat(data.price).toLocaleString('en-US'))
-                tr.find('.product_total').text(parseFloat(data.price * qty).toLocaleString('en-US'))
-                $('#POS-field table tbody').append(tr)
-                $('#product-id').val('').trigger('change')
-                $('#product-qty').val(1)
-                calc()
-                tr.find('[name="qty[]"]').on('input keypress keyup keydown', function() {
-                    calc()
-                })
-                tr.find('.rem-item').click(function() {
-                    if (confirm("Are you sure to remove " + data.name + " product form list?") == true) {
-                        tr.remove()
-                        calc()
-                    }
-                })
+            if (!!window.prod_arr[id]) {
+                addItemToPOS(id, qty);
             } else {
                 alert("Undefined Product");
             }
-        })
+        });
+
         $('[name="tax"]').on('input keypress keydown keyup', function() {
-            calc()
-        })
+            calc();
+        });
+
         $('#check_out').click(function() {
             if ($('#POS-field table tbody tr').length <= 0) {
-                alert("Add atleast 1 product first!")
+                alert("Add at least 1 product first!");
                 return false;
             }
-            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
-        })
+            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val());
+        });
+
         $('#pos-form').submit(function(e) {
             e.preventDefault();
-            var _this = $(this)
+            var _this = $(this);
             $('.err-msg').remove();
-            var el = $('<div>')
-            el.addClass("alert alert-danger err-msg")
-            el.hide()
+            var el = $('<div>');
+            el.addClass("alert alert-danger err-msg");
+            el.hide();
             if (_this[0].checkValidity() == false) {
                 _this[0].reportValidity();
                 return false;
@@ -238,52 +253,30 @@
                 type: 'POST',
                 dataType: 'json',
                 error: err => {
-                    console.log(err)
+                    console.log(err);
                     end_loader();
                 },
                 success: function(resp) {
                     if (typeof resp == 'object' && resp.status == 'success') {
-                        el.removeClass("alert alert-danger err-msg")
-                            // location.reload()
-                        uni_modal("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id)
+                        el.removeClass("alert alert-danger err-msg");
+                        uni_modal("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id);
                         $('#uni_modal').on('hide.bs.modal', function() {
-                            location.reload()
-                        })
+                            location.reload();
+                        });
                     } else if (resp.status == 'failed' && !!resp.msg) {
-                        el.text(resp.msg)
+                        el.text(resp.msg);
                     } else {
-                        el.text("An error occured", 'error');
+                        el.text("An error occurred", 'error');
                         end_loader();
-                        console.err(resp)
+                        console.err(resp);
                     }
-                    _this.prepend(el)
-                    el.show('slow')
+                    _this.prepend(el);
+                    el.show('slow');
                     $("html, body, .modal").scrollTop(0);
-                    end_loader()
+                    end_loader();
                 }
-            })
-        })
-    })
-
-    document.getElementById('product-filter').addEventListener('input', function() {
-        var filter = this.value.toLowerCase();
-        var options = document.getElementById('product-id').options;
-        for (var i = 0; i < options.length; i++) {
-            var option = options[i];
-            var text = option.text.toLowerCase();
-            option.style.display = text.includes(filter) ? '' : 'none';
-        }
-    });
-
-    document.getElementById('add-product').addEventListener('click', function() {
-        var productId = document.getElementById('product-id').value;
-        var productQty = document.getElementById('product-qty').value;
-        if (productId && productQty > 0) {
-            // Add product to sale list logic here
-            console.log('Product added:', productId, 'Quantity:', productQty);
-        } else {
-            alert('Please select a product and enter a valid quantity.');
-        }
+            });
+        });
     });
 </script>
 {% endblock ScriptBlock %}

@@ -47,3 +47,13 @@ body {
     margin-left: 0 !important;
     margin-right: 0 !important;
 }
+
+.icon-small{
+    font-size: .75rem;
+}
+.btn-small{
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    padding: .001em;
+}

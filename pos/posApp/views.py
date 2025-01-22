@@ -1,4 +1,4 @@
-import logging
+import logging, json
 from pickle import FALSE
 from django.shortcuts import redirect, render
 from django.http import HttpResponse, JsonResponse
@@ -10,7 +10,6 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
-import json, sys
 from datetime import date, datetime, timedelta
 from django.template.loader import render_to_string
 
@@ -247,13 +246,23 @@ def delete_product(request):
 @login_required
 def pos(request):
     products = Products.objects.filter(status=1)
-    product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'price': float(product.price)} for product in products]
     context = {
         'page_title': "Point of Sale",
         'products': products,
-        'product_json': json.dumps(product_json)
     }
     return render(request, 'posApp/pos.html', context)
+
+@login_required
+def get_product_json(request):     
+    try:
+        products = Products.objects.filter(status=1)
+        product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'price': float(product.price)} for product in products]
+        return JsonResponse(product_json, safe=False)
+    
+    except Exception as e:
+        logger.error(f"Error fetching product JSON: {e}")
+        return JsonResponse({"error": "Couldn't get Products json"}, status=500)
+    
 
 @login_required
 def checkout_modal(request):

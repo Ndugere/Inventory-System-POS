@@ -30,6 +30,7 @@ urlpatterns = [
     path('generate_report', views.generate_report, name="generate_report"),
     path('get_report/<int:id>/', views.get_report, name="get_report"),
     path('delete_report', views.delete_report, name="delete_report"),
+    path("get_product_json", views.get_product_json, name="get_product_json"),
     
     # path('employees', views.employees, name="employee-page"),
     # path('manage_employees', views.manage_employees, name="manage_employees-page"),
