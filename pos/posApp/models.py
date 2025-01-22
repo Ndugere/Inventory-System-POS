@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from unicodedata import category
 from django.db import models
 from django.utils import timezone
@@ -85,6 +85,7 @@ class Category(models.Model):
     class Meta:    
         verbose_name="Category"
         verbose_name_plural="Categories"
+        ordering = ['name']
 
 class Products(models.Model):
     code = models.CharField("Product Code", max_length=100, unique=True, blank=False)
@@ -99,11 +100,13 @@ class Products(models.Model):
     date_updated = models.DateTimeField(auto_now=True) 
 
     def __str__(self):
-        return self.code + " - " + self.name
+        return self.code + " - " + self.name + " (" + self.description +")"
     
     class Meta:
         verbose_name="Product"
         verbose_name_plural = "Products"
+        
+        unique_together = (("name", "measurement_value"))
 
 class Sales(models.Model):
     code = models.CharField(max_length=100)
@@ -122,6 +125,7 @@ class Sales(models.Model):
     class Meta:
         verbose_name="Sale"
         verbose_name_plural = "Sales"
+        ordering = ['-date_added', '-date_updated']
 
 class salesItems(models.Model):
     sale_id = models.ForeignKey(Sales,on_delete=models.CASCADE)
@@ -133,3 +137,47 @@ class salesItems(models.Model):
     class Meta:
         verbose_name="Sale Item"
         verbose_name_plural = "Sale Items"
+
+class Report(models.Model):
+    class ReportType(models.TextChoices):
+        INVENTORY = "inventory", _("Inventory Report")
+        SALES = "sales", _("Sales Report")
+    
+    name = models.CharField("Title", max_length=100, blank=False)
+    generated_on = models.DateTimeField(auto_now_add=True)
+    type = models.CharField("Report Type", choices = ReportType.choices, default = ReportType.INVENTORY, max_length=10)
+    json = models.TextField("Report Data", blank=False)
+    
+    def is_new(self):
+        now = datetime.now().astimezone()
+        
+        if now - self.generated_on < timedelta(days=7):
+            return True
+    
+    def __str__(self):
+        return f"{str.upper(self.name)} -  {self.generated_on}"
+    
+    class Meta:
+        verbose_name = "Report"
+        verbose_name_plural = "Reports"
+        unique_together = (("name", "generated_on"))
+        ordering = ['-generated_on']
+
+class StockMovement(models.Model):
+    class MovementType(models.TextChoices):
+        ADDITION = 'addition', _('Addition')
+        SUBTRACTION = 'subtraction', _('Subtraction')
+
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    movement_type = models.CharField(max_length=20, choices=MovementType.choices)
+    quantity = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.movement_type} - {self.quantity}"
+
+    class Meta:
+        verbose_name = "Stock Movement"
+        verbose_name_plural = "Stock Movements"
+        ordering = ['-timestamp']

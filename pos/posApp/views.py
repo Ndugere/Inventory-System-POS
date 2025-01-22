@@ -3,14 +3,15 @@ from pickle import FALSE
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems, MeasurementType
-from django.db.models import Count, Sum
+from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report
+from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
 import json, sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -285,6 +286,13 @@ def save_pos(request):
             price = data.getlist('price[]')[i]
             total = float(qty) * float(price)
             salesItems(sale_id=sales, product_id=product, qty=qty, price=price, total=total).save()
+            
+            # Update product quantity
+            product.available_quantity = product.available_quantity - int(qty)
+            if product.available_quantity == 0:
+                product.status = 0
+            product.save()
+              
         resp['status'] = 'success'
         resp['sale_id'] = sale_id
         messages.success(request, "Sale Record has been saved.")
@@ -345,5 +353,138 @@ def get_measurements(request, category_id):
     data = {
         'measurements': list(measurements.values('id', 'name', 'short_name'))
     }
-    print(f"\n{data}\n")
+    
     return HttpResponse(json.dumps(data), content_type="application/json")
+
+@login_required
+def reports(request):
+    try:
+        reports = Report.objects.all()
+    
+    except:        
+        reports = Report.objects.none()
+     
+    context = {
+        'reports': reports,
+    }
+    return render(request, 'posApp/reports.html', context)
+
+@login_required
+@csrf_exempt
+def generate_report(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        report_type = data.get('report_type', 'inventory')
+        time_period = data.get('time_period', 'daily')
+
+        if report_type == "inventory":
+            products = Products.objects.all()
+            report_data = [
+                {
+                    "product_code": product.code,
+                    "product_name": product.name,
+                    "category": product.category_id.name,
+                    "description": product.description,
+                    "measurement_type": product.measurement_value.name if product.measurement_value else "",
+                    "price": product.price,
+                    "available_quantity": product.available_quantity,
+                    "status": product.status,
+                    "date_added": product.date_added.isoformat(),
+                    "date_updated": product.date_updated.isoformat(),
+                }
+                for product in products
+            ]
+
+            report = Report(
+                name="Inventory Report "+ str(datetime.now().astimezone()),
+                type=Report.ReportType.INVENTORY,
+                json=json.dumps(report_data)
+            )
+            report.save()
+
+        else:
+            today = datetime.now().astimezone()
+
+            if time_period == 'daily':
+                start_date = today - timedelta(hours=23, minutes=59, seconds=59)
+            elif time_period == 'weekly':
+                start_date = today - timedelta(weeks=1)
+            elif time_period == 'monthly':
+                start_date = today - timedelta(weeks=4)
+            elif time_period == 'annual':
+                start_date = today - timedelta(weeks=52)
+            else:
+                start_date = today
+
+            sales = Sales.objects.filter(date_added__gte=start_date).annotate(
+                total_sales=Sum('grand_total'),
+                tax_percentage=ExpressionWrapper(
+                    (F('tax_amount') / F('sub_total')) * 100,
+                    output_field=FloatField()
+                )
+            )
+            report_data = [
+                {
+                    "sale_code": sale.code,
+                    "date_of_sale": sale.date_added.isoformat(),
+                    "sub_total": sale.sub_total,
+                    "grand_total": sale.grand_total,
+                    "tax_amount": sale.tax_amount,
+                    "tendered_amount": sale.tendered_amount,
+                    "amount_change": sale.amount_change,
+                    "items": [
+                        {
+                            "product_code": item.product_id.code,
+                            "product_name": item.product_id.name,
+                            "quantity": item.qty,
+                            "price": item.price,
+                            "total": item.total,
+                        }
+                        for item in sale.salesitems_set.all()
+                    ]
+                }
+                for sale in sales
+            ]
+
+            report_total = sales.aggregate(total=Sum('grand_total'))['total'] or 0.0
+            report_data.append({"report_total": report_total})
+
+            report = Report(
+                name="Sales Report " + str(datetime.now().astimezone()),
+                type=Report.ReportType.SALES,
+                json=json.dumps(report_data)
+            )
+            report.save()
+
+        return HttpResponse(json.dumps({"status": "success"}), content_type="application/json")
+    else:
+        return HttpResponse(json.dumps({"status": "failed", "message": "Invalid request method"}), content_type="application/json")
+@login_required
+def get_report(request, id: int):
+    try:
+        report = Report.objects.get(id=id)
+        report_data = {
+            "name": report.name,
+            "generated_on": report.generated_on.strftime("%Y-%m-%d %H:%M:%S"),
+            "type": report.type,
+            "json": json.loads(report.json)
+        }
+        return HttpResponse(json.dumps(report_data), content_type="application/json")
+    except Report.DoesNotExist:
+        return HttpResponse(json.dumps({"error": "Report not found"}), content_type="application/json")
+    except Exception as e:
+        return HttpResponse(json.dumps({"error": str(e)}), content_type="application/json")
+
+@login_required
+def delete_report(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        report_id = data.get('id')
+        try:
+            Report.objects.filter(id=report_id).delete()
+            return HttpResponse(json.dumps({"status": "success", "message": "Report Deleted"}), content_type="application/json")
+        except:
+            return HttpResponse(json.dumps({"status": "failed", "message": "Could not delete report!"}), content_type="application/json") 
+    
+    else:
+        return HttpResponse(json.dumps({"status": "failed", "message": "Invalid request method"}), content_type="application/json")

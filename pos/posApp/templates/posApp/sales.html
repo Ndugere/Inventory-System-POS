@@ -32,7 +32,7 @@
                 <tbody>
                     {% for sale in sale_data %}
                     <tr>
-                        <td class="px-2 py-1 text-center">{{ sale.id }}</td>
+                        <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
                         <td class="px-2 py-1 text-start">{{ sale.date_added|date:'Y-m-d H:i' }}</td>
                         <td class="px-2 py-1 text-start">{{ sale.code }}</td>
                         <td class="px-2 py-1 text-end">{{ sale.grand_total|intcomma }}</td>

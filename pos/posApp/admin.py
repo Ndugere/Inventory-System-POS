@@ -1,5 +1,5 @@
 from django.contrib import admin
-from posApp.models import Category, Products, Sales, salesItems, MeasurementType
+from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report
 
 # Register your models here.
 
@@ -43,4 +43,16 @@ class SalesAdmin(admin.ModelAdmin):
     
     list_display = []
     list_filter = []
+    
+    
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    model = Report
+    fieldsets = [
+        ("Report Info:", {"fields": ['name', 'generated_on', 'type']}),
+        ("Details", {"fields": ['json']})
+    ]
+    readonly_fields = ["generated_on"]
+    list_display = ['name', 'type', 'generated_on']
+    list_filter = ['type']
 # admin.site.register(Employees)

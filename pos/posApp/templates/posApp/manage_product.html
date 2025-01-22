@@ -35,7 +35,7 @@
         </div>
         <div class="form-group mb-3">
             <label for="available_quantity" class="control-label">Available QTY</label>
-            <input type="text" name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.available_quantity %}{{product.available_quantity}}{% endif %}" required>
+            <input type="number" name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.available_quantity %}{{product.available_quantity}}{% endif %}" min="0" step="any" required>
         </div>
         <div class="form-group mb-3">
             <label for="price" class="control-label">Price</label>
