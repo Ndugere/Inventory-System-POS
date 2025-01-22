@@ -238,38 +238,12 @@
             fetch(`/get_report/${reportId}/`)
             .then(response => {
                 if(response.ok){
-                    return response.json();
+                    return response.text();
                 }
                 throw new Error('Network response was not ok.');
             })
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-
-                $('#report_modal .modal-title').text(data.name);
-                let reportContent = `<p>Generated On: ${data.generated_on}</p>`;
-                reportContent += `<p>Type: ${data.type}</p>`;
-
-                // Generate table content
-                let tableContent = '<table class="table table-striped">';
-                tableContent += '<thead><tr>';
-                for (let key in data.json[0]) {
-                    tableContent += `<th>${key}</th>`;
-                }
-                tableContent += '</tr></thead><tbody>';
-                data.json.forEach(row => {
-                    tableContent += '<tr>';
-                    for (let key in row) {
-                        tableContent += `<td>${row[key]}</td>`;
-                    }
-                    tableContent += '</tr>';
-                });
-                tableContent += '</tbody></table>';
-
-                reportContent += tableContent;
-                $('#report_modal .modal-body .table-responsive').html(reportContent);
+            .then(html => {
+                $('#report_modal .modal-body').html(html);
                 $('#report_modal').modal('show');
             })
             .catch(error => {

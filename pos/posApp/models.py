@@ -143,9 +143,16 @@ class Report(models.Model):
         INVENTORY = "inventory", _("Inventory Report")
         SALES = "sales", _("Sales Report")
     
+    class ReportTimeRange(models.TextChoices):
+        DAILY = "daily", _("Daily")
+        WEEKLY = "weekly", _("Weekly")
+        MONTHLY = "monthly", _("Monthly")
+        ANNUAL = "annual", _("Annual")
+    
     name = models.CharField("Title", max_length=100, blank=False)
     generated_on = models.DateTimeField(auto_now_add=True)
     type = models.CharField("Report Type", choices = ReportType.choices, default = ReportType.INVENTORY, max_length=10)
+    time_range = models.CharField("Time Range", choices = ReportTimeRange.choices, default=ReportTimeRange.DAILY, max_length=10)
     json = models.TextField("Report Data", blank=False)
     
     def is_new(self):

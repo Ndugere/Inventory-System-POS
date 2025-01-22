@@ -1,7 +1,7 @@
 import logging
 from pickle import FALSE
 from django.shortcuts import redirect, render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from flask import jsonify
 from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField
@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
 import json, sys
 from datetime import date, datetime, timedelta
+from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,6 @@ def save_category(request):
                 measurement_type=data['measurement_type'],
                 status=data['status']
             )
-            print(f"\n{new_category}\n")
             new_category.save()
         resp['status'] = 'success'
         messages.success(request, 'Category Successfully saved.')
@@ -407,14 +407,19 @@ def generate_report(request):
 
             if time_period == 'daily':
                 start_date = today - timedelta(hours=23, minutes=59, seconds=59)
+                time_range = Report.ReportTimeRange.DAILY
             elif time_period == 'weekly':
                 start_date = today - timedelta(weeks=1)
+                time_range = Report.ReportTimeRange.WEEKLY
             elif time_period == 'monthly':
                 start_date = today - timedelta(weeks=4)
+                time_range = Report.ReportTimeRange.MONTHLY
             elif time_period == 'annual':
                 start_date = today - timedelta(weeks=52)
+                time_range = Report.ReportTimeRange.ANNUAL
             else:
                 start_date = today
+                time_range = Report.ReportTimeRange.DAILY
 
             sales = Sales.objects.filter(date_added__gte=start_date).annotate(
                 total_sales=Sum('grand_total'),
@@ -446,12 +451,13 @@ def generate_report(request):
                 for sale in sales
             ]
 
-            report_total = sales.aggregate(total=Sum('grand_total'))['total'] or 0.0
+            report_total = sales.aggregate(total=Sum('sale_total'))['total'] or 0.0
             report_data.append({"report_total": report_total})
 
             report = Report(
                 name="Sales Report " + str(datetime.now().astimezone()),
                 type=Report.ReportType.SALES,
+                time_range = time_range,
                 json=json.dumps(report_data)
             )
             report.save()
@@ -459,6 +465,7 @@ def generate_report(request):
         return HttpResponse(json.dumps({"status": "success"}), content_type="application/json")
     else:
         return HttpResponse(json.dumps({"status": "failed", "message": "Invalid request method"}), content_type="application/json")
+
 @login_required
 def get_report(request, id: int):
     try:
@@ -469,11 +476,16 @@ def get_report(request, id: int):
             "type": report.type,
             "json": json.loads(report.json)
         }
-        return HttpResponse(json.dumps(report_data), content_type="application/json")
+        if report.type == Report.ReportType.SALES:
+            html = render_to_string('posApp/report/sales_report.html', {'report': report_data}, request)
+        else:
+            html = render_to_string('posApp/report/inventory_report.html', {'report': report_data}, request)
+        
+        return HttpResponse(html)
     except Report.DoesNotExist:
-        return HttpResponse(json.dumps({"error": "Report not found"}), content_type="application/json")
+        return JsonResponse({"error": "Report not found"})
     except Exception as e:
-        return HttpResponse(json.dumps({"error": str(e)}), content_type="application/json")
+        return JsonResponse({"error": str(e)})
 
 @login_required
 def delete_report(request):
@@ -488,3 +500,4 @@ def delete_report(request):
     
     else:
         return HttpResponse(json.dumps({"status": "failed", "message": "Invalid request method"}), content_type="application/json")
+    

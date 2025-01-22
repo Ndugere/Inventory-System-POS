@@ -14,6 +14,10 @@
                 <div class="row align-items-end">
                     <div class="col-lg-5 col-md-8 col-12">
                         <div class="form-group mb-3">
+                            <label for="product-filter">Filter Products</label>
+                            <input type="text" id="product-filter" class="form-control form-control-sm" placeholder="Type to filter products">
+                        </div>
+                        <div class="form-group mb-3">
                             <label for="product-id">Select Product</label>
                             <select id="product-id" class="form-select form-select-sm">
                                 <option value="" disabled selected></option>
@@ -31,10 +35,9 @@
                     </div>
                     <div class="col-lg-4 col-md-2 col-12">
                         <div class="form-group mb-3">
-                            <button class="btn btn-light btn-sm bg-gradient border rounded-0 text-start" type="button" id="add_item"><i class="mdi mdi-plus"></i> Add Item</button>
+                            <button type="button" id="add-product" class="btn btn-primary">Add to Sale</button>
                         </div>
                     </div>
-
                 </div>
             </fieldset>
             <fieldset>
@@ -261,5 +264,26 @@
             })
         })
     })
+
+    document.getElementById('product-filter').addEventListener('input', function() {
+        var filter = this.value.toLowerCase();
+        var options = document.getElementById('product-id').options;
+        for (var i = 0; i < options.length; i++) {
+            var option = options[i];
+            var text = option.text.toLowerCase();
+            option.style.display = text.includes(filter) ? '' : 'none';
+        }
+    });
+
+    document.getElementById('add-product').addEventListener('click', function() {
+        var productId = document.getElementById('product-id').value;
+        var productQty = document.getElementById('product-qty').value;
+        if (productId && productQty > 0) {
+            // Add product to sale list logic here
+            console.log('Product added:', productId, 'Quantity:', productQty);
+        } else {
+            alert('Please select a product and enter a valid quantity.');
+        }
+    });
 </script>
 {% endblock ScriptBlock %}

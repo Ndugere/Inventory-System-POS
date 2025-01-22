@@ -1,0 +1,46 @@
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <header class="mdc-card-header pt-4 pb-4 text-center"><h2>{{report.time_range|capfirst}} Sales Report <br> <small>{{report.generated_on}}</small></h2></header>
+        <h3 class="p2"> Summary</h3>
+        <div class="table-responsive">            
+            <table class="table table-striped table-bordered">
+                <colgroup>
+                    <col width="5%">
+                    <col width="20%">
+                    <col width="20%">
+                    <col width="25%">
+                    <col width="15%">
+                    <col width="15%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="text-center py-1">#</th>
+                        <th class="text-center py-1">Sale Code</th>
+                        <th class="text-center py-1">Date</th>
+                        <th class="text-center py-1">Sale Amount</th>
+                        <th class="text-center py-1">Tax<br>(Inclusive)</th>
+                        <th class="text-center py-1">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in report.json %}
+                        {% if not sale.total %}
+                            <tr>
+                                <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                                <td class="px-2 py-1 text-start">{{ sale.sale_code }}</td>
+                                <td class="px-2 py-1 text-center">{{ sale.date_of_sale }}</td>
+                                <td class="px-2 py-1 text-center">{{ sale.sub_total }}</td>
+                                <td class="px-2 py-1 text-center">{{ sale.tax_amount|floatformat:2 }}</td>
+                                <td class="px-2 py-1 text-center">{{ sale.grand_total }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="p2">Sales Details </h3>
+        
+        
+    </div>
+</div>
