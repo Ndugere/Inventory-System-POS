@@ -57,3 +57,10 @@ body {
     border-radius: 10px;
     padding: .001em;
 }
+.mb-2{
+    margin-bottom: 2px;
+}
+.soft-bold{
+    font-weight:600;
+    color: slategrey;
+}

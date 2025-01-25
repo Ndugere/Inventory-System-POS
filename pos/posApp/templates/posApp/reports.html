@@ -14,10 +14,27 @@
                     <div class="col-md-4">
                         <div class="form-group">                                
                             <label for="report_type">Report Type:</label>
-                            <select name="report_type" id="report_type" class="form-select form-select-sm">                                
-                                <option value="" selected ></option>
+                            <select name="report_type" id="report_type" class="form-select form-select-sm">  
+                                {% for value in  request.user.groups.values_list %}
+                                    {% if  'Inventory Manager' in value %}
+                                    <option value="inventory">Inventory</option>
+
+                                    {% elif 'Sales Manager' in value %}
+                                    <option value="sales">Sales</option>
+
+                                    {% elif 'Admin' in value %}                              
+                                    <option value="" selected ></option>
+                                    <option value="inventory">Inventory</option>
+                                    <option value="sales">Sales</option>
+
+                                    {% endif %}                                
+                                {% endfor %}
+                                
+                                <!--
                                 <option value="inventory">Inventory</option>
                                 <option value="sales">Sales</option>
+                                -->
+
                             </select>
                         </div>
                     </div>
@@ -143,25 +160,74 @@
                     </tr>
                 </thead>
                 <tbody id="reports-list">
-                    {% for report in reports %}
-                    <tr>
-                        <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
-                        <td class="px-2 py-1 text-start">{{ report.name }}</td>
-                        <td class="px-2 py-1 text-start">{{ report.generated_on }}</td>
-                        <td class="px-2 py-1 text-start">{{ report.type }}</td>
-                        <td class="px-2 py-1 text-center">
-                            <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="View" onclick="viewReport(this)">
-                                <i class="material-icons mdc-button__icon">receipt</i>
-                            </button>
-                            
-                            <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="Print" onclick="printReport(this)">
-                                <i class="material-icons mdc-button__icon">print</i>
-                            </button>
-                            <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ report.pk }}" data-name="{{ report.name }}" title="Delete" onclick="deleteReport(this)">
-                                <i class="material-icons mdc-button__icon">deleteoutline</i>
-                            </button>
-                        </td>
-                    </tr>
+                    {% for value in request.user.groups.values_list %}
+                        {% for report in reports %}
+                            {% if 'Sales Manager' in value and report.type == 'sales'%}                        
+                            <tr>
+                                <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.name }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.generated_on }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.type }}</td>
+                                <td class="px-2 py-1 text-center">
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="View" onclick="viewReport(this)">
+                                        <i class="material-icons mdc-button__icon">receipt</i>
+                                    </button>
+                                    
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="Print" onclick="printReport(this)">
+                                        <i class="material-icons mdc-button__icon">print</i>
+                                    </button>
+                                    {% if request.user.is_superuser %}
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ report.pk }}" data-name="{{ report.name }}" title="Delete" onclick="deleteReport(this)">
+                                        <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% elif 'Inventory Manager' in value and report.type == 'inventory'%}                        
+                            <tr>
+                                <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.name }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.generated_on }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.type }}</td>
+                                <td class="px-2 py-1 text-center">
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="View" onclick="viewReport(this)">
+                                        <i class="material-icons mdc-button__icon">receipt</i>
+                                    </button>
+                                    
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="Print" onclick="printReport(this)">
+                                        <i class="material-icons mdc-button__icon">print</i>
+                                    </button>
+                                    {% if request.user.is_superuser %}
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ report.pk }}" data-name="{{ report.name }}" title="Delete" onclick="deleteReport(this)">
+                                        <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            {% elif 'Admin' in value %}
+                            <tr>
+                                <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.name }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.generated_on }}</td>
+                                <td class="px-2 py-1 text-start">{{ report.type }}</td>
+                                <td class="px-2 py-1 text-center">
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="View" onclick="viewReport(this)">
+                                        <i class="material-icons mdc-button__icon">receipt</i>
+                                    </button>
+                                    
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="Print" onclick="printReport(this)">
+                                        <i class="material-icons mdc-button__icon">print</i>
+                                    </button>
+                                    {% if request.user.is_superuser %}
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ report.pk }}" data-name="{{ report.name }}" title="Delete" onclick="deleteReport(this)">
+                                        <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}                       
                     {% endfor %}
                 </tbody>
             </table>

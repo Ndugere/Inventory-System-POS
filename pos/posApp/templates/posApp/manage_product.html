@@ -1,3 +1,4 @@
+{% load humanize %}
 <div class="container-fluid">
     <form action="" id="product-form">
         <input type="hidden" name="id" value="{% if product.pk %}{{product.pk}}{% endif %}">
@@ -39,9 +40,9 @@
         </div>
         <div class="form-group mb-3">
             <label for="price" class="control-label">Price</label>
-            <input type="text" name="price" id="price" class="form-control form-control-sm rounded-0" value="{% if product.price %}{{product.price}}{% endif %}" required>
+            <input type="text" name="price" id="price" class="form-control form-control-sm rounded-0" value="{% if product.price %}{{product.price|floatformat:2|intcomma}}{% endif %}" required>
         </div>
-        <div class="form-group mb-3">
+        <!--div class="form-group mb-3">
             <label for="status" class="control-label">Status</label>
             <select name="status" id="status" class="form-select form-select-sm rounded-0" required>
                 {% if product.status and product.status == 1 %}
@@ -55,7 +56,7 @@
                 <option value="0">Inactive</option>
                 {% endif %}
             </select>
-        </div>
+        </div-->
     </form>
 </div>
 <script>

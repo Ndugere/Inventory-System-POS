@@ -95,8 +95,8 @@ class Products(models.Model):
     measurement_value = models.ForeignKey(MeasurementType, on_delete=models.SET_NULL, null=True)
     price = models.FloatField("Price", default=0)
     available_quantity = models.IntegerField(default=0)
-    status = models.IntegerField(default=1) 
-    date_added = models.DateTimeField(default=timezone.now) 
+    status = models.IntegerField(default=0) 
+    date_added = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
 
     def __str__(self):
@@ -106,7 +106,7 @@ class Products(models.Model):
         verbose_name="Product"
         verbose_name_plural = "Products"
         
-        unique_together = (("name", "measurement_value"))
+        unique_together = (("name", "measurement_value", "description"))
 
 class Sales(models.Model):
     code = models.CharField(max_length=100)
@@ -116,7 +116,8 @@ class Sales(models.Model):
     tax = models.FloatField(default=0)
     tendered_amount = models.FloatField(default=0)
     amount_change = models.FloatField(default=0)
-    date_added = models.DateTimeField(default=timezone.now) 
+    served_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="served_by")
+    date_added = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
 
     def __str__(self):
@@ -151,6 +152,7 @@ class Report(models.Model):
     
     name = models.CharField("Title", max_length=100, blank=False)
     generated_on = models.DateTimeField(auto_now_add=True)
+    generated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="report_generated_by")
     type = models.CharField("Report Type", choices = ReportType.choices, default = ReportType.INVENTORY, max_length=10)
     time_range = models.CharField("Time Range", choices = ReportTimeRange.choices, max_length=10, blank=True, null=True)
     json = models.TextField("Report Data", blank=False)

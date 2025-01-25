@@ -13,38 +13,39 @@
         <hr>
         <div class="lh-1">
             <div>
-                <span>Date:</span> {{ transaction.date_added|date:"M d Y" }} <br>
-                <span>Transaction Code:</span> {{ transaction.code }}
+                <p>Date: &nbsp; {{ transaction.date_added|date:"M d Y" }}</p> 
+                <p>Transaction Code: &nbsp; {{ transaction.code }}</p>
+                <p>Served By: &nbsp; {{ transaction.served_by }}</p> 
             </div>
         </div>
         <div class="clear-fix py-3"></div>
         <div class="lh-1">
             <div class="d-flex w-100 align-items-end border-bottom pt-2">
-                <div class="col-4 text-left fw-bold">Product</div>
-                <div class="col-4 text-left fw-bold">Description</div>                
+                <div class="col-3 text-left fw-bold">Product</div>
+                <div class="col-3 text-left fw-bold">Description</div>                
                 <div class="col-2 text-center fw-bold">Price</div>
-                <div class="col-3 text-center fw-bold">Qty</div>
-                <div class="col-3 text-right fw-bold">Amount</div>
+                <div class="col-2 text-center fw-bold">Qty</div>
+                <div class="col-2 text-right fw-bold">Amount</div>
             </div>
             {% for item in salesItems %}
             <div class="d-flex w-100 align-items-end">
-                <div class="col-4 fw-bold">
+                <div class="col-3 fw-bold">
                     <div class="lh-1 pt-2">
                         <small>{{ item.product_id.name }}</small><br>
                     </div>
                 </div>
-                <div class="col-4 fw-bold">
+                <div class="col-3 fw-bold">
                     <div class="lh-1 pt-2">
                         <small>{{ item.product_id.description }}</small><br>
                     </div>
                 </div>
                 <div class="col-2 fw-bold text-center">
                     <div class="lh-1 pt-2">
-                        <small>{{ item.price|intcomma }}</small><br>
+                        <small>{{ item.price|floatformat:2|intcomma }}</small><br>
                     </div>
                 </div>
-                <div class="col-3 text-center fw-bold pt-2">{{ item.qty|intcomma|floatformat:0 }}</div>
-                <div class="col-3 text-end fw-bold pt-2">{{ item.total|intcomma }}</div>
+                <div class="col-2 text-center fw-bold pt-2">{{ item.qty|intcomma}}</div>
+                <div class="col-2 text-end fw-bold pt-2">{{ item.total|floatformat:2|intcomma }}</div>
             </div>
             {% endfor %}
             <hr>

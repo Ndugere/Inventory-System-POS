@@ -173,6 +173,7 @@ def manage_products(request):
         'categories' : categories
     }
     return render(request, 'posApp/manage_product.html',context)
+
 def test(request):
     categories = Category.objects.all()
     context = {
@@ -198,6 +199,10 @@ def save_product(request):
         measurement_value = MeasurementType.objects.filter(id=data['measurement_value']).first()
         try:
             if id.isnumeric() and int(id) > 0:
+                if  int(data['available_quantity']) > 0:
+                    status = 1 
+                else:
+                    status = 0
                 Products.objects.filter(id=id).update(
                     code=data['code'],
                     category_id=category,
@@ -206,7 +211,7 @@ def save_product(request):
                     measurement_value=measurement_value,
                     available_quantity=data['available_quantity'],
                     price=float(data['price']),
-                    status=data['status']
+                    status=status
                 )
             else:
                 new_product = Products(
@@ -217,7 +222,7 @@ def save_product(request):
                     measurement_value=measurement_value,
                     available_quantity=data['available_quantity'],
                     price=float(data['price']),
-                    status=data['status']
+                    status=1
                 )
                 new_product.save()
 
@@ -286,7 +291,16 @@ def save_pos(request):
     code = str(pref) + str(code)
 
     try:
-        sales = Sales(code=code, sub_total=data['sub_total'], tax=data['tax'], tax_amount=data['tax_amount'], grand_total=data['grand_total'], tendered_amount=data['tendered_amount'], amount_change=data['amount_change'])
+        sales = Sales(
+            code=code, 
+            sub_total=data['sub_total'], 
+            tax=data['tax'], 
+            tax_amount=data['tax_amount'], 
+            grand_total=data['grand_total'], 
+            tendered_amount=data['tendered_amount'], 
+            amount_change=data['amount_change'],
+            served_by = request.user
+        )
         sales.save()
         sale_id = sales.pk
         for i, prod in enumerate(data.getlist('product_id[]')):
@@ -332,6 +346,7 @@ def receipt(request):
     id = request.GET.get('id')
     sales = Sales.objects.filter(id=id).first()
     transaction = {field.name: getattr(sales, field.name) for field in Sales._meta.get_fields() if field.related_model is None}
+    transaction['served_by'] = sales.served_by.username
     if 'tax_amount' in transaction:
         transaction['tax_amount'] = format(float(transaction['tax_amount']), '.2f')
     ItemList = salesItems.objects.filter(sale_id=sales).all()
@@ -406,6 +421,7 @@ def generate_report(request):
 
             report = Report(
                 name="Inventory Report " + str(datetime.now().astimezone()),
+                generated_by = request.user,
                 type=Report.ReportType.INVENTORY,
                 json=json.dumps(report_data)
             )
@@ -467,6 +483,7 @@ def generate_report(request):
                 }
             report = Report(
                 name=f"Sales Report {time_period.capitalize()} {str(datetime.now().astimezone())}",
+                generated_by = request.user,
                 type=Report.ReportType.SALES,
                 time_range=time_range,
                 json=json.dumps(report_data)
@@ -484,6 +501,7 @@ def get_report(request, id: int):
         report_data = {
             "name": report.name,
             "generated_on": report.generated_on.strftime("%Y-%m-%d %H:%M:%S"),
+            "generated_by": report.generated_by,
             "type": report.type,
             "time_range": report.time_range,
             "json": json.loads(report.json)
