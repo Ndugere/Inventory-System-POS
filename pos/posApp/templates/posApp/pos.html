@@ -159,10 +159,11 @@
             var tax = $('[name="tax"]').val();
             tax = tax / 100;
             var tax_amount = parseFloat(sub_total) * parseFloat(tax);
+            var grand_total = parseFloat(sub_total) + tax_amount;
             $('#tax_amount').text(parseFloat(tax_amount).toLocaleString('en-US'));
             $('[name="tax_amount"]').val(parseFloat(tax_amount));
-            $('#grand_total').text(parseFloat(sub_total).toLocaleString('en-US'));
-            $('[name="grand_total"]').val(parseFloat(sub_total));
+            $('#grand_total').text(parseFloat(grand_total).toLocaleString('en-US'));
+            $('[name="grand_total"]').val(Math.floor(parseFloat(grand_total)));
             $('#sub_total').text(parseFloat(sub_total).toLocaleString('en-US'));
             $('[name="sub_total"]').val(parseFloat(sub_total));
         }
