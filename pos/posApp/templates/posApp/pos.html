@@ -23,13 +23,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-5 col-md-12">
+                    <div class="col-lg-3 col-md-4 col-sm-12">
                         <div class="form-group mb-3">
                             <label for="product-qty">Qty</label>
                             <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" value="1">
                         </div>
                     </div>
-                    <div class="col-lg-4 col-md-2 col-md-12">
+                    <div class="col-lg-4 col-md-3 col-sm-12">
                         <div class="form-group mb-3">
                             <button class="btn btn-light btn-sm bg-gradient border rounded-0 text-start" type="button" id="add_item"><i class="mdi mdi-plus"></i> Add Item</button>
                         </div>
@@ -73,11 +73,11 @@
                                 </dd>
                                 <dt class="h4 fw-bold text-light">Tax Inclusive (%)</dt>
                                 <dd>
-                                    <input type="number" class="form-control form-control-lg rounded-0 text-end" step="any" min="0" max="100" name="tax" value="0">
+                                    <input type="number" class="form-control form-control-lg rounded-0 text-end" step="0.01" min="0.00" max="100" name="tax" value="0.00">
                                 </dd>
                                 <dt class="h4 fw-bold text-light">Tax Amount</dt>
                                 <dd class="text-end py-1 px-2 rounded-0 bg-light">
-                                    <input type="hidden" name="tax_amount" value="0">
+                                    <input type="hidden" name="tax_amount" value="0.00">
                                     <span class="h3 fw-bold" id="tax_amount">0.00</span>
                                 </dd>
                                 <dt class="h4 fw-bold text-light">Grand Total</dt>
@@ -158,12 +158,12 @@
             });
             var tax = $('[name="tax"]').val();
             tax = tax / 100;
-            var tax_amount = parseFloat(sub_total) * parseFloat(tax);
-            var grand_total = parseFloat(sub_total) + tax_amount;
+            var tax_amount = parseFloat(parseFloat(sub_total) * parseFloat(tax));
+            var grand_total = Math.ceil(parseFloat(sub_total) + tax_amount);
             $('#tax_amount').text(parseFloat(tax_amount).toLocaleString('en-US'));
             $('[name="tax_amount"]').val(parseFloat(tax_amount));
             $('#grand_total').text(parseFloat(grand_total).toLocaleString('en-US'));
-            $('[name="grand_total"]').val(Math.floor(parseFloat(grand_total)));
+            $('[name="grand_total"]').val(grand_total);
             $('#sub_total').text(parseFloat(sub_total).toLocaleString('en-US'));
             $('[name="sub_total"]').val(parseFloat(sub_total));
         }
