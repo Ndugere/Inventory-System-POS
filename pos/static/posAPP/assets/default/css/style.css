@@ -64,3 +64,8 @@ body {
     font-weight:600;
     color: slategrey;
 }
+.alert{
+    position: fixed;
+    top: 50px;
+    z-index: 5000
+}

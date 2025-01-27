@@ -163,6 +163,11 @@
             $('#confirm_modal .modal-body').html($msg)
             $('#confirm_modal').modal('show')
         }
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                alert.style.display = 'none';
+            });
+        }, 5000);
         $(function() {
 
         })
