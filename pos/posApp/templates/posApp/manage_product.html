@@ -39,8 +39,12 @@
             <input type="number" name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.available_quantity %}{{product.available_quantity}}{% endif %}" min="0" step="any" required>
         </div>
         <div class="form-group mb-3">
-            <label for="price" class="control-label">Price</label>
-            <input type="text" name="price" id="price" class="form-control form-control-sm rounded-0" value="{% if product.price %}{{product.price|floatformat:2|intcomma}}{% endif %}" required>
+            <label for="buy_price" class="control-label"> Buying Price</label>
+            <input type="number" name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2|intcomma}}{% endif %}" min="0.00" step="any" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="sell_price" class="control-label">Selling Price</label>
+            <input type="number" name="sell_price" id="sell_price" class="form-control form-control-sm rounded-0" value="{% if product.sell_price %}{{product.sell_price|floatformat:2|intcomma}}{% endif %}" min="0.00" step="any" required>
         </div>
         <!--div class="form-group mb-3">
             <label for="status" class="control-label">Status</label>

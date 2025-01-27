@@ -210,7 +210,8 @@ def save_product(request):
                     description=data['description'],
                     measurement_value=measurement_value,
                     available_quantity=data['available_quantity'],
-                    price=float(data['price']),
+                    buy_price=float(data['buy_price']),
+                    sell_price=float(data['sell_price']),
                     status=status
                 )
             else:
@@ -221,7 +222,8 @@ def save_product(request):
                     description=data['description'],
                     measurement_value=measurement_value,
                     available_quantity=data['available_quantity'],
-                    price=float(data['price']),
+                    buy_price=float(data['buy_price']),
+                    sell_price=float(data['sell_price']),
                     status=1
                 )
                 new_product.save()
@@ -261,7 +263,7 @@ def pos(request):
 def get_product_json(request):     
     try:
         products = Products.objects.filter(status=1)
-        product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'price': float(product.price)} for product in products]
+        product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'buy_price': float(product.buy_price), 'sell_price': float(product.sell_price)} for product in products]
         return JsonResponse(product_json, safe=False)
     
     except Exception as e:
@@ -394,7 +396,6 @@ def reports(request):
     return render(request, 'posApp/reports.html', context)
 
 @login_required
-@csrf_exempt
 def generate_report(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -410,7 +411,8 @@ def generate_report(request):
                     "category": product.category_id.name,
                     "description": product.description,
                     "measurement_type": product.measurement_value.name if product.measurement_value else "",
-                    "price": product.price,
+                    "buy_price": product.buy_price,
+                    "sell_price": product.sell_price,
                     "available_quantity": product.available_quantity,
                     "status": product.status,
                     "date_added": product.date_added.isoformat(),
@@ -421,7 +423,7 @@ def generate_report(request):
 
             report = Report(
                 name="Inventory Report " + str(datetime.now().astimezone()),
-                generated_by = request.user,
+                generated_by=request.user,
                 type=Report.ReportType.INVENTORY,
                 json=json.dumps(report_data)
             )
@@ -453,46 +455,84 @@ def generate_report(request):
                     output_field=FloatField()
                 )
             )
+
+            # Calculate most profitable products
+            most_profitable_products = salesItems.objects.values(
+                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'product_id__sell_price'
+            ).annotate(
+                total_quantity=Sum('qty'),
+                total_amount=Sum(F('qty') * F('product_id__sell_price')),
+                total_profit=Sum(ExpressionWrapper(
+                    F('qty') * (F('product_id__sell_price') - F('product_id__buy_price')),
+                    output_field=FloatField()
+                )),
+                total_percentage_profit=ExpressionWrapper(
+                    (Sum(ExpressionWrapper(
+                        F('qty') * (F('product_id__sell_price') - F('product_id__buy_price')),
+                        output_field=FloatField()
+                    )) / Sum(F('qty') * F('product_id__buy_price'))) * 100,
+                    output_field=FloatField()
+                )
+            ).order_by('-total_percentage_profit')
+
             
+            # Calculate products with most sold quantity
+            products_with_most_sales = salesItems.objects.values(
+                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'product_id__sell_price'
+            ).annotate(
+                total_quantity=Sum('qty'),
+                total_amount=Sum(F('qty') * F('product_id__sell_price')),
+                total_profit=Sum(ExpressionWrapper(
+                    F('qty') * (F('product_id__sell_price') - F('product_id__buy_price')),
+                    output_field=FloatField()
+                ))
+            ).order_by('-total_quantity')
+
             total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
 
-            report_data ={ 
-                    "total_sales_amount": total_sales_amount,
-                    "sales": [
-                        {
-                            "sale_code": sale.code,
-                            "date_of_sale": sale.date_added.isoformat(),
-                            "sub_total": sale.sub_total,
-                            "grand_total": sale.grand_total,
-                            "tax_amount": sale.tax_amount,
-                            "tendered_amount": sale.tendered_amount,
-                            "amount_change": sale.amount_change,
-                            "items": [
-                                {
-                                    "product_code": item.product_id.code,
-                                    "product_name": item.product_id.name,
-                                    "quantity": item.qty,
-                                    "price": item.price,
-                                    "total": item.total
-                                }
-                                for item in sale.salesitems_set.all()
-                            ]
-                        }
-                        for sale in sales
-                    ]
-                }
+            report_data = {
+                "total_sales_amount": total_sales_amount,
+                "most_profitable_products": list(most_profitable_products),
+                "products_with_most_sales": list(products_with_most_sales),
+                "sales": [
+                    {
+                        "sale_code": sale.code,
+                        "date_of_sale": sale.date_added.isoformat(),
+                        "sub_total": sale.sub_total,
+                        "grand_total": sale.grand_total,
+                        "tax": (sale.tax_amount /sale.sub_total * 100),
+                        "tax_amount": sale.tax_amount,
+                        "tendered_amount": sale.tendered_amount,
+                        "amount_change": sale.amount_change,
+                        "items": [
+                            {
+                                "product_code": item.product_id.code,
+                                "product_name": item.product_id.name,
+                                "description": item.product_id.description,
+                                "quantity": item.qty,
+                                "price": item.price,
+                                "total": item.total
+                            }
+                            for item in sale.salesitems_set.all()
+                        ]
+                    }
+                    for sale in sales
+                ]
+            }
+
             report = Report(
                 name=f"Sales Report {time_period.capitalize()} {str(datetime.now().astimezone())}",
-                generated_by = request.user,
+                generated_by=request.user,
                 type=Report.ReportType.SALES,
                 time_range=time_range,
                 json=json.dumps(report_data)
             )
             report.save()
 
-        return JsonResponse({"status": "success", "message": "Report generated successfully."})
+        messages.success(request, 'Report Successfully Generated')
+        return JsonResponse({"status": "success", "msg": "Report generated successfully."})
     else:
-        return JsonResponse({"status": "failed", "message": "Invalid request method."}, status=400)
+        return JsonResponse({"status": "failed", "msg": "Invalid request method."}, status=400)
 
 @login_required
 def get_report(request, id: int):
@@ -513,7 +553,7 @@ def get_report(request, id: int):
         
         return HttpResponse(html)
     except Report.DoesNotExist:
-        return JsonResponse({"error": "Report not found"})
+        return JsonResponse({"status": "failed", "msg": "Report not found"})
     except Exception as e:
         return JsonResponse({"error": str(e)})
 
@@ -522,11 +562,14 @@ def delete_report(request):
     if request.method == "POST":
         data = json.loads(request.body)
         report_id = data.get('id')
-        try:
-            Report.objects.filter(id=report_id).delete()
-            return HttpResponse(json.dumps({"status": "success", "message": "Report Deleted"}), content_type="application/json")
+        try:            
+            Report.objects.filter(id=report_id).delete()            
+            messages.success(request, 'Report Successfully deleted.')
+            return HttpResponse(json.dumps({"status": "success", "msg": f"Report Deleted"}), content_type="application/json")
         except:
-            return HttpResponse(json.dumps({"status": "failed", "message": "Could not delete report!"}), content_type="application/json") 
+            return HttpResponse(json.dumps({"status": "failed", "msg": f"Could not delete report!"}), content_type="application/json") 
     
     else:
-        return HttpResponse(json.dumps({"status": "failed", "message": "Invalid request method"}), content_type="application/json")
+        
+        messages.error(request, 'Could not delete report.')
+        return HttpResponse(json.dumps({"status": "failed", "msg": "Invalid request method"}), content_type="application/json")

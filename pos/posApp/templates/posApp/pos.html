@@ -26,7 +26,7 @@
                     <div class="col-lg-3 col-md-4 col-sm-12">
                         <div class="form-group mb-3">
                             <label for="product-qty">Qty</label>
-                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" value="1">
+                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" min="1" value="1">
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-3 col-sm-12">
@@ -110,7 +110,7 @@
         <td class="px-2 py-1">
             <input type="hidden" name="product_id[]">
             <input type="hidden" name="price[]">
-            <input type="number" name="qty[]" min="0" class="form-control form-control-sm rounded-0 text-center">
+            <input type="number" name="qty[]" min="1" class="form-control form-control-sm rounded-0 text-center">
         </td>
         <td class="px-2 py-1 product_name text-start"></td>
         <td class="px-2 py-1 product_description text-end"></td>
@@ -177,11 +177,11 @@
             var tr = $($('noscript#item-clone').html()).clone();
             tr.find('[name="qty[]"]').val(qty);
             tr.find('[name="product_id[]"]').val(id);
-            tr.find('[name="price[]"]').val(data.price);
+            tr.find('[name="price[]"]').val(data.sell_price);
             tr.find('.product_name').text(data.name);
             tr.find('.product_description').text(data.description);
-            tr.find('.product_price').text(parseFloat(data.price).toLocaleString('en-US'));
-            tr.find('.product_total').text(parseFloat(data.price * qty).toLocaleString('en-US'));
+            tr.find('.product_price').text(parseFloat(data.sell_price).toLocaleString('en-US'));
+            tr.find('.product_total').text(parseFloat(data.sell_price * qty).toLocaleString('en-US'));
             $('#POS-field table tbody').append(tr);
             $('#product-id').val('').trigger('change');
             $('#product-qty').val(1);

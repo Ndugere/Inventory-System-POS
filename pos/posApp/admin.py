@@ -25,10 +25,10 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     model = Products
     fieldsets =[
-        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "measurement_value",'description', 'available_quantity','price','status']})
+        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "measurement_value",'description', 'available_quantity', 'buy_price', 'sell_price','status']})
     ]
-    list_display = ['name', 'category_id', 'price']
-    list_filter = ['category_id', 'name', 'price']
+    list_display = ['name', 'category_id', 'buy_price', 'sell_price',]
+    list_filter = ['category_id', 'name', 'buy_price', 'sell_price',]
 
 class SaleItemsAdmin(admin.TabularInline):
     model = salesItems

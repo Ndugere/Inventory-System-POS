@@ -23,7 +23,8 @@
                         <th class="text-center py-1">Product Code</th>
                         <th class="text-center py-1">Product Name</th>                        
                         <th class="text-center py-1">Description</th>
-                        <th class="text-center py-1">Price</th>
+                        <th class="text-center py-1">Buy Price</th>
+                        <th class="text-center py-1">Sell Price</th>
                         <th class="text-center py-1">Available Quantity</th>
                         <th class="text-center py-1">Last Update</th>
                     </tr>
@@ -36,7 +37,8 @@
                             <td class="px-2 py-1 text-start">{{ product.product_code }}</td>
                             <td class="px-2 py-1 text-start">{{ product.product_name }}</td>
                             <td class="px-2 py-1 text-start">{{ product.description }}</td>
-                            <td class="px-2 py-1 text-center">{{ product.price|floatformat:2|intcomma }}</td>
+                            <td class="px-2 py-1 text-center">{{ product.buy_price|floatformat:2|intcomma }}</td>
+                            <td class="px-2 py-1 text-center">{{ product.sell_price|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>
                             <td class="px-2 py-1 text-center">{{ product.date_updated }}</td>
                         </tr>
