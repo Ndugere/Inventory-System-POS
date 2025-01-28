@@ -36,7 +36,8 @@
                         <th class="text-center py-1">Description</th>
                         <th class="text-center py-1">Available QTY</th>                        
                         <th class="text-center py-1">Buying Price</th>
-                        <th class="text-center py-1">Selling Price</th>
+                        <th class="text-center py-1">Min Price</th>
+                        <th class="text-center py-1">Max Price</th>
                         <th class="text-center py-1">Status</th>
                         {% for value in request.user.groups.values_list%}
                             {% if 'Inventory Manager' in  value or 'Admin' in value%}
@@ -55,7 +56,8 @@
                         <td class="px-2 py-1 text-start">{{ product.description }}</td>     
                         <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>                           
                         <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
-                        <td class="px-2 py-1 text-end">{{ product.sell_price|floatformat:2|intcomma }}</td>
+                        <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
+                        <td class="px-2 py-1 text-end">{{ product.max_sell_price|floatformat:2|intcomma }}</td>
                         <td class="px-2 py-1 text-center">
                             {% if product.status == 1 %}
                             <span class="badge bg-primary rounded-pill px-3">Active</span> {% else %}

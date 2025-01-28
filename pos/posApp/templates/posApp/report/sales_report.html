@@ -57,14 +57,14 @@
             <h4>{{forloop.counter}}. Sale #{{sale.sale_code}} </h4>
             <div class="table-responsive">            
                 <table class="table table-striped table-bordered">
-                    <colgroup>
+                    <!--colgroup>
                         <col width="5%">
                         <col width= "20%">
                         <col width="20%">
                         <col width="25%">
                         <col width="15%">
                         <col width="15%">
-                    </colgroup>
+                    </colgroup-->
                     <thead>
                         <tr>
                             <th class="text-center py-1">#</th>
@@ -72,7 +72,8 @@
                             <th class="text-center py-1">Product Name</th>
                             <th class="text-center py-1">Description</th>
                             <th class="text-center py-1">Quantity</th>
-                            <th class="text-center py-1">Price</th>
+                            <th class="text-center py-1">Buy Price</th>
+                            <th class="text-center py-1">Sell Price</th>
                             <th class="text-center py-1">Total Amount</th>
                         </tr>
                     </thead>
@@ -83,7 +84,8 @@
                                 <td class="px-2 py-1 text-start">{{ item.product_code }}</td>
                                 <td class="px-2 py-1 text-start">{{ item.product_name }}</td>
                                 <td class="px-2 py-1 text-start">{{ item.description }}</td>
-                                <td class="px-2 py-1 text-center">{{ item.quantity|floatformat:0|intcomma }}</td>
+                                <td class="px-2 py-1 text-center">{{ item.quantity }}</td>
+                                <td class="px-2 py-1 text-center">{{ item.buy_price|floatformat:2 }}</td>
                                 <td class="px-2 py-1 text-center">{{ item.price|floatformat:2 }}</td>
                                 <td class="px-2 py-1 text-center">{{ item.total|floatformat:2|intcomma }}</td>
                             </tr>
@@ -104,7 +106,8 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>    
+            </div>
+            <br>    
         {% endfor %}
 
         <h3 class="mt-4 p-2 text-center">Most Profitable Products </h3>
@@ -139,9 +142,9 @@
                             <td class="px-2 py-1 text-start">{{ item.product_id__code }}</td>
                             <td class="px-2 py-1 text-start">{{ item.product_id__name }}</td>
                             <td class="px-2 py-1 text-start">{{ item.product_id__description }}</td>
-                            <td class="px-2 py-1 text-center">{{ item.total_quantity|floatformat:0|intcomma }}</td>
+                            <td class="px-2 py-1 text-center">{{ item.total_quantity}}</td>
                             <td class="px-2 py-1 text-center">{{ item.product_id__buy_price|floatformat:2 }}</td>
-                            <td class="px-2 py-1 text-center">{{ item.product_id__sell_price|floatformat:2 }}</td>
+                            <td class="px-2 py-1 text-center">{{ item.price|floatformat:2 }}</td>
                             <td class="px-2 py-1 text-center">{{ item.total_amount|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-center">{{ item.total_profit|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-end">{{ item.total_percentage_profit|floatformat:2 }}%</td>
@@ -159,8 +162,9 @@
                         <th class="text-center py-1">Product Code</th>
                         <th class="text-center py-1">Product Name</th>
                         <th class="text-center py-1">Description</th>
-                        <th class="text-center py-1">Total Quantity</th>
+                        <th class="text-center py-1">Buy Price</th>
                         <th class="text-center py-1">Sell Price</th>
+                        <th class="text-center py-1">Total Quantity</th>
                         <th class="text-center py-1">Total Sell Amount</th>
                         <th class="text-center py-1">Profit</th>
                     </tr>
@@ -172,8 +176,9 @@
                             <td class="px-2 py-1 text-start">{{ item.product_id__code }}</td>
                             <td class="px-2 py-1 text-start">{{ item.product_id__name }}</td>
                             <td class="px-2 py-1 text-start">{{ item.product_id__description }}</td>
-                            <td class="px-2 py-1 text-center">{{ item.total_quantity|floatformat:0|intcomma }}</td>
-                            <td class="px-2 py-1 text-center">{{ item.product_id__sell_price|floatformat:2 }}</td>
+                            <td class="px-2 py-1 text-start">{{ item.product_id__buy_price }}</td>
+                            <td class="px-2 py-1 text-center">{{ item.price|floatformat:2 }}</td>
+                            <td class="px-2 py-1 text-center">{{ item.total_quantity}}</td>
                             <td class="px-2 py-1 text-center">{{ item.total_amount|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-center">{{ item.total_profit|floatformat:2|intcomma }}</td>
                         </tr>

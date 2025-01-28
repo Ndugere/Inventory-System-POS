@@ -211,7 +211,8 @@ def save_product(request):
                     measurement_value=measurement_value,
                     available_quantity=data['available_quantity'],
                     buy_price=float(data['buy_price']),
-                    sell_price=float(data['sell_price']),
+                    min_sell_price=float(data['min_sell_price']),
+                    max_sell_price=float(data['max_sell_price']),
                     status=status
                 )
             else:
@@ -223,7 +224,8 @@ def save_product(request):
                     measurement_value=measurement_value,
                     available_quantity=data['available_quantity'],
                     buy_price=float(data['buy_price']),
-                    sell_price=float(data['sell_price']),
+                    min_sell_price=float(data['min_sell_price']),
+                    max_sell_price=float(data['max_sell_price']),
                     status=1
                 )
                 new_product.save()
@@ -263,7 +265,7 @@ def pos(request):
 def get_product_json(request):     
     try:
         products = Products.objects.filter(status=1)
-        product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'buy_price': float(product.buy_price), 'sell_price': float(product.sell_price)} for product in products]
+        product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
         return JsonResponse(product_json, safe=False)
     
     except Exception as e:
@@ -293,6 +295,7 @@ def save_pos(request):
     code = str(pref) + str(code)
 
     try:
+        # Create a new Sales record
         sales = Sales(
             code=code, 
             sub_total=data['sub_total'], 
@@ -301,27 +304,37 @@ def save_pos(request):
             grand_total=data['grand_total'], 
             tendered_amount=data['tendered_amount'], 
             amount_change=data['amount_change'],
-            served_by = request.user
+            served_by=request.user
         )
         sales.save()
         sale_id = sales.pk
+
+        # Iterate over the list of products
         for i, prod in enumerate(data.getlist('product_id[]')):
             product = Products.objects.filter(id=prod).first()
             qty = data.getlist('qty[]')[i]
-            price = data.getlist('price[]')[i]
+            price = float(data.getlist('price[]')[i])           
             total = float(qty) * float(price)
-            salesItems(sale_id=sales, product_id=product, qty=qty, price=price, total=total).save()
-            
+
+            # Validate the price
+            if int(price) in range(int(product.min_sell_price), int(product.max_sell_price)):
+                # Create a new sales item
+                salesItems(sale_id=sales, product_id=product, qty=qty, price=price, total=total).save()
+            else:
+                raise Exception(f"Price should be in the within the range {product.min_sell_price} - {product.max_sell_price}")
+
             # Update product quantity
             product.available_quantity = product.available_quantity - int(qty)
             if product.available_quantity == 0:
                 product.status = 0
             product.save()
-              
+
+        # Set response status to success
         resp['status'] = 'success'
         resp['sale_id'] = sale_id
         messages.success(request, "Sale Record has been saved.")
     except Exception as e:
+        # Log the error and set response status to error
         logger.error(f"Error saving POS: {e}")
         resp['msg'] = "An error occurred"
     return HttpResponse(json.dumps(resp), content_type="application/json")
@@ -412,7 +425,8 @@ def generate_report(request):
                     "description": product.description,
                     "measurement_type": product.measurement_value.name if product.measurement_value else "",
                     "buy_price": product.buy_price,
-                    "sell_price": product.sell_price,
+                    "min_sell_price": product.min_sell_price,
+                    "max_sell_price": product.max_sell_price,
                     "available_quantity": product.available_quantity,
                     "status": product.status,
                     "date_added": product.date_added.isoformat(),
@@ -447,49 +461,56 @@ def generate_report(request):
             else:
                 start_date = today
                 time_range = Report.ReportTimeRange.DAILY
-
+                
             sales = Sales.objects.filter(date_added__gte=start_date).annotate(
                 total_sales=Sum('grand_total'),
                 tax_percentage=ExpressionWrapper(
                     (F('tax_amount') / F('sub_total')) * 100,
                     output_field=FloatField()
                 )
-            )
-
+            )       
+                  
             # Calculate most profitable products
             most_profitable_products = salesItems.objects.values(
-                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'product_id__sell_price'
+                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'price'
             ).annotate(
                 total_quantity=Sum('qty'),
-                total_amount=Sum(F('qty') * F('product_id__sell_price')),
+                total_amount=Sum(F('qty') * F('price')),
                 total_profit=Sum(ExpressionWrapper(
-                    F('qty') * (F('product_id__sell_price') - F('product_id__buy_price')),
+                    F('qty') * (F('price') - F('product_id__buy_price')),
                     output_field=FloatField()
                 )),
                 total_percentage_profit=ExpressionWrapper(
                     (Sum(ExpressionWrapper(
-                        F('qty') * (F('product_id__sell_price') - F('product_id__buy_price')),
+                        F('qty') * (F('price') - F('product_id__buy_price')),
                         output_field=FloatField()
                     )) / Sum(F('qty') * F('product_id__buy_price'))) * 100,
                     output_field=FloatField()
                 )
             ).order_by('-total_percentage_profit')
-
             
             # Calculate products with most sold quantity
             products_with_most_sales = salesItems.objects.values(
-                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'product_id__sell_price'
+                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'price'
             ).annotate(
                 total_quantity=Sum('qty'),
-                total_amount=Sum(F('qty') * F('product_id__sell_price')),
+                total_amount=Sum(F('qty') * F('price')),
                 total_profit=Sum(ExpressionWrapper(
-                    F('qty') * (F('product_id__sell_price') - F('product_id__buy_price')),
+                    F('qty') * (F('price') - F('product_id__buy_price')),
                     output_field=FloatField()
-                ))
+                )),
+                total_percentage_profit=ExpressionWrapper(
+                    (Sum(ExpressionWrapper(
+                        F('qty') * (F('price') - F('product_id__buy_price')),
+                        output_field=FloatField()
+                    )) / Sum(F('qty') * F('product_id__buy_price'))) * 100,
+                    output_field=FloatField()
+                )
             ).order_by('-total_quantity')
 
+            
             total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
-
+            
             report_data = {
                 "total_sales_amount": total_sales_amount,
                 "most_profitable_products": list(most_profitable_products),
@@ -510,6 +531,7 @@ def generate_report(request):
                                 "product_name": item.product_id.name,
                                 "description": item.product_id.description,
                                 "quantity": item.qty,
+                                "buy_price": item.product_id.buy_price,
                                 "price": item.price,
                                 "total": item.total
                             }
@@ -519,7 +541,7 @@ def generate_report(request):
                     for sale in sales
                 ]
             }
-
+            
             report = Report(
                 name=f"Sales Report {time_period.capitalize()} {str(datetime.now().astimezone())}",
                 generated_by=request.user,
