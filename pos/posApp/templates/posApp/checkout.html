@@ -7,37 +7,104 @@
         </div>
         <div class="form-group mb-3">
             <label for="tendered_amount" class="control-label">Amount Tendered</label>
-            <input type="number" step="any" id="tendered_amount" class="form-control form-control-lg rounded-0 text-end" value="0" required>
+            <input type="number" step="any" id="tendered_amount" name="tendered_amount" class="form-control form-control-lg rounded-0 text-end" value="0" required>
         </div>
         <div class="form-group mb-3">
             <label for="payment_change" class="control-label">Change</label>
             <input type="text" id="payment_change" class="form-control form-control-lg rounded-0 text-end" value="{{ 0|intcomma }}" required disabled>
         </div>
+        <!-- Hidden field for amount change -->
+        <input type="hidden" name="amount_change" value="0">
+        <!-- Hidden field for pos_number. Adjust this value as needed -->
+        <input type="hidden" name="pos_number" id="pos_number" value="POS001">
     </form>
 </div>
+
+<div class="modal" id="status-modal">
+    <div class="modal-dialog modal-md">
+        <div class="body">
+            <form>
+                <div class="form-group">
+                    <p><span class="tw-font-bold">Name: </span> <span id="name"></span></p>
+                    <p><span class="tw-font-bold">Amount Received: </span> <span id="amount_received"></span></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     $(function() {
-        $('#tendered_amount').on('input keypress keyup keydown', function() {
-            var tendered_amount = $('#tendered_amount').val()
-            var payable = $('#payable_amount').val()
-            tendered_amount = tendered_amount.replace(/,/gi, '')
-            payable = payable.replace(/,/gi, '')
-            var change = 0
-            tendered_amount = tendered_amount > 0 ? tendered_amount : 0;
-            $('[name="tendered_amount"]').val(tendered_amount)
-            change = parseFloat(tendered_amount) - parseFloat(payable)
-            console.log(tendered_amount, payable)
-            $('#payment_change').val(parseFloat(change).toLocaleString('en-US'))
-            $('[name="amount_change"]').val(change)
+        // Flag to stop polling if user starts entering tendered amount
+        let stopPolling = false;
+        
+        // Async function to poll for a matching C2B payment based on grand_total and pos_number.
+        async function checkC2BPayment(grand_total, pos_number, timeout = 30000, interval = 1500) {
+            const startTime = Date.now();
+            while (Date.now() - startTime < timeout) {
+                // Stop polling if user has started inputting tendered amount
+                if (stopPolling) { 
+                    break; 
+                }
+                try {
+                    const response = await $.ajax({
+                        url: "https://simple-humane-kitten.ngrok-free.app/payment/check",
+                        method: "GET",
+                        //data: { grand_total: grand_total, pos_number: pos_number },
+                        //dataType: "json"
+                    });
 
-        })
+                    // If the server confirms the payment, return the response and stop polling
+                    if (response && response.payment_confirmed) {
+                        return response;
+                    }
+                } catch (err) {
+                    console.error("Error checking C2B payment:", err);
+                }
+                // Wait before polling again.
+                await new Promise(resolve => setTimeout(resolve, interval));
+            }
+            return null;  // No payment found within the timeout period or polling was stopped.
+        }
+        
+        // Retrieve the grand total and pos_number from the form.
+        let grand_total = $('#payable_amount').val().replace(/,/g, '');
+        let pos_number = $('#pos_number').val();
+        
+        // Start polling for a C2B payment when the page loads.
+        let pollingPromise = checkC2BPayment(grand_total, pos_number);
+        pollingPromise.then(function(response) {
+            if(response) {
+                console.log("C2B Payment confirmed:", response);
+                // Optionally, auto-fill a hidden field, notify the user, or trigger form submission.
+                $('[name="tendered_amount"]').val(grand_total);
+            } else {
+                console.log("No C2B payment confirmed. Polling was stopped.");
+            }
+        });
+        
+        // When the tendered amount field is being edited, stop the async polling.
+        $('#tendered_amount').on('input keypress keyup keydown', function() {
+            stopPolling = true;
+            let tendered_amount = $('#tendered_amount').val().replace(/,/gi, '');
+            let payable = $('#payable_amount').val().replace(/,/gi, '');
+            tendered_amount = tendered_amount > 0 ? tendered_amount : 0;
+
+            $('[name="tendered_amount"]').val(tendered_amount);
+            let change = parseFloat(tendered_amount) - parseFloat(payable);
+            console.log("Tendered:", tendered_amount, "Payable:", payable, "Change:", change);
+            $('#payment_change').val(parseFloat(change).toLocaleString('en-US'));
+            $('[name="amount_change"]').val(change);
+        });
+        
+        // When the checkout form is submitted, ensure the tendered amount is sufficient.
         $('#checkout-form').submit(function(e) {
             e.preventDefault();
             if ($('[name="amount_change"]').val() < 0) {
-                alert("Tendered Amount is lower that Payable Amount")
+                alert("Tendered Amount is lower than Payable Amount");
                 return false;
             }
-            $('#pos-form').submit()
-        })
-    })
+            $('#pos-form').submit();
+        });
+    });
 </script>

@@ -3,7 +3,7 @@ from pickle import FALSE
 from django.shortcuts import redirect, render
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report
+from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report, MpesaPaymentTransaction
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
 from datetime import date, datetime, timedelta
 from django.template.loader import render_to_string
+from .mpesa import MpesaClient
 
 logger = logging.getLogger(__name__)
 
@@ -254,6 +255,9 @@ def delete_product(request):
 
 @login_required
 def pos(request):
+    mpesa_client = MpesaClient()
+    response = mpesa_client.c2b()
+    
     products = Products.objects.filter(status=1)
     context = {
         'page_title': "Point of Sale",
@@ -595,3 +599,303 @@ def delete_report(request):
         
         messages.error(request, 'Could not delete report.')
         return HttpResponse(json.dumps({"status": "failed", "msg": "Invalid request method"}), content_type="application/json")
+
+@csrf_exempt
+def initiate_payment(request):
+    if request.method == 'POST':
+        phone_number = request.POST.get('phone_number')
+        amount = float(request.POST.get('amount'))
+        account_reference = f"Order{int(datetime.now().timestamp())}"  # Example of generating a reference
+        
+        # Create a PaymentTransaction record
+        
+        payment_transaction = MpesaPaymentTransaction.objects.create(
+            phone_number=phone_number,
+            amount=amount,
+            account_reference=account_reference,
+            transaction_desc="Test Payment for goods/services"
+        )
+        
+        mpesa_client = MpesaClient()
+
+        try:
+            response = mpesa_client.express(phone_number, amount)
+            print(f"\nLipa Request Response: {response}\n")
+            
+            payment_transaction.transaction_id = response['CheckoutRequestID']
+            payment_transaction.status = "Pending"  # Set initial status as pending
+            payment_transaction.mpesa_response = response  # Store the full M-Pesa response
+            
+            payment_transaction.save()
+            
+            print(f"\nTransaction Record : {payment_transaction}\n")
+        except Exception as e:
+            payment_transaction.status = "Failed"
+            payment_transaction.save()
+            return render(request, 'payment/payment_error.html', {'error': str(e)})
+
+    return render(request, 'payment/payment_form.html')
+
+@csrf_exempt
+def payment_callback(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            print(f"\nCallback Response: {data}\n")
+            # Extract information from the callback data
+            result_code = data['Body']['stkCallback']['ResultCode']
+            result_desc = data['Body']['stkCallback']['ResultDesc']
+            checkout_request_id = data['Body']['stkCallback']['CheckoutRequestID']
+            amount_received = data['Body']['stkCallback'].get('Amount', 0)  # Default to 0 if not found
+            transaction_time = data['Body']['stkCallback']['TransactionDate']
+
+            try:
+                # Find the transaction by CheckoutRequestID
+                transaction = MpesaPaymentTransaction.objects.get(transaction_id=checkout_request_id)
+
+                # Update the transaction status based on the result code
+                if result_code == 0:
+                    transaction.status = "Success"
+                else:
+                    transaction.status = "Failed"
+
+                # Store additional details
+                transaction.result_code = result_code
+                transaction.result_desc = result_desc
+                transaction.amount_received = amount_received
+                transaction.transaction_time = datetime.strptime(str(transaction_time), "%Y%m%d%H%M%S")  # Convert string to datetime
+                transaction.save()
+                
+                # Respond with a success message
+                return JsonResponse({'status': 'success'})
+
+            except MpesaPaymentTransaction.DoesNotExist:
+                return JsonResponse({'status': 'failed', 'error': 'Transaction not found'}, status=404)
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON'}, status=400)
+        except KeyError as e:
+            return JsonResponse({'status': 'failed', 'error': f'Missing key: {str(e)}'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+
+    return JsonResponse({'status': 'invalid'}, status=400)
+
+@csrf_exempt
+def payment_validation(request):
+    """
+    Handle M-Pesa validation callback (typically for C2B).
+    M-Pesa will POST a JSON payload to this endpoint to validate a transaction.
+    We respond with a zero ResultCode to indicate acceptance.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            print(f"\n{data}\n")
+            logger.info("Payment validation callback received: %s", data)
+            """
+            # (Optional) Insert any business validation logic here.
+            response = {
+                "ResultCode": 0,
+                "ResultDesc": "Accepted"
+            }
+            """
+            #return JsonResponse(response)
+        except Exception as e:
+            logger.error("Error in payment_validation: %s", str(e))
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Validation failed"}, status=500)
+    else:
+        return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid request method"}, status=400)
+    
+@csrf_exempt
+def payment_confirmation(request):
+    """
+    Handle M-Pesa confirmation callback (for C2B).
+    M-Pesa sends transaction details after a successful C2B payment.
+    We extract the information and update or create a corresponding transaction record.
+    Expected payload sample (keys may vary):\n
+      {\n
+          "TransactionType": "Pay Bill",\n
+          "TransID": "XYZ123",\n
+          "TransTime": "20210101101010",\n
+          "TransAmount": "100",\n
+          "BusinessShortCode": "600000",\n
+          "BillRefNumber": "12345",\n
+          "MSISDN": "254712345678",\n
+          "FirstName": "John",\n
+          "MiddleName": "",\n
+          "LastName": "Doe"\n
+      }
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            print(F"\n{data}\n")
+            logger.info("Payment confirmation callback received: %s", data)
+            
+            # Extract fields from the callback payload.
+            transaction_type = data.get("TransactionType")
+            trans_id = data.get("TransID")
+            trans_time = data.get("TransTime")
+            trans_amount = data.get("TransAmount")
+            bill_ref_number = data.get("BillRefNumber")
+            msisdn = data.get("MSISDN")
+            
+            # Handle missing names gracefully
+            first_name = data.get('FirstName', "")
+            last_name = data.get('LastName', "")
+            customer_name = f"{first_name} {last_name}".strip()
+           
+            # Convert trans_amount to a decimal if needed and parse trans_time.
+            amount = trans_amount
+            transaction_time = None
+            if trans_time:
+                try:
+                    transaction_time = datetime.strptime(trans_time, "%Y%m%d%H%M%S")
+                except Exception as e:
+                    logger.error("Error parsing transaction time: %s", e)
+            
+            # Create or update the MpesaPaymentTransaction record for a C2B payment.
+            transaction, created = MpesaPaymentTransaction.objects.get_or_create(
+                transaction_id=trans_id,
+                defaults={
+                    "customer_name": customer_name,
+                    "phone_number": msisdn,
+                    "amount": amount,
+                    "account_reference": bill_ref_number,
+                    "transaction_desc": transaction_type,
+                    "transaction_time": transaction_time,
+                    "status": MpesaPaymentTransaction.StatusChoices.COMPLETED,
+                    "mpesa_response": data
+                }
+            )
+            if not created:
+                transaction.customer_name = customer_name
+                transaction.phone_number = msisdn
+                transaction.amount = amount
+                transaction.account_reference = bill_ref_number
+                transaction.transaction_desc = transaction_type
+                transaction.transaction_time = transaction_time
+                transaction.status = MpesaPaymentTransaction.StatusChoices.COMPLETED
+                transaction.mpesa_response = data
+                transaction.save()
+            
+            response = {"ResultCode": 0, "ResultDesc": "Confirmation received successfully"}
+            return JsonResponse(response)
+        except Exception as e:
+            logger.error("Error in payment_confirmation: %s", str(e))
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Confirmation failed"}, status=500)
+    else:
+        try:
+            result = MpesaClient.c2b()
+            print(f"\n{result}\n")
+        except:
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid request method"}, status=400)
+
+@csrf_exempt
+def payment_result(request):
+    """
+    Handle M-Pesa result callback for B2C/B2B transactions.
+    The payload is expected to have a 'Result' block with keys such as:\n
+      {\n
+          "Result": {\n
+              "ResultCode": 0,\n
+              "ResultDesc": "The service request is processed successfully",\n
+              "TransactionID": "ABC123",\n
+              ...\n
+          }\n
+      }
+    We update the corresponding transaction record based on the result.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            logger.info("Payment result callback received: %s", data)
+            
+            result = data.get("Result", {})
+            result_code = result.get("ResultCode")
+            result_desc = result.get("ResultDesc")
+            transaction_id = result.get("TransactionID")
+            
+            # Find the corresponding transaction (if any)
+            transaction = MpesaPaymentTransaction.objects.filter(transaction_id=transaction_id).first()
+            if transaction:
+                transaction.status = "Success" if result_code == 0 else "Failed"
+                transaction.result_code = result_code
+                transaction.result_desc = result_desc
+                transaction.mpesa_response = data
+                # Optionally update the method if provided
+                transaction.transaction_method = data.get("TransactionType", "B2C")
+                transaction.save()
+            response = {"ResultCode": 0, "ResultDesc": "Result processed successfully"}
+            return JsonResponse(response)
+        except Exception as e:
+            logger.error("Error in payment_result: %s", str(e))
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Result processing failed"}, status=500)
+    else:
+        return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid request method"}, status=400)
+
+@csrf_exempt
+def payment_timeout(request):
+    """
+    Handle the M-Pesa Queue Timeout callback.
+    M-Pesa will POST a JSON payload to this endpoint if a transaction
+    remains in the queue longer than expected.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            logger.info("Payment timeout : %s", data)
+            
+            # Optionally, update a transaction record or take any additional actions.
+            
+            response = {
+                "ResultCode": 0,
+                "ResultDesc": "Timeout processed successfully"
+            }
+            return JsonResponse(response)
+        except Exception as e:
+            logger.error("Error processing payment timeout: %s", str(e))
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Timeout processing failed"}, status=500)
+    else:
+        return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid request method"}, status=400)
+    
+@csrf_exempt
+def check_payment(request):
+    """
+    Check if a payment has been received based on the provided POS number (account_reference)
+    and the payable amount (grand_total).
+    """ 
+    print(f"\n{request}\n")
+    return JsonResponse({"payment_confirmed": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
+    """
+    try:
+       
+        
+        account_reference = request.GET.get("pos_number", "").strip()
+        grand_total = request.GET.get("grand_total", "").strip()
+
+        # Ensure required parameters are provided
+        if not account_reference or not grand_total:
+            return JsonResponse({"payment_confirmed": False, "error": "Missing required parameters"}, status=400)
+
+        # Query the payment transaction
+        payment = MpesaPaymentTransaction.objects.filter(
+            account_reference=account_reference,
+            amount=grand_total,
+            status="completed"
+        ).first()
+
+        if payment:
+            return JsonResponse({"payment_confirmed": True, "payment": payment})
+        else:
+            return JsonResponse({"payment_confirmed": False})
+        
+    except Exception as e:
+        logger.error("Error getting payment information: %s", str(e))
+        return JsonResponse({"ResultCode": 1, "ResultDesc": "Error processing request"}, status=500)
+    
+    """
+    
+    

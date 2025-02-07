@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +21,31 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--w(dug*va_megpa25w$gmv8o6+f8!fg_*m1^u$)z25pab0hicm'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure--w(dug*va_megpa25w$gmv8o6+f8!fg_*m1^u$)z25pab0hicm')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG =config("DEBUG", default='False')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
+CORS_ALLOWED_ORIGINS = [
+    'https://simple-humane-kitten.ngrok-free.app',
+    'http://localhost'
+]
+
+#Mpesa
+MPESA_CONSUMER_KEY = config('CONSUMER_KEY')
+MPESA_CONSUMER_SECRET = config('CONSUMER_SECRET')
+MPESA_PASSKEY = config("PASSKEY")
+MPESA_SECURITY_CREDENTIALS = config('SECURITY_CREDENTIALS')
+MPESA_CALLBACK_URL = config('CALLBACK_URL')
+MPESA_CONFIRMATION_URL = config('CONFIRMATION_URL')
+MPESA_VALIDATION_URL = config('VALIDATION_URL')
+MPESA_RESULT_URL = config('RESULT_URL')
+MPESA_TIMEOUT_URL = config('TIMEOUT_URL')
+
+MPESA_C2B_SHORTCODE = config("C2B_SHORTCODE")
+MPESA_BUSINESS_SHORTCODE = config("BUSINESS_SHORTCODE")
 
 # Application definition
 
@@ -37,11 +56,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'posApp.apps.posAppConfig',
     'django.contrib.humanize',
+    'corsheaders',
+    'posApp',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

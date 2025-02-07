@@ -4448,3 +4448,27 @@ Traceback (most recent call last):
     for saleItem in salesItems:
 TypeError: 'ModelBase' object is not iterable
 "POST /generate_report HTTP/1.1" 500 76493
+Internal Server Error: /pos
+Traceback (most recent call last):
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\pos\posApp\views.py", line 258, in pos
+    mpesa_client = MpesaClient()
+                   ^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\pos\posApp\mpesa.py", line 13, in __init__
+    self.access_token = self.get_access_token(environment)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\pos\posApp\mpesa.py", line 41, in get_access_token
+    oauth_url = self.baseUrl+'/oauth/v1/generate?grant_type=client_credentials'
+                ^^^^^^^^^^^^
+AttributeError: 'MpesaClient' object has no attribute 'baseUrl'
+"GET /pos HTTP/1.1" 500 84837
+Internal Server Error: /payment/check
+"GET /payment/check HTTP/1.1" 500 59

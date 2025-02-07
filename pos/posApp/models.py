@@ -31,27 +31,27 @@ from django.utils.translation import gettext_lazy as _
 class Store(models.Model):
     name = models.CharField("Store Name", max_length=100, blank=False, default="Grocery")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at =  models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return f"{str.casefold(self.name)}"
     
     class Meta:
-        verbose_name="Store"
-        verbose_name_plural ="Stores"
+        verbose_name = "Store"
+        verbose_name_plural = "Stores"
 
 class Branch(models.Model):
     name = models.CharField("Branch Name", max_length=255, blank=False)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at =  models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return f"{str.casefold(self.name)}"
     
     class Meta:
-        verbose_name="Store Branches"
-        verbose_name_plural ="Stores Branches"
+        verbose_name = "Store Branches"
+        verbose_name_plural = "Stores Branches"
 
 class MeasurementType(models.Model):
     class MEASUREMENT_CHOICES(models.TextChoices):
@@ -68,8 +68,8 @@ class MeasurementType(models.Model):
         return self.name
     
     class Meta:
-        verbose_name="Measurement Type"
-        verbose_name_plural ="Measurement Type"
+        verbose_name = "Measurement Type"
+        verbose_name_plural = "Measurement Type"
         
 class Category(models.Model):
     name = models.CharField("Category Name", max_length=100, blank=False)
@@ -83,8 +83,8 @@ class Category(models.Model):
         return self.name
     
     class Meta:    
-        verbose_name="Category"
-        verbose_name_plural="Categories"
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
         ordering = ['name']
 
 class Products(models.Model):
@@ -105,9 +105,8 @@ class Products(models.Model):
         return self.code + " - " + self.name + " (" + self.description +")"
     
     class Meta:
-        verbose_name="Product"
+        verbose_name = "Product"
         verbose_name_plural = "Products"
-        
         unique_together = (("name", "measurement_value", "description"))
 
 class Sales(models.Model):
@@ -117,6 +116,7 @@ class Sales(models.Model):
     tax_amount = models.FloatField(default=0)
     tax = models.FloatField(default=0)
     tendered_amount = models.FloatField(default=0)
+    #pos_no = models.CharField(_("Point of Sale"), max_length=20, blank=False)
     amount_change = models.FloatField(default=0)
     served_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="served_by")
     date_added = models.DateTimeField(auto_now_add=True) 
@@ -126,19 +126,19 @@ class Sales(models.Model):
         return self.code
     
     class Meta:
-        verbose_name="Sale"
+        verbose_name = "Sale"
         verbose_name_plural = "Sales"
         ordering = ['-date_added', '-date_updated']
 
 class salesItems(models.Model):
-    sale_id = models.ForeignKey(Sales,on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Products,on_delete=models.CASCADE)
+    sale_id = models.ForeignKey(Sales, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
     price = models.FloatField(default=0)
     qty = models.FloatField(default=0)
     total = models.FloatField(default=0)
     
     class Meta:
-        verbose_name="Sale Item"
+        verbose_name = "Sale Item"
         verbose_name_plural = "Sale Items"
 
 class Report(models.Model):
@@ -155,13 +155,12 @@ class Report(models.Model):
     name = models.CharField("Title", max_length=100, blank=False)
     generated_on = models.DateTimeField(auto_now_add=True)
     generated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="report_generated_by")
-    type = models.CharField("Report Type", choices = ReportType.choices, default = ReportType.INVENTORY, max_length=10)
-    time_range = models.CharField("Time Range", choices = ReportTimeRange.choices, max_length=10, blank=True, null=True)
+    type = models.CharField("Report Type", choices=ReportType.choices, default=ReportType.INVENTORY, max_length=10)
+    time_range = models.CharField("Time Range", choices=ReportTimeRange.choices, max_length=10, blank=True, null=True)
     json = models.TextField("Report Data", blank=False)
     
     def is_new(self):
         now = datetime.now().astimezone()
-        
         if now - self.generated_on < timedelta(days=7):
             return True
     
@@ -192,3 +191,23 @@ class StockMovement(models.Model):
         verbose_name = "Stock Movement"
         verbose_name_plural = "Stock Movements"
         ordering = ['-timestamp']
+
+class MpesaPaymentTransaction(models.Model):
+    class StatusChoices(models.TextChoices):
+        COMPLETED = "completed", _("Completed")
+        CANCELLED = "cancelled", _("Cancelled")
+        PENDING = "pending", _("Pending")
+        
+    transaction_id = models.CharField(max_length=255, editable=False)
+    customer_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_received = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)  # Amount received from M-Pesa
+    account_reference = models.CharField(max_length=255)
+    transaction_desc = models.CharField(max_length=255)
+    result_code = models.IntegerField(null=True, blank=True)  # Store M-Pesa's result code (e.g., 0 for success)
+    result_desc = models.CharField(max_length=255, null=True, blank=True)  # Description of the result
+    transaction_time = models.DateTimeField(null=True, blank=True)  # The time the transaction was processed
+    status = models.CharField(max_length=50, choices=StatusChoices.choices, default=StatusChoices.PENDING)  # "Pending", "Success", "Failed"
+    mpesa_response = models.JSONField(null=True, blank=True)  # Store the full response from M-Pesa\n    \n    # New field to distinguish payment types\n    transaction_method = models.CharField(\n        max_length=10, \n        choices=(\n            ('STK', 'STK'),\n            ('C2B', 'C2B'),\n            ('B2C', 'B2C'),\n            ('B2B', 'B2B')\n        ),\n        default='STK'\n    )\n    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)  # Link to a user if applicable\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\n    def __str__(self):\n        return f\"Transaction {self.account_reference} - {self.status}\"\n        \n    class Meta:\n        verbose_name = \"Mpesa Payment\"\n        verbose_name_plural = \"Mpesa Payments\"\n        ordering = ['-transaction_time']\n```
+

@@ -224,17 +224,6 @@
             sell_price.setAttribute("min", min_price);
             sell_price.setAttribute("max", max_price);
         });
-        /*
-        $('#sell_price').keyup(function(){
-            var min_price =  $('#product-id option:selected').data('min-price');
-            var max_price =  $('#product-id option:selected').data('max-price');
-            var sell_price = $('#sell_price').val();
-            if(parseInt(sell_price) < parseInt(min_price) | parseInt($('#sell_price').val()) > parseInt(max_price)){
-                alert(`The Sell price should be within the range KSH. ${min_price} - KSH.${max_price}`);
-                return false;
-            }
-        })
-        */
         $('#add_item').click(function() {
             var id = $('#product-id').val();
             var qty = $('#product-qty').val();
@@ -273,6 +262,7 @@
                 alert("Add at least 1 product first!");
                 return false;
             }
+
             uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val());
         });
 

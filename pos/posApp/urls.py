@@ -37,4 +37,11 @@ urlpatterns = [
     # path('save_employee', views.save_employee, name="save-employee-page"),
     # path('delete_employee', views.delete_employee, name="delete-employee"),
     # path('view_employee', views.view_employee, name="view-employee-page"),
+    
+    path("payment/callback", views.payment_callback, name="payment_callback"),
+    path("payment/confirmation", views.payment_confirmation, name="payment_confirmation"),
+    path("payment/validation", views.payment_validation, name="payment_validation"),
+    path("payment/result", views.payment_result, name="payment_result"),
+    path("payment/timeout", views.payment_timeout, name="payment_timeout"),
+    path('payment/check', views.check_payment, name="check_payment"),
 ]
