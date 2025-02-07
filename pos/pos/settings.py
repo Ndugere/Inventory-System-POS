@@ -24,13 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure--w(dug*va_megpa25w$gmv8o6+f8!fg_*m1^u$)z25pab0hicm')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG =config("DEBUG", default='False')
+DEBUG = config("DEBUG", default='False')
 
 ALLOWED_HOSTS = ['*']
 
 CORS_ALLOWED_ORIGINS = [
     'https://simple-humane-kitten.ngrok-free.app',
-    'http://localhost'
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
 ]
 
 #Mpesa

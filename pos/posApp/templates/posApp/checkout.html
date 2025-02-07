@@ -20,84 +20,113 @@
     </form>
 </div>
 
-<div class="modal" id="status-modal">
-    <div class="modal-dialog modal-md">
-        <div class="body">
-            <form>
-                <div class="form-group">
-                    <p><span class="tw-font-bold">Name: </span> <span id="name"></span></p>
-                    <p><span class="tw-font-bold">Amount Received: </span> <span id="amount_received"></span></p>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
     $(function() {
-        // Flag to stop polling if user starts entering tendered amount
         let stopPolling = false;
-        
-        // Async function to poll for a matching C2B payment based on grand_total and pos_number.
-        async function checkC2BPayment(grand_total, pos_number, timeout = 30000, interval = 1500) {
+    
+        async function checkC2BPayment(grand_total, pos_number, timeout = 30000, interval = 1000) {
             const startTime = Date.now();
             while (Date.now() - startTime < timeout) {
-                // Stop polling if user has started inputting tendered amount
                 if (stopPolling) { 
                     break; 
-                }
+                }    
                 try {
-                    const response = await $.ajax({
-                        url: "https://simple-humane-kitten.ngrok-free.app/payment/check",
-                        method: "GET",
-                        //data: { grand_total: grand_total, pos_number: pos_number },
-                        //dataType: "json"
+                    const response = await fetch('http://localhost:8000/payment/check', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 'grand_total': grand_total, 'pos': pos_number })
                     });
-
-                    // If the server confirms the payment, return the response and stop polling
-                    if (response && response.payment_confirmed) {
-                        return response;
+    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                } catch (err) {
-                    console.error("Error checking C2B payment:", err);
+    
+                    const result = await response.json();
+    
+                    if (result && result.success) { // Assuming API returns { success: true } when payment is confirmed
+                        return result;
+                    }
+                } catch (error) {
+                    console.error("Fetch error:", error);
                 }
-                // Wait before polling again.
+    
+                // Wait before polling again
                 await new Promise(resolve => setTimeout(resolve, interval));
             }
-            return null;  // No payment found within the timeout period or polling was stopped.
+    
+            return null;
         }
-        
-        // Retrieve the grand total and pos_number from the form.
+    
         let grand_total = $('#payable_amount').val().replace(/,/g, '');
         let pos_number = $('#pos_number').val();
+        setTimeout(function(){
+            let grand_total = $('#payable_amount').val().replace(/,/g, '');  
+            let pos_number = $('#pos_number').val();
+            
+            let pollingPromise = checkC2BPayment(grand_total, pos_number);
+            pollingPromise.then(response => {
+                if (response) {
+                    stopPolling = true;
+                    $('#uni_modal').modal('hide');
+                    $('#customer_name').text(response.customer_name);
+                    $('#amount_received').text(response.amount + ' KSH ');
+                    $('#status-modal').modal('show');
+                } else {
+                    console.log("No C2B payment confirmed. Polling was stopped.");
+                }
+            });
+        }, 5000);
         
-        // Start polling for a C2B payment when the page loads.
-        let pollingPromise = checkC2BPayment(grand_total, pos_number);
-        pollingPromise.then(function(response) {
-            if(response) {
-                console.log("C2B Payment confirmed:", response);
-                // Optionally, auto-fill a hidden field, notify the user, or trigger form submission.
-                $('[name="tendered_amount"]').val(grand_total);
-            } else {
-                console.log("No C2B payment confirmed. Polling was stopped.");
-            }
+        $('#payment_confirmation_btn').on('click', function(e){
+            e.preventDefault();
+            $('#status-modal').modal('hide'); 
+            
+            let receivedAmount = $('#amount_received').text().replace(/[^\d.]/g, '');  // Extract numeric value
+            let payableAmount = $('#payable_amount').val().replace(/,/g, '');          // Get payable amount
+            receivedAmount = parseFloat(receivedAmount) || 0;
+            payableAmount = parseFloat(payableAmount) || 0;
+        
+            // Set tendered amount field
+            $('[name="tendered_amount"]').val(receivedAmount);
+        
+            // Calculate change/balance
+            let change = receivedAmount - payableAmount;
+        
+            // Update the UI
+            $('#payment_change').val(parseFloat(change).toLocaleString('en-US'));  // Display formatted change
+            $('[name="amount_change"]').val(change);  // Store the change in the hidden input
+            
+            $('#uni_modal').modal('show');
         });
         
-        // When the tendered amount field is being edited, stop the async polling.
-        $('#tendered_amount').on('input keypress keyup keydown', function() {
+        
+        $('#payment_confirmation_cancel_btn').on('click', function(e){
+            e.preventDefault();
+            $('#status-modal').modal('hide');            
+            $('#uni_modal').modal('show');
+        });
+        
+        // Ensure modal resets only after hiding
+        $('#status-modal').on('hidden.bs.modal', function () {
+            $('#customer_name').text('');
+            $('#amount_received').text('');
+        });
+        
+    
+        $('#tendered_amount').on('input keypress keyup keydown change', function() {
             stopPolling = true;
-            let tendered_amount = $('#tendered_amount').val().replace(/,/gi, '');
-            let payable = $('#payable_amount').val().replace(/,/gi, '');
-            tendered_amount = tendered_amount > 0 ? tendered_amount : 0;
-
-            $('[name="tendered_amount"]').val(tendered_amount);
+            let tendered_amount = $('#tendered_amount').val().replace(/,/gi, '') || 0;
+            let payable = $('#payable_amount').val().replace(/,/gi, '') || 0;
             let change = parseFloat(tendered_amount) - parseFloat(payable);
-            console.log("Tendered:", tendered_amount, "Payable:", payable, "Change:", change);
+    
+            $('[name="tendered_amount"]').val(tendered_amount);
             $('#payment_change').val(parseFloat(change).toLocaleString('en-US'));
             $('[name="amount_change"]').val(change);
         });
-        
-        // When the checkout form is submitted, ensure the tendered amount is sufficient.
+    
         $('#checkout-form').submit(function(e) {
             e.preventDefault();
             if ($('[name="amount_change"]').val() < 0) {
@@ -107,4 +136,5 @@
             $('#pos-form').submit();
         });
     });
+    
 </script>

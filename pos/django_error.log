@@ -4472,3 +4472,14 @@ AttributeError: 'MpesaClient' object has no attribute 'baseUrl'
 "GET /pos HTTP/1.1" 500 84837
 Internal Server Error: /payment/check
 "GET /payment/check HTTP/1.1" 500 59
+Internal Server Error: /payment/check
+Traceback (most recent call last):
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 204, in _get_response
+    self.check_response(response, callback)
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 332, in check_response
+    raise ValueError(
+ValueError: The view posApp.views.check_payment didn't return an HttpResponse object. It returned None instead.
+"POST /payment/check HTTP/1.1" 500 20184

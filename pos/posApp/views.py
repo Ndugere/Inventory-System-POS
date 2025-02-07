@@ -867,35 +867,37 @@ def check_payment(request):
     Check if a payment has been received based on the provided POS number (account_reference)
     and the payable amount (grand_total).
     """ 
-    print(f"\n{request}\n")
-    return JsonResponse({"payment_confirmed": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
-    """
-    try:
-       
+    if request.method == "POST":
+        return JsonResponse({"success": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
+   
+        """
+        try:
         
-        account_reference = request.GET.get("pos_number", "").strip()
-        grand_total = request.GET.get("grand_total", "").strip()
+            
+            account_reference = request.GET.get("pos_number", "").strip()
+            grand_total = request.GET.get("grand_total", "").strip()
 
-        # Ensure required parameters are provided
-        if not account_reference or not grand_total:
-            return JsonResponse({"payment_confirmed": False, "error": "Missing required parameters"}, status=400)
+            # Ensure required parameters are provided
+            if not account_reference or not grand_total:
+                return JsonResponse({"payment_confirmed": False, "error": "Missing required parameters"}, status=400)
 
-        # Query the payment transaction
-        payment = MpesaPaymentTransaction.objects.filter(
-            account_reference=account_reference,
-            amount=grand_total,
-            status="completed"
-        ).first()
+            # Query the payment transaction
+            payment = MpesaPaymentTransaction.objects.filter(
+                account_reference=account_reference,
+                amount=grand_total,
+                status="completed"
+            ).first()
 
-        if payment:
-            return JsonResponse({"payment_confirmed": True, "payment": payment})
-        else:
-            return JsonResponse({"payment_confirmed": False})
-        
-    except Exception as e:
-        logger.error("Error getting payment information: %s", str(e))
-        return JsonResponse({"ResultCode": 1, "ResultDesc": "Error processing request"}, status=500)
+            if payment:
+                return JsonResponse({"payment_confirmed": True, "payment": payment})
+            else:
+                return JsonResponse({"payment_confirmed": False})
+            
+        except Exception as e:
+            logger.error("Error getting payment information: %s", str(e))
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Error processing request"}, status=500)
     
-    """
-    
+        """
+    else:
+        return JsonResponse({"success": False}, status=401)
     

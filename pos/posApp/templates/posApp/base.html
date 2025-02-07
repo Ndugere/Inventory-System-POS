@@ -123,6 +123,33 @@
             </div>
         </div>
     </div>
+    
+    <div class="modal fade" id="status-modal" role='dialog'>
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+           <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment Confirmation</h5>
+            </div>
+            <div class="modal-body">
+                <form class="p-2">
+                    <div class="form-group">
+                        <p><span class="tw-font-bold pb-4"><strong>Customer Name: </strong></span> <span id="customer_name"></span></p>
+                        <p><span class="tw-font-bold"><strong>Amount Received: </strong></span> <span id="amount_received"></span></p>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-6 text-left pt-4">
+                            <button id="payment_confirmation_btn" class="btn btn-primary" title="Continue">Continue</button>
+                        </div>
+                        <div class="col-6 text-right pt-4">
+                            <button id="payment_confirmation_cancel_btn" class="btn btn-danger" title="Cancel" data-bs-dismiss="modal">cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+           </div>
+        </div>
+    </div>
+
     <script>
         window.start_loader = function() {
             $('body').removeClass('loaded')

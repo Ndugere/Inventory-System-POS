@@ -69,3 +69,9 @@ body {
     top: 50px;
     z-index: 5000
 }
+.obscure{
+    opacity: 0%;
+}
+#status-modal{
+    z-index: 500000;
+}
