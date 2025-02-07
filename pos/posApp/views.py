@@ -289,7 +289,6 @@ def checkout_modal(request):
 def save_pos(request):
     resp = {'status': 'failed', 'msg': ''}
     data = request.POST
-    print(f"\n{data}\n")
     payment_method = data.get("payment_method").strip().lower()  # Default to cash
     pos_number = data.get("pos_number", "").strip()  # Reference for M-Pesa payments
     grand_total = float(data.get("grand_total", 0))
@@ -442,8 +441,23 @@ def reports(request):
 def generate_report(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        report_type = data.get('report_type', 'inventory')
+        report_type = data.get('report_type', 'sales')
         time_period = data.get('time_period', 'daily')
+        payment_method = data.get('payment_method', 'all')  # Default to all
+
+        today = datetime.now().astimezone()
+
+        # Set time period range
+        if time_period == 'daily':
+            start_date = today - timedelta(days=1)
+        elif time_period == 'weekly':
+            start_date = today - timedelta(weeks=1)
+        elif time_period == 'monthly':
+            start_date = today - timedelta(weeks=4)
+        elif time_period == 'annual':
+            start_date = today - timedelta(weeks=52)
+        else:
+            start_date = today
 
         if report_type == "inventory":
             products = Products.objects.all()
@@ -466,41 +480,23 @@ def generate_report(request):
             ]
 
             report = Report(
-                name="Inventory Report " + str(datetime.now().astimezone()),
+                name="Inventory Report " + str(today),
                 generated_by=request.user,
                 type=Report.ReportType.INVENTORY,
                 json=json.dumps(report_data)
             )
             report.save()
-
         else:
-            today = datetime.now().astimezone()
+            # Sales Report
+            sales = Sales.objects.filter(date_added__gte=start_date)
 
-            if time_period == 'daily':
-                start_date = today - timedelta(days=1)
-                time_range = Report.ReportTimeRange.DAILY
-            elif time_period == 'weekly':
-                start_date = today - timedelta(weeks=1)
-                time_range = Report.ReportTimeRange.WEEKLY
-            elif time_period == 'monthly':
-                start_date = today - timedelta(weeks=4)
-                time_range = Report.ReportTimeRange.MONTHLY
-            elif time_period == 'annual':
-                start_date = today - timedelta(weeks=52)
-                time_range = Report.ReportTimeRange.ANNUAL
-            else:
-                start_date = today
-                time_range = Report.ReportTimeRange.DAILY
-                
-            sales = Sales.objects.filter(date_added__gte=start_date).annotate(
-                total_sales=Sum('grand_total'),
-                tax_percentage=ExpressionWrapper(
-                    (F('tax_amount') / F('sub_total')) * 100,
-                    output_field=FloatField()
-                )
-            )       
-                  
-            # Calculate most profitable products
+            # Apply payment method filter
+            if payment_method in dict(Sales.PaymentMethod.choices):
+                sales = sales.filter(payment_method=payment_method)
+
+            total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
+
+            # Calculate Most Profitable Products
             most_profitable_products = salesItems.objects.values(
                 'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'price'
             ).annotate(
@@ -518,8 +514,8 @@ def generate_report(request):
                     output_field=FloatField()
                 )
             ).order_by('-total_percentage_profit')
-            
-            # Calculate products with most sold quantity
+
+            # Calculate Products with Most Sold Quantity
             products_with_most_sales = salesItems.objects.values(
                 'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'price'
             ).annotate(
@@ -538,9 +534,6 @@ def generate_report(request):
                 )
             ).order_by('-total_quantity')
 
-            
-            total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
-            
             report_data = {
                 "total_sales_amount": total_sales_amount,
                 "most_profitable_products": list(most_profitable_products),
@@ -551,15 +544,15 @@ def generate_report(request):
                         "date_of_sale": sale.date_added.isoformat(),
                         "sub_total": sale.sub_total,
                         "grand_total": sale.grand_total,
-                        "tax": (sale.tax_amount /sale.sub_total * 100),
+                        "tax": (sale.tax_amount / sale.sub_total * 100) if sale.sub_total > 0 else 0,
                         "tax_amount": sale.tax_amount,
                         "tendered_amount": sale.tendered_amount,
                         "amount_change": sale.amount_change,
+                        "payment_method": sale.payment_method,
                         "items": [
                             {
                                 "product_code": item.product_id.code,
                                 "product_name": item.product_id.name,
-                                "description": item.product_id.description,
                                 "quantity": item.qty,
                                 "buy_price": item.product_id.buy_price,
                                 "price": item.price,
@@ -571,20 +564,19 @@ def generate_report(request):
                     for sale in sales
                 ]
             }
-            
+
             report = Report(
-                name=f"Sales Report {time_period.capitalize()} {str(datetime.now().astimezone())}",
+                name=f"Sales Report {time_period.capitalize()} - {payment_method.capitalize()} {today}",
                 generated_by=request.user,
                 type=Report.ReportType.SALES,
-                time_range=time_range,
                 json=json.dumps(report_data)
             )
             report.save()
 
         messages.success(request, 'Report Successfully Generated')
         return JsonResponse({"status": "success", "msg": "Report generated successfully."})
-    else:
-        return JsonResponse({"status": "failed", "msg": "Invalid request method."}, status=400)
+    
+    return JsonResponse({"status": "failed", "msg": "Invalid request method."}, status=400)
 
 @login_required
 def get_report(request, id: int):
@@ -718,7 +710,6 @@ def payment_validation(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            print(f"\n{data}\n")
             logger.info("Payment validation callback received: %s", data)
             """
             # (Optional) Insert any business validation logic here.

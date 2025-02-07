@@ -11,7 +11,7 @@
         <div class="container">            
             <form method="get" action="{% url 'reports-page' %}">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">                                
                             <label for="report_type">Report Type:</label>
                             <select name="report_type" id="report_type" class="form-select form-select-sm">  
@@ -38,7 +38,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">                                
                             <label for="time_period">Select Time Period:</label>
                             <select name="time_period" id="time_period" class="form-select form-select-sm">                                
@@ -50,7 +50,18 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-4 pt-4 text-right">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="payment_method">Filter by Payment Method:</label>
+                            <select name="payment_method" id="payment_method" class="form-select form-select-sm">
+                                <option value="all" {% if not selected_payment_method or selected_payment_method == "all" %}selected{% endif %}>All</option>
+                                <option value="cash" {% if selected_payment_method == "cash" %}selected{% endif %}>Cash</option>
+                                <option value="mpesa" {% if selected_payment_method == "mpesa" %}selected{% endif %}>M-Pesa</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 pt-4 text-right">
                         <button type="submit" id="generate_report_btn" class="btn btn-primary btn-sm rounded-0">Generate Report</button>
                     </div>
                 </div>
@@ -166,7 +177,7 @@
                             <tr>
                                 <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
                                 <td class="px-2 py-1 text-start">{{ report.name }}</td>
-                                <td class="px-2 py-1 text-start">{{ report.generated_on }}</td>
+                                <td class="px-2 py-1 text-center">{{ report.generated_on }}</td>
                                 <td class="px-2 py-1 text-start">{{ report.type }}</td>
                                 <td class="px-2 py-1 text-center">
                                     <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ report.pk }}" title="View" onclick="viewReport(this)">
@@ -231,6 +242,8 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            
             {% else %}
             <p>No reports available.</p>
             {% endif %}
@@ -255,18 +268,21 @@
     </div>
 </div>
 {% endblock pageContent %} {% block ScriptBlock %}
-<script>
+<script>    
     $(document).ready(function() {
         $("#generate_report_btn").click(function(e){
             e.preventDefault();
             
-            let $type = $("#report_type").val();
-            let $period = $("#time_period").val();
-
+            let type = $("#report_type").val();
+            let period = $("#time_period").val();
+            let paymentMethod = $("#payment_method").val();  // Get selected payment method
+    
             let data = {
-                report_type: $type,
-                time_period: $period
+                report_type: type,
+                time_period: period,
+                payment_method: paymentMethod  // Include payment method filter
             };
+    
 
             fetch("{% url 'generate_report' %}", {
                 headers:{
