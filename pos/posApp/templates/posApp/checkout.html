@@ -15,8 +15,6 @@
         </div>
         <!-- Hidden field for amount change -->
         <input type="hidden" name="amount_change" value="0">
-        <!-- Hidden field for pos_number. Adjust this value as needed -->
-        <input type="hidden" name="pos_number" id="pos_number" value="POS001">
     </form>
 </div>
 
@@ -62,6 +60,7 @@
     
         let grand_total = $('#payable_amount').val().replace(/,/g, '');
         let pos_number = $('#pos_number').val();
+        
         setTimeout(function(){
             let grand_total = $('#payable_amount').val().replace(/,/g, '');  
             let pos_number = $('#pos_number').val();
@@ -74,6 +73,9 @@
                     $('#customer_name').text(response.customer_name);
                     $('#amount_received').text(response.amount + ' KSH ');
                     $('#status-modal').modal('show');
+    
+                    // Set payment method to M-Pesa
+                    $('[name="payment_method"]').val("mpesa");
                 } else {
                     console.log("No C2B payment confirmed. Polling was stopped.");
                 }
@@ -88,33 +90,30 @@
             let payableAmount = $('#payable_amount').val().replace(/,/g, '');          // Get payable amount
             receivedAmount = parseFloat(receivedAmount) || 0;
             payableAmount = parseFloat(payableAmount) || 0;
-        
+    
             // Set tendered amount field
             $('[name="tendered_amount"]').val(receivedAmount);
-        
             // Calculate change/balance
             let change = receivedAmount - payableAmount;
-        
+    
             // Update the UI
             $('#payment_change').val(parseFloat(change).toLocaleString('en-US'));  // Display formatted change
             $('[name="amount_change"]').val(change);  // Store the change in the hidden input
-            
+           
             $('#uni_modal').modal('show');
         });
-        
         
         $('#payment_confirmation_cancel_btn').on('click', function(e){
             e.preventDefault();
             $('#status-modal').modal('hide');            
             $('#uni_modal').modal('show');
         });
-        
+    
         // Ensure modal resets only after hiding
         $('#status-modal').on('hidden.bs.modal', function () {
             $('#customer_name').text('');
             $('#amount_received').text('');
         });
-        
     
         $('#tendered_amount').on('input keypress keyup keydown change', function() {
             stopPolling = true;
@@ -125,6 +124,11 @@
             $('[name="tendered_amount"]').val(tendered_amount);
             $('#payment_change').val(parseFloat(change).toLocaleString('en-US'));
             $('[name="amount_change"]').val(change);
+    
+            // Set payment method to Cash if the user manually enters an amount
+            if (parseFloat(tendered_amount) > 0) {
+                $('[name="payment_method"]').val("cash"); 
+            }
         });
     
         $('#checkout-form').submit(function(e) {
@@ -136,5 +140,6 @@
             $('#pos-form').submit();
         });
     });
+    
     
 </script>

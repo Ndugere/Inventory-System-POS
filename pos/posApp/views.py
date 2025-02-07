@@ -289,6 +289,11 @@ def checkout_modal(request):
 def save_pos(request):
     resp = {'status': 'failed', 'msg': ''}
     data = request.POST
+    print(f"\n{data}\n")
+    payment_method = data.get("payment_method").strip().lower()  # Default to cash
+    pos_number = data.get("pos_number", "").strip()  # Reference for M-Pesa payments
+    grand_total = float(data.get("grand_total", 0))
+
     pref = datetime.now().year + datetime.now().year
     i = 1
     while True:
@@ -298,20 +303,32 @@ def save_pos(request):
             break
     code = str(pref) + str(code)
 
+    # Validate M-Pesa payment if required
+    """
+    if payment_method == "mpesa":
+        payment = MpesaPaymentTransaction.objects.filter(
+            account_reference=pos_number,
+            amount_received=grand_total,
+            status=MpesaPaymentTransaction.StatusChoices.COMPLETED
+        ).first()
+        if not payment:
+            return JsonResponse({"status": "failed", "msg": "No matching M-Pesa payment found."}, status=400)
+    """
     try:
         # Create a new Sales record
-        sales = Sales(
+        sale = Sales(
             code=code, 
             sub_total=data['sub_total'], 
             tax=data['tax'], 
             tax_amount=data['tax_amount'], 
-            grand_total=data['grand_total'], 
+            grand_total=grand_total, 
             tendered_amount=data['tendered_amount'], 
             amount_change=data['amount_change'],
+            payment_method=payment_method,  # Save payment method
             served_by=request.user
         )
-        sales.save()
-        sale_id = sales.pk
+        sale.save()
+        sale_id = sale.pk
 
         # Iterate over the list of products
         for i, prod in enumerate(data.getlist('product_id[]')):
@@ -323,7 +340,7 @@ def save_pos(request):
             # Validate the price
             if int(price) in range(int(product.min_sell_price), int(product.max_sell_price)):
                 # Create a new sales item
-                salesItems(sale_id=sales, product_id=product, qty=qty, price=price, total=total).save()
+                salesItems(sale_id=sale, product_id=product, qty=qty, price=price, total=total).save()
             else:
                 raise Exception(f"Price should be in the within the range {product.min_sell_price} - {product.max_sell_price}")
 
@@ -338,14 +355,19 @@ def save_pos(request):
         resp['sale_id'] = sale_id
         messages.success(request, "Sale Record has been saved.")
     except Exception as e:
-        # Log the error and set response status to error
         logger.error(f"Error saving POS: {e}")
         resp['msg'] = "An error occurred"
+
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
 @login_required
 def salesList(request):
+    payment_method = request.GET.get('payment_method', '')  # Get filter parameter
     sales = Sales.objects.all()
+
+    if payment_method and payment_method in dict(Sales.PaymentMethod.choices):  # Validate filter
+        sales = sales.filter(payment_method=payment_method)
+
     sale_data = []
     for sale in sales:
         data = {field.name: getattr(sale, field.name) for field in sale._meta.get_fields(include_parents=False) if field.related_model is None}
@@ -354,9 +376,12 @@ def salesList(request):
         if 'tax_amount' in data:
             data['tax_amount'] = format(float(data['tax_amount']), '.2f')
         sale_data.append(data)
+
     context = {
         'page_title': 'Sales Transactions',
         'sale_data': sale_data,
+        'payment_methods': Sales.PaymentMethod.choices,  # Pass payment methods for dropdown
+        'selected_method': payment_method  # Keep track of selected method
     }
     return render(request, 'posApp/sales.html', context)
 
@@ -365,7 +390,8 @@ def receipt(request):
     id = request.GET.get('id')
     sales = Sales.objects.filter(id=id).first()
     transaction = {field.name: getattr(sales, field.name) for field in Sales._meta.get_fields() if field.related_model is None}
-    transaction['served_by'] = sales.served_by.username
+    transaction['served_by'] = str.capitalize(sales.served_by.username)
+    transaction['payment_method'] = str.capitalize(sales.payment_method)
     if 'tax_amount' in transaction:
         transaction['tax_amount'] = format(float(transaction['tax_amount']), '.2f')
     ItemList = salesItems.objects.filter(sale_id=sales).all()
@@ -711,58 +737,46 @@ def payment_validation(request):
 @csrf_exempt
 def payment_confirmation(request):
     """
-    Handle M-Pesa confirmation callback (for C2B).
-    M-Pesa sends transaction details after a successful C2B payment.
-    We extract the information and update or create a corresponding transaction record.
-    Expected payload sample (keys may vary):\n
-      {\n
-          "TransactionType": "Pay Bill",\n
-          "TransID": "XYZ123",\n
-          "TransTime": "20210101101010",\n
-          "TransAmount": "100",\n
-          "BusinessShortCode": "600000",\n
-          "BillRefNumber": "12345",\n
-          "MSISDN": "254712345678",\n
-          "FirstName": "John",\n
-          "MiddleName": "",\n
-          "LastName": "Doe"\n
-      }
+    Handle M-Pesa confirmation callback (for C2B payments).
+    Extracts payment details and updates or creates a transaction record.
     """
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            print(F"\n{data}\n")
             logger.info("Payment confirmation callback received: %s", data)
-            
+
             # Extract fields from the callback payload.
-            transaction_type = data.get("TransactionType")
+            transaction_type = data.get("TransactionType", "C2B")
             trans_id = data.get("TransID")
             trans_time = data.get("TransTime")
             trans_amount = data.get("TransAmount")
-            bill_ref_number = data.get("BillRefNumber")
+            bill_ref_number = data.get("BillRefNumber")  # POS number
             msisdn = data.get("MSISDN")
-            
-            # Handle missing names gracefully
-            first_name = data.get('FirstName', "")
-            last_name = data.get('LastName', "")
+
+            # Handle customer name (some responses may not include a middle name)
+            first_name = data.get("FirstName", "").strip()
+            last_name = data.get("LastName", "").strip()
             customer_name = f"{first_name} {last_name}".strip()
-           
-            # Convert trans_amount to a decimal if needed and parse trans_time.
-            amount = trans_amount
-            transaction_time = None
-            if trans_time:
-                try:
-                    transaction_time = datetime.strptime(trans_time, "%Y%m%d%H%M%S")
-                except Exception as e:
-                    logger.error("Error parsing transaction time: %s", e)
-            
-            # Create or update the MpesaPaymentTransaction record for a C2B payment.
-            transaction, created = MpesaPaymentTransaction.objects.get_or_create(
+
+            # Convert amount to decimal
+            try:
+                amount_received = float(trans_amount)
+            except ValueError:
+                return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid amount format"}, status=400)
+
+            # Parse transaction time
+            try:
+                transaction_time = datetime.strptime(trans_time, "%Y%m%d%H%M%S") if trans_time else None
+            except ValueError:
+                return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid transaction time format"}, status=400)
+
+            # Update or create the transaction record
+            transaction, created = MpesaPaymentTransaction.objects.update_or_create(
                 transaction_id=trans_id,
                 defaults={
                     "customer_name": customer_name,
                     "phone_number": msisdn,
-                    "amount": amount,
+                    "amount_received": amount_received,
                     "account_reference": bill_ref_number,
                     "transaction_desc": transaction_type,
                     "transaction_time": transaction_time,
@@ -770,28 +784,21 @@ def payment_confirmation(request):
                     "mpesa_response": data
                 }
             )
-            if not created:
-                transaction.customer_name = customer_name
-                transaction.phone_number = msisdn
-                transaction.amount = amount
-                transaction.account_reference = bill_ref_number
-                transaction.transaction_desc = transaction_type
-                transaction.transaction_time = transaction_time
-                transaction.status = MpesaPaymentTransaction.StatusChoices.COMPLETED
-                transaction.mpesa_response = data
-                transaction.save()
-            
+
+            if created:
+                logger.info(f"New payment recorded: {transaction}")
+            else:
+                logger.info(f"Updated existing payment record: {transaction}")
+
+            # Respond to Safaricom
             response = {"ResultCode": 0, "ResultDesc": "Confirmation received successfully"}
             return JsonResponse(response)
+
         except Exception as e:
-            logger.error("Error in payment_confirmation: %s", str(e))
-            return JsonResponse({"ResultCode": 1, "ResultDesc": "Confirmation failed"}, status=500)
+            logger.error(f"Error in payment_confirmation: {str(e)}")
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Error processing request"}, status=500)
     else:
-        try:
-            result = MpesaClient.c2b()
-            print(f"\n{result}\n")
-        except:
-            return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid request method"}, status=400)
+        return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid request method"}, status=400)
 
 @csrf_exempt
 def payment_result(request):
@@ -869,13 +876,12 @@ def check_payment(request):
     """ 
     if request.method == "POST":
         return JsonResponse({"success": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
-   
         """
         try:
         
             
-            account_reference = request.GET.get("pos_number", "").strip()
-            grand_total = request.GET.get("grand_total", "").strip()
+            account_reference = request.POST.get("pos", "").strip()
+            grand_total = request.POST.get("grand_total", "").strip()
 
             # Ensure required parameters are provided
             if not account_reference or not grand_total:
@@ -889,9 +895,9 @@ def check_payment(request):
             ).first()
 
             if payment:
-                return JsonResponse({"payment_confirmed": True, "payment": payment})
+                return JsonResponse({"success": True, "customer_name": payment.customer_name, "amount": payment.amount_received})
             else:
-                return JsonResponse({"payment_confirmed": False})
+                return JsonResponse({"success": False})
             
         except Exception as e:
             logger.error("Error getting payment information: %s", str(e))

@@ -26,7 +26,7 @@
                     <div class="col-lg-2 col-md-2 col-sm-12">
                         <div class="form-group mb-3">
                             <label for="product-qty">Qty <br><small>(<span id="qty-available">0</span> Available)</small></label>
-                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" min="1" value="1">
+                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" min="1" max="{{product.available_quantity}}" value="1">
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-4 col-sm-12">
@@ -93,6 +93,10 @@
                                     <input type="hidden" name="amount_change" value="0">
                                     <input type="hidden" name="grand_total" value="0">
                                     <input type="hidden" name="grand_total" value="0">
+                                    
+                                    <!-- Hidden field for pos_number and payment method. Adjust this value as needed -->
+                                    <input type="hidden" name="pos_number" id="pos_number" value="POS001">
+                                    <input type="hidden" name="payment_method" id="payment_method">
                                     <span class="h3 fw-bold" id="grand_total">0.00</span>
                                 </dd>
                             </dl>
@@ -214,6 +218,7 @@
             var availableQty = $('#product-id option:selected').data('available-qty');
             console.log(`${availableQty}`);
             $('#qty-available').text(availableQty);
+            $('#product-qty').attr("max", availableQty).val(1);
 
             var min_price =  $('#product-id option:selected').data('min-price');
             var max_price =  $('#product-id option:selected').data('max-price');
@@ -224,34 +229,37 @@
             sell_price.setAttribute("min", min_price);
             sell_price.setAttribute("max", max_price);
         });
+
         $('#add_item').click(function() {
             var id = $('#product-id').val();
             var qty = $('#product-qty').val();
             var available_qty = $('#product-id option:selected').data('available-qty');
-            var min_price =  $('#product-id option:selected').data('min-price');
-            var max_price =  $('#product-id option:selected').data('max-price');
+            var min_price = $('#product-id option:selected').data('min-price');
+            var max_price = $('#product-id option:selected').data('max-price');
             var sell_price = $('#sell_price').val();            
-
-            if (id == '' || qty == '' || sell_price == '' || id == null || qty == null || sell_price == null) {
-                alert("Product, Quantity and Sell Price Fields are required!");
+        
+            if (!id || !qty || !sell_price) {
+                alert("Product, Quantity, and Sell Price Fields are required!");
                 return false;
             }
-
+        
             if (parseInt(qty) > parseInt(available_qty)) {
-                alert("The quantity selected exceeds the available quantity!");
+                alert("The selected quantity exceeds the available stock!");
                 return false;
             }
             
-            if(parseFloat(sell_price) < parseFloat(min_price) | parseFloat(sell_price) > parseFloat(max_price)){
-                alert(`The Sell price should be within the range KSH. ${min_price} - KSH.${max_price}`);
-                return false
+            if (parseFloat(sell_price) < parseFloat(min_price) || parseFloat(sell_price) > parseFloat(max_price)) {
+                alert(`Sell price must be between KSH ${min_price} - KSH ${max_price}`);
+                return false;
             }
+        
             if (!!window.prod_arr[id]) {
                 addItemToPOS(id, qty, sell_price);
             } else {
                 alert("Undefined Product");
             }
         });
+        
 
         $('[name="tax"]').on('input keypress keydown keyup', function() {
             calc();

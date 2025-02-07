@@ -110,20 +110,28 @@ class Products(models.Model):
         unique_together = (("name", "measurement_value", "description"))
 
 class Sales(models.Model):
+    class PaymentMethod(models.TextChoices):
+        CASH = "cash", _("Cash")
+        MPESA = "mpesa", _("M-Pesa")
+
     code = models.CharField(max_length=100)
     sub_total = models.FloatField(default=0)
     grand_total = models.FloatField(default=0)
     tax_amount = models.FloatField(default=0)
     tax = models.FloatField(default=0)
     tendered_amount = models.FloatField(default=0)
-    #pos_no = models.CharField(_("Point of Sale"), max_length=20, blank=False)
     amount_change = models.FloatField(default=0)
+    payment_method = models.CharField(  # New field
+        max_length=10,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.CASH
+    )
     served_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="served_by")
     date_added = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
 
     def __str__(self):
-        return self.code
+        return f"{self.code} - {self.payment_method}"
     
     class Meta:
         verbose_name = "Sale"
@@ -201,7 +209,7 @@ class MpesaPaymentTransaction(models.Model):
     transaction_id = models.CharField(max_length=255, editable=False)
     customer_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    #amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_received = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)  # Amount received from M-Pesa
     account_reference = models.CharField(max_length=255)
     transaction_desc = models.CharField(max_length=255)

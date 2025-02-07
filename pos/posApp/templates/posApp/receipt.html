@@ -13,9 +13,10 @@
         <hr>
         <div class="lh-1">
             <div>
-                <p>Date: &nbsp; {{ transaction.date_added|date:"M d Y" }}</p> 
-                <p>Transaction Code: &nbsp; {{ transaction.code }}</p>
-                <p>Served By: &nbsp; {{ transaction.served_by }}</p> 
+                <p><strong>Date:</strong> &nbsp; {{ transaction.date_added|date:"M d Y" }}</p> 
+                <p><strong>Transaction Code:</strong> &nbsp; {{ transaction.code }}</p>
+                <p><strong>Served By:</strong> &nbsp; {{ transaction.served_by }}</p> 
+                <p><strong>Paid Through:</strong> &nbsp; {{ transaction.payment_method }}</p> 
             </div>
         </div>
         <div class="clear-fix py-3"></div>

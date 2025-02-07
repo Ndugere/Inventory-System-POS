@@ -4483,3 +4483,35 @@ Traceback (most recent call last):
     raise ValueError(
 ValueError: The view posApp.views.check_payment didn't return an HttpResponse object. It returned None instead.
 "POST /payment/check HTTP/1.1" 500 20184
+Internal Server Error: /save-pos
+Traceback (most recent call last):
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\pos\posApp\views.py", line 292, in save_pos
+    payment_method = data.get("payment_method").strip().lower()  # Default to cash
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'strip'
+"POST /save-pos HTTP/1.1" 500 79879
+Internal Server Error: /save-pos
+Traceback (most recent call last):
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\python\Inventory-System-POS\pos\posApp\views.py", line 293, in save_pos
+    payment_method = data.get("payment_method").strip().lower()  # Default to cash
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'strip'
+"POST /save-pos HTTP/1.1" 500 79928
