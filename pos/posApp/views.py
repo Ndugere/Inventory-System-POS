@@ -735,6 +735,7 @@ def payment_confirmation(request):
         try:
             data = json.loads(request.body)
             logger.info("Payment confirmation callback received: %s", data)
+            print(f"\nCallback:{data}\n")
 
             # Extract fields from the callback payload.
             transaction_type = data.get("TransactionType", "C2B")
