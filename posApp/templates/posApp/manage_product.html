@@ -1,0 +1,154 @@
+{% load humanize %}
+<div class="container-fluid">
+    <form action="" id="product-form">
+        <input type="hidden" name="id" value="{% if product.pk %}{{product.pk}}{% endif %}">
+        <div class="form-group mb-3">
+            <label for="code" class="control-label">Code</label>
+            <input type="text" name="code" id="code" class="form-control form-control-sm rounded-0" value="{% if product.code %}{{product.code}}{% endif %}" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="category_id" class="control-label">Category</label>
+            <select name="category_id" id="category_id" class="form-select form-select-sm rounded-0" required>            
+                {% for category in categories %}
+                    {% if product.category_id == category.id %}
+                    <option value="{{ category.id }}" selected>{{ category.name }}</option>
+                    {% else %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="name" class="control-label">Product Name</label>
+            <input type="text" name="name" id="name" class="form-control form-control-sm rounded-0" value="{% if product.name %}{{product.name}}{% endif %}" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="measurement_value" class="control-label">Measure</label>
+            <select name="measurement_value" id="measurement_value" class="form-control form-control-sm rounded-0" required>
+                {% if product.measurement_value %}
+                    <option value="{{product.measurement_value.id}}" selected>{{product.measurement_value.name}} ({{product.measurement_value.short_name}})</option>                  
+                {% endif %}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="description" class="control-label">Description</label>
+            <textarea rows="5" name="description" id="description" class="form-control form-control-sm rounded-0" required>{% if product.description %}{{product.description}}{% endif %}</textarea>
+        </div>
+        <div class="form-group mb-3">
+            <label for="available_quantity" class="control-label">Available QTY</label>
+            <input type="number" name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.available_quantity %}{{product.available_quantity}}{% endif %}" min="0" step="any" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="buy_price" class="control-label"> Buying Price</label>
+            <input type="number" name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2|intcomma}}{% endif %}" min="0.00" step="any" required>
+        </div>
+        <div class="form-group mb-3">
+            <h6 for="sell_price" class="control-label">Selling Price Range</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 for="min_sell_price" class="control-label">Min</h6>
+                    <input type="number" name="min_sell_price" id="min_sell_price" class="form-control form-control-sm rounded-0" value="{% if product.min_sell_price %}{{product.min_sell_price|floatformat:2|intcomma}}{% endif %}" min="0.00" step="any" required>
+                </div>
+                <div class="col-md-6">
+                    <h6 for="max_sell_price" class="control-label">Max</h6>
+                    <input type="number" name="max_sell_price" id="max_sell_price" class="form-control form-control-sm rounded-0" value="{% if product.max_sell_price %}{{product.max_sell_price|floatformat:2|intcomma}}{% endif %}" min="0.00" step="any" required>
+                </div>
+            </div>
+        </div>
+        <!--div class="form-group mb-3">
+            <label for="status" class="control-label">Status</label>
+            <select name="status" id="status" class="form-select form-select-sm rounded-0" required>
+                {% if product.status and product.status == 1 %}
+                <option value="1" selected>Active</option>
+                {% else %}
+                <option value="1">Active</option>
+                {% endif %}
+                {% if product.status and product.status == 0 %}
+                <option value="0" selected>Inactive</option>
+                {% else %}
+                <option value="0">Inactive</option>
+                {% endif %}
+            </select>
+        </div-->
+    </form>
+</div>
+<script>
+    $(function() {
+        $('#product-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this)
+            $('.err-msg').remove();
+            var el = $('<div>')
+            el.addClass("alert alert-danger err-msg")
+            el.hide()
+            if (_this[0].checkValidity() == false) {
+                _this[0].reportValidity();
+                return false;
+            }
+            start_loader();
+            $.ajax({
+                headers: {
+                    "X-CSRFToken": '{{csrf_token}}'
+                },
+                url: "{% url 'save-product-page' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+                error: err => {
+                    console.log(err)
+                    end_loader();
+                },
+                success: function(resp) {
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        el.removeClass("alert alert-danger err-msg")
+                        location.reload()
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg)
+                    } else {
+                        el.text("An error occurred", 'error');
+                        end_loader();
+                        console.error(resp)
+                    }
+                    _this.prepend(el)
+                    el.show('slow')
+                    $("html, body, .modal").scrollTop(0);
+                    end_loader()
+                }
+            })
+        });
+        $('#measurement_value').focus(function(e){
+            var categoryId = document.getElementById('category_id').value;
+            fetch(`/get_measurements/${categoryId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    var measurementValueSelect = document.getElementById('measurement_value');
+                    measurementValueSelect.innerHTML = '';
+                    data.measurements.forEach(function(measurement) {
+                        var option = document.createElement('option');
+                        option.value = measurement.id;
+                        option.text = `${measurement.name} (${measurement.short_name})`;
+                        measurementValueSelect.appendChild(option);
+                    });
+                });
+        });
+        $('#category_id').change(function(e){
+            var categoryId = this.value;
+            fetch(`/get_measurements/${categoryId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    var measurementValueSelect = document.getElementById('measurement_value');
+                    measurementValueSelect.innerHTML = '';
+                    data.measurements.forEach(function(measurement) {
+                        var option = document.createElement('option');
+                        option.value = measurement.id;
+                        option.text = `${measurement.name} (${measurement.short_name})`;
+                        measurementValueSelect.appendChild(option);
+                    });
+                });
+        })
+    })
+</script>
