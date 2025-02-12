@@ -256,7 +256,7 @@ def delete_product(request):
 @login_required
 def pos(request):
     mpesa_client = MpesaClient()
-    response = mpesa_client.c2b()
+    mpesa_client.register_urls()
     
     products = Products.objects.filter(status=1)
     context = {
@@ -449,12 +449,16 @@ def generate_report(request):
 
         # Set time period range
         if time_period == 'daily':
+            time_range = Report.ReportTimeRange.DAILY
             start_date = today - timedelta(days=1)
         elif time_period == 'weekly':
+            time_range = Report.ReportTimeRange.WEEKLY
             start_date = today - timedelta(weeks=1)
         elif time_period == 'monthly':
+            time_range = Report.ReportTimeRange.MONTHLY 
             start_date = today - timedelta(weeks=4)
         elif time_period == 'annual':
+            time_range = Report.ReportTimeRange.ANNUAL
             start_date = today - timedelta(weeks=52)
         else:
             start_date = today
@@ -488,17 +492,22 @@ def generate_report(request):
             report.save()
         else:
             # Sales Report
+            # Filter sales based on the time range
             sales = Sales.objects.filter(date_added__gte=start_date)
 
-            # Apply payment method filter
+            # Apply payment method filter if needed
             if payment_method in dict(Sales.PaymentMethod.choices):
                 sales = sales.filter(payment_method=payment_method)
 
             total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
 
+            # Filter salesItems to only include items belonging to the filtered sales
+            filtered_salesitems = salesItems.objects.filter(sale_id__in=sales)
+
             # Calculate Most Profitable Products
-            most_profitable_products = salesItems.objects.values(
-                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'price'
+            most_profitable_products = filtered_salesitems.values(
+                'product_id__code', 'product_id__name', 'product_id__description', 
+                'product_id__buy_price', 'price'
             ).annotate(
                 total_quantity=Sum('qty'),
                 total_amount=Sum(F('qty') * F('price')),
@@ -516,8 +525,9 @@ def generate_report(request):
             ).order_by('-total_percentage_profit')
 
             # Calculate Products with Most Sold Quantity
-            products_with_most_sales = salesItems.objects.values(
-                'product_id__code', 'product_id__name', 'product_id__description', 'product_id__buy_price', 'price'
+            products_with_most_sales = filtered_salesitems.values(
+                'product_id__code', 'product_id__name', 'product_id__description', 
+                'product_id__buy_price', 'price'
             ).annotate(
                 total_quantity=Sum('qty'),
                 total_amount=Sum(F('qty') * F('price')),
@@ -566,9 +576,10 @@ def generate_report(request):
             }
 
             report = Report(
-                name=f"Sales Report {time_period.capitalize()} - {payment_method.capitalize()} {today}",
+                name=f"{time_range.capitalize()} Sales Report  - {payment_method.capitalize()} {today}",
                 generated_by=request.user,
                 type=Report.ReportType.SALES,
+                time_range=time_range,
                 json=json.dumps(report_data)
             )
             report.save()

@@ -32,7 +32,7 @@
                     <div class="col-lg-4 col-md-4 col-sm-12">
                         <div class="form-group mb-3">
                             <label for="sell_price">Sell Price <br><small>(Range: KSH <span id="min_sell_price">0.00</span> - KSH <span id="max_sell_price">0.00</span>)</small></label>
-                            <input type="number" class="form-control form-control-sm text-center" step="any" id="sell_price" min="0.00" value="0.00">
+                            <input type="number" class="form-control form-control-sm text-center" step="any" id="sell_price" min="{{product.min_sell_price}}" value="{{product.max_sell_price}}">
                         </div>
                     </div>
                     <div class="col-lg-2 col-md-2 col-sm-12">

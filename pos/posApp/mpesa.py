@@ -25,6 +25,24 @@ class MpesaClient:
             self.b2b_url = baseUrl+'/mpesa/b2b/v1/registerurl'
             self.b2c_url = baseUrl+'/mpesa/b2c/v1/registerurl'
 
+    def register_urls(self):
+        confirmation_url = settings.MPESA_CONFIRMATION_URL
+        validation_url = settings.MPESA_VALIDATION_URL
+ 
+        headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {self.access_token}'
+        }
+        payload = {
+            "ShortCode": 600999,
+            "ResponseType": "Completed",
+            "ConfirmationURL": confirmation_url,
+            "ValidationURL": validation_url,
+        }
+        
+        response = requests.request("POST", 'https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl', headers = headers, data = payload)
+        print(f"\nURL Registartion result: {response}\n")
+        
     def generate_timestamp(self):
         return datetime.now().strftime("%Y%m%d%H%M%S")
 

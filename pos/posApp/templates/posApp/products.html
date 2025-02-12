@@ -49,7 +49,7 @@
                 <tbody>
                     {% for product in products %}
                     <tr>
-                        <td class="px-2 py-1 text-center">{{ product.id }}</td>
+                        <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
                         <td class="px-2 py-1 text-start">{{ product.category_id }}</td>
                         <td class="px-2 py-1 text-start">{{ product.code }}</td>
                         <td class="px-2 py-1 text-start">{{ product.name }}</td>

@@ -40,7 +40,7 @@
                 <tbody>
                     {% for cat in category %}
                     <tr>
-                        <td class="px-2 py-1 text-center">{{ cat.id }}</td>
+                        <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
                         <td class="px-2 py-1 text-start">{{ cat.name }}</td>
                         <td class="px-2 py-1 text-start">{{ cat.description }}</td>
                         <td class="px-2 py-1 text-start">{{ cat.measurement_type }}</td>

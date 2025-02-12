@@ -108,6 +108,7 @@ class Products(models.Model):
         verbose_name = "Product"
         verbose_name_plural = "Products"
         unique_together = (("name", "measurement_value", "description"))
+        ordering = ["code", "name"]
 
 class Sales(models.Model):
     class PaymentMethod(models.TextChoices):

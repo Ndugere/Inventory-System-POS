@@ -4515,3 +4515,157 @@ Traceback (most recent call last):
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'NoneType' object has no attribute 'strip'
 "POST /save-pos HTTP/1.1" 500 79928
+Internal Server Error: /pos
+Traceback (most recent call last):
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\views.py", line 259, in pos
+    mpesa_client.register_urls()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\mpesa.py", line 29, in register_urls
+    confirmation_url = settings.CONFIRMATION_URL
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\conf\__init__.py", line 83, in __getattr__
+    val = getattr(_wrapped, name)
+AttributeError: 'Settings' object has no attribute 'CONFIRMATION_URL'. Did you mean: 'MPESA_CONFIRMATION_URL'?
+"GET /pos HTTP/1.1" 500 82840
+Internal Server Error: /pos
+Traceback (most recent call last):
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\views.py", line 259, in pos
+    mpesa_client.register_urls()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\mpesa.py", line 44, in register_urls
+    print(f"\nURL Registartion result: {response.text.decode('utf8')}\n")
+                                        ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'decode'. Did you mean: 'encode'?
+"GET /pos HTTP/1.1" 500 80099
+Internal Server Error: /generate_report
+Traceback (most recent call last):
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\views.py", line 499, in generate_report
+    filtered_salesitems = salesItems.objects.filter(sale__in=sales)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1609, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1641, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1491, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1303, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1768, in names_to_path
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Cannot resolve keyword 'sale' into field. Choices are: id, price, product_id, product_id_id, qty, sale_id, sale_id_id, total
+"POST /generate_report HTTP/1.1" 500 125893
+Internal Server Error: /generate_report
+Traceback (most recent call last):
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\views.py", line 499, in generate_report
+    filtered_salesitems = salesItems.objects.filter(sale__in=sales)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1609, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1641, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1491, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1303, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\db\models\sql\query.py", line 1768, in names_to_path
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Cannot resolve keyword 'sale' into field. Choices are: id, price, product_id, product_id_id, qty, sale_id, sale_id_id, total
+"POST /generate_report HTTP/1.1" 500 125893
+Internal Server Error: /generate_report
+Traceback (most recent call last):
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\views.py", line 575, in generate_report
+    name=f"{time_range.capitalize()} Sales Report  - {payment_method.capitalize()} {today}",
+            ^^^^^^^^^^
+NameError: name 'time_range' is not defined
+"POST /generate_report HTTP/1.1" 500 92282
+Internal Server Error: /generate_report
+Traceback (most recent call last):
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\Projects\Python\Inventory-System-POS\pos\posApp\views.py", line 575, in generate_report
+    name=f"{time_range.capitalize()} Sales Report  - {payment_method.capitalize()} {today}",
+            ^^^^^^^^^^
+NameError: name 'time_range' is not defined
+"POST /generate_report HTTP/1.1" 500 92280
