@@ -866,8 +866,8 @@ def check_payment(request):
     and the payable amount (grand_total).
     """ 
     if request.method == "POST":
-        return JsonResponse({"success": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
-        """
+        #return JsonResponse({"success": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
+        
         try:
         
             
@@ -894,7 +894,7 @@ def check_payment(request):
             logger.error("Error getting payment information: %s", str(e))
             return JsonResponse({"ResultCode": 1, "ResultDesc": "Error processing request"}, status=500)
     
-        """
+        
     else:
         return JsonResponse({"success": False}, status=401)
     
