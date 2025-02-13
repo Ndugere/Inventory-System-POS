@@ -28,20 +28,31 @@ class MpesaClient:
     def register_urls(self):
         confirmation_url = settings.MPESA_CONFIRMATION_URL
         validation_url = settings.MPESA_VALIDATION_URL
- 
+        short_code = settings.MPESA_C2B_SHORTCODE
+
         headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {self.access_token}'
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.access_token}'
         }
         payload = {
-            "ShortCode": 600999,
-            "ResponseType": "Completed",
+            "ShortCode": short_code,
+            "ResponseType": "Completed", # For automatic validation. If you prefer manual validation, use 'Cancelled'
             "ConfirmationURL": confirmation_url,
-            "ValidationURL": validation_url,
+            "ValidationURL": validation_url
         }
-        
-        response = requests.request("POST", 'https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl', headers = headers, data = payload)
-        print(f"\nURL Registartion result: {response}\n")
+
+        try:
+            response = requests.post(
+                'https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl',
+                headers=headers,
+                json=payload
+            )
+            response.raise_for_status()  # Raises an error for HTTP error codes
+
+            print(f"URL Registration successful: {response.json()}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error registering URL: {e}")
+
         
     def generate_timestamp(self):
         return datetime.now().strftime("%Y%m%d%H%M%S")
