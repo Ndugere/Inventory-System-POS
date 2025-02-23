@@ -18,7 +18,7 @@ body {
 }
 
 #POS-field {
-    height: 55vh
+    min-height: 55vh
 }
 
 .mdc-card.info-card.info-card--primary .card-inner .card-icon-wrapper {
@@ -110,7 +110,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    backdrop-filter: blur(1px); /* Adjust blur strength */
+    backdrop-filter: blur(0px); /* Adjust blur strength */
     background: rgba(0, 0, 0, 0.3); /* Optional tint */
 }
 .mdc-top-app-bar,
@@ -119,7 +119,7 @@ body {
 .bg-dark-alt{
     color: #000;
     font-weight: 600;
-    background: #b091f3;
+    background: #8162c5;
 }
 .mdc-button.mdc-menu-button .d-flex .user-name{
     color: #fff;
@@ -138,8 +138,8 @@ body {
 }
 
 .mdc-list-item{
-    background: #b091f3;
-    border: 2px solid #b091f3; 
+    background: #8162c5;
+    border: 2px solid #8162c5; 
     margin-bottom: .15rem;
     font-size: 14px;
 }
@@ -151,6 +151,50 @@ body {
     color: #0c0c0c;
 }
 .text-dark-alt{
-    color: #0c0c0c;
+    color: #000000;
     font-weight: 600;
+}
+.btn-new,
+.btn-new:active{
+    background: #8162c5;
+    border-width: 0;
+    color: #0c0c0c;
+    font-weight:600;
+}
+.btn-new:hover,
+.btn-new:focus{
+    background:rgb(150, 120, 201);
+}
+.bg-primary-alt{
+    background: rgb(27, 145, 27);
+    padding: 5px;
+}
+.modal-content{
+    background: rgb(218, 218, 218);
+}
+.modal-btn{
+    width: 50%;
+}
+.modal-header{
+    border-radius:0;
+    background:#b091f3
+}
+.modal-footer{
+    border-top-color:#b091f3
+}
+
+legend{
+    margin:0;
+    padding: 10px;
+    background: #dcdcdc;
+}
+.table{
+    padding: 0;
+    margin: 0;
+}
+#check_out{
+    margin-top: 15px;
+    margin-right: 15px;
+    font-weight: 600;
+    font-size:16px;
 }
