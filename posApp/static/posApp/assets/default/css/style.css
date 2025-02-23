@@ -42,6 +42,10 @@ body {
 .mdc-drawer__content {
     margin: .5em !important;
 }
+.mdc-drawer__header{
+    margin-top: .15em !important;
+    padding-bottom: .005em !important;
+}
 
 .mdc-list-item.mdc-drawer-item {
     margin-left: 0 !important;
@@ -108,4 +112,45 @@ body {
     height: 100%;
     backdrop-filter: blur(1px); /* Adjust blur strength */
     background: rgba(0, 0, 0, 0.3); /* Optional tint */
+}
+.mdc-top-app-bar,
+.mdc-menu,
+.mdc-menu-surface,
+.bg-dark-alt{
+    color: #000;
+    font-weight: 600;
+    background: #b091f3;
+}
+.mdc-button.mdc-menu-button .d-flex .user-name{
+    color: #fff;
+    font-weight: 600;
+}
+.mdc-menu{
+    box-shadow: 2px ,2px, 2px, -2px, -2px, rgba(206, 206, 206, 0.3);
+}
+.mdc-menu .item-thumbnail{
+    color: #0c0c0c;
+    font-size: 10px;
+}
+.mdc-menu .mdc-list{
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.mdc-list-item{
+    background: #b091f3;
+    border: 2px solid #b091f3; 
+    margin-bottom: .15rem;
+    font-size: 14px;
+}
+.mdc-list-item:hover{
+    background: rgb(150, 120, 201);
+    border-color: rgb(150, 120, 201);
+}
+.mdi{
+    color: #0c0c0c;
+}
+.text-dark-alt{
+    color: #0c0c0c;
+    font-weight: 600;
 }

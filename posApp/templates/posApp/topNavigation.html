@@ -9,7 +9,7 @@
                     {% if 'Inventory Manager' in value %} Inventory Manager
                     {% elif 'Sales Manager' in value %} Sales Manager
                     {% elif 'Sales Person' in value %} Sales Person
-                    {% elif 'Admin' in value %} Admin
+                    {% elif 'Admin' in value %} System Admin
                     {% endif %}
                 {% endfor %}
             </span>
@@ -28,23 +28,18 @@
                     <ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical">
                         {% if request.user.is_superuser %}
                         <li class="mdc-list-item" role="menuitem">
-                            <a class="text-dark" href="{% url 'redirect-admin' %}">
+                            <a class="text-dark" href="{% url 'redirect-admin' %}" title="Settings">
                                 <div class="item-thumbnail item-thumbnail-icon-only">
-                                    <i class="mdi mdi-settings-outline text-dark"></i>
+                                    <i class="mdi mdi-settings-outline"></i>
                                     <span> Settings </span>
-                                </div>
-                                <div class="item-content d-flex align-items-start flex-column justify-content-center">
-                                    <h6 class="item-subject font-weight-normal">
-                                       
-                                    </h6>
                                 </div>
                             </a>
                         </li>
                         {% endif %}
                         <li class="mdc-list-item" role="menuitem">
-                            <a class="text-dark" href="{% url 'logout' %}">
+                            <a class="text-dark" href="{% url 'logout' %}" title="Logout">
                                 <div class="item-thumbnail item-thumbnail-icon-only">
-                                    <i class="mdi mdi-logout text-dark"></i>
+                                    <i class="mdi mdi-logout"></i>
                                     <span> Logout </span>
                                 </div>
                                 <div class="item-content d-flex align-items-start flex-column justify-content-center">
