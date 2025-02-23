@@ -5,7 +5,7 @@
             <h4 class="card-title mb-0">Category List</h4>
             <div class="text-start">
                 {% if request.user.is_staff %}
-                <button class="btn btn-primary bg-gradient btn-sm rounded-0" id="create_new"><i class="mdi mdi-plus"></i><span> Add New</span></button>
+                <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new" title="Add Category"><i class="mdi mdi-plus"></i><span> Add New</span></button>
                 {% endif %}
             </div>
         </div>
@@ -46,7 +46,7 @@
                         <td class="px-2 py-1 text-start">{{ cat.measurement_type }}</td>
                         <td class="px-2 py-1 text-center">
                             {% if cat.status == 1 %}
-                            <span class="badge bg-primary rounded-pill px-3">Active</span> {% else %}
+                            <span class="badge bg-primary-alt bg-green rounded-pill px-3">Active</span> {% else %}
                             <span class="badge bg-secondary rounded-pill px-3">Inactive</span> {% endif %}
                         </td>
                         {% for value in request.user.groups.values_list  %}

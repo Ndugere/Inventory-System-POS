@@ -52,17 +52,17 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="payment_method">Filter by Payment Method:</label>
+                            <label for="payment_method">Payment Method:</label>
                             <select name="payment_method" id="payment_method" class="form-select form-select-sm">
                                 <option value="all" {% if not selected_payment_method or selected_payment_method == "all" %}selected{% endif %}>All</option>
                                 <option value="cash" {% if selected_payment_method == "cash" %}selected{% endif %}>Cash</option>
-                                <option value="mpesa" {% if selected_payment_method == "mpesa" %}selected{% endif %}>M-Pesa</option>
+                                <!--option value="mpesa" {% if selected_payment_method == "mpesa" %}selected{% endif %}>M-Pesa</option-->
                             </select>
                         </div>
                     </div>
-                    
+                   
                     <div class="col-md-3 pt-4 text-right">
-                        <button type="submit" id="generate_report_btn" class="btn btn-primary btn-sm rounded-0">Generate Report</button>
+                        <button type="submit" id="generate_report_btn" class="btn btn-primary btn-new btn-sm mt-3 rounded-0"title="Generate">Generate Report</button>
                     </div>
                 </div>
                 
