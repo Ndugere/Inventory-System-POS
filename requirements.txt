@@ -4,4 +4,4 @@ psycopg2-binary
 requests
 django-cors-headers
 whitenoise
-flask
+djangorestframework
