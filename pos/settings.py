@@ -32,6 +32,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://simple-humane-kitten.ngrok-free.app',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://dev.10percent.shop',
 ]
 
 #Mpesa
@@ -59,7 +60,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'corsheaders',
-    'posApp',
+    'livereload',
+    'app',
 ]
 
 MIDDLEWARE = [

@@ -5,3 +5,16 @@ venv/
 env/
 frontend/
 ui/
+db.sqlite3
+migrations/
+*.json
+tailwindcss/
+less/
+scss/
+sprites/
+svgs/
+brands/
+webfonts/
+metadata/
+LICENSE.txt
+bootstrap/

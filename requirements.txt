@@ -5,3 +5,5 @@ requests
 django-cors-headers
 whitenoise
 djangorestframework
+django-livereload-server
+pyotp
