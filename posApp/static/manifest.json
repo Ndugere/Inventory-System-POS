@@ -1,0 +1,16 @@
+{
+    "name": "Ten Percent",
+    "short_name": "Ten Percent",
+    "description": "Ten Percent Shop",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#6200ea",
+    "icons": [
+        {
+            "src": "/static/posApp/assets/material-admin/images/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
