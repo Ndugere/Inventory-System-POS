@@ -34,10 +34,15 @@
                         <th class="text-center py-1">Product Code</th>
                         <th class="text-center py-1">Product</th>
                         <th class="text-center py-1">Description</th>
-                        <th class="text-center py-1">Available QTY</th>                        
-                        <th class="text-center py-1">Buying Price</th>
-                        <th class="text-center py-1">Min Price</th>
-                        <th class="text-center py-1">Max Price</th>
+                        <th class="text-center py-1">Available QTY</th> 
+                        {% for value in request.user.groups.values_list%}
+                            {% if 'Inventory Manager' in value or 'Admin' in value %}
+                            <th class="text-center py-1">Buying Price</th>
+                            {% endif %}
+                        {% endfor %}                       
+                        
+                        <th class="text-center py-1">Min Selling Price</th>
+                        <th class="text-center py-1">Max Selling Price</th>
                         <th class="text-center py-1">Status</th>
                         {% for value in request.user.groups.values_list%}
                             {% if 'Inventory Manager' in  value or 'Admin' in value%}
@@ -54,8 +59,12 @@
                         <td class="px-2 py-1 text-start">{{ product.code }}</td>
                         <td class="px-2 py-1 text-start">{{ product.name }}</td>
                         <td class="px-2 py-1 text-start">{{ product.description }}</td>     
-                        <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>                           
-                        <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
+                        <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>
+                        {% for value in request.user.groups.values_list%}
+                            {% if 'Inventory Manager' in value or 'Admin' in value %}                                                   
+                                <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
+                            {% endif %}
+                        {% endfor %}    
                         <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
                         <td class="px-2 py-1 text-end">{{ product.max_sell_price|floatformat:2|intcomma }}</td>
                         <td class="px-2 py-1 text-center">
