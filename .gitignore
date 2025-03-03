@@ -8,13 +8,11 @@ ui/
 db.sqlite3
 migrations/
 *.json
-tailwindcss/
+tailwindcss3.14
 less/
 scss/
 sprites/
 svgs/
 brands/
-webfonts/
 metadata/
 LICENSE.txt
-bootstrap/

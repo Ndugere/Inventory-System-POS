@@ -8,13 +8,15 @@
 
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
-    <link rel="stylesheet" href="{% static 'tailwindcss/output.css' %}">
-</head>
-<body>
-    {% block body %}{% endblock body %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
 
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'fontawesome/js/all.min.js' %}"></script>
     <script src="{% static 'main.js' %}"></script>
+</head>
+<body>
+    {% block body %}{% endblock body %}
+
+    {% include "snippets/loading.html" %}
 </body>
 </html>
