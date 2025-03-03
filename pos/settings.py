@@ -34,7 +34,6 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:8000',
     'https://dev.10percent.shop',
 ]
-
 #Mpesa
 MPESA_CONSUMER_KEY = config('CONSUMER_KEY')
 MPESA_CONSUMER_SECRET = config('CONSUMER_SECRET')
@@ -59,15 +58,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'rest_framework',
     'corsheaders',
-    'livereload',
     'app',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'livereload.middleware.LiveReloadScript',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -155,7 +153,7 @@ STATICFILES_DIRS = (
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = '/login'
+LOGIN_URL = '/login/'
 
 # Logging configuration
 LOGGING = {

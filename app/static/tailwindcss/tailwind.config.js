@@ -3,6 +3,7 @@ module.exports = {
     prefix: "tw-",
     content: [
         "../../templates/**/*.html",
+        "../main.js"
     ],
     theme: {
         extend: {},
