@@ -4,5 +4,7 @@ psycopg2-binary
 requests
 whitenoise
 djangorestframework
+django-cors-headers
+django-livereload-server
 pyotp
 plotly
