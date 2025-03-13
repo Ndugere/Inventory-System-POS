@@ -44,4 +44,7 @@ urlpatterns = [
     path("payment/result", views.payment_result, name="payment_result"),
     path("payment/timeout", views.payment_timeout, name="payment_timeout"),
     path('payment/check', views.check_payment, name="check_payment"),
+    
+    path('reports_view', views.reports_view, name="reports_view"),
+    path('reports_data', views.reports_data, name="reports_data"),
 ]
