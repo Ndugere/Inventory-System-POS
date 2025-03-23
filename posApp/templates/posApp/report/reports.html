@@ -14,7 +14,7 @@
     <div class="mdc-card">
         <form id="reports-filter-form" class="row align-items-end">
             <!-- Selection Mode -->
-            <div class="col-md-3 mb-3">
+            <div class="col-sm-3 col-mb-3 mb-3">
                 <label class="control-label">Filter By</label>
                 <select id="filter-type" class="form-control form-control-sm rounded-0">
                     <option value="day">Date</option>
@@ -23,17 +23,17 @@
             </div>
 
             <!-- Single Day Picker (Hidden by Default when Date Range is selected) -->
-            <div class="col-md-3 mb-3" id="single-day-filter">
+            <div class="col-sm-4 col-mb-3 mb-3" id="single-day-filter">
                 <label for="report-date" class="control-label">Select Day</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="report-date" name="report_date">
             </div>
 
             <!-- Date Range Pickers (Hidden by Default when Single Day is selected) -->
-            <div class="col-md-3 mb-3 d-none" id="date-range-filter">
+            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter">
                 <label for="start-date" class="control-label">Start Date</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="start-date" name="start_date">
             </div>
-            <div class="col-md-3 mb-3 d-none" id="date-range-filter-end">
+            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter-end">
                 <label for="end-date" class="control-label">End Date</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date">
             </div>
@@ -158,27 +158,28 @@
         .then(response => response.json())
         .then(data => {
             // Sales Trends Chart
-            const formattedHours = data.sales_trends.hours.map(formatHour);
+            const formattedHours = data.sales_trend.hours.map(formatHour);
             new Chart(document.getElementById("salesTrendChart"), {
                 type: "line",
                 data: {
                     labels: formattedHours,
                     datasets: [{
                         label: "Sales Revenue",
-                        data: data.sales_trends.amounts,
+                        data: data.sales_trend.amounts,
                         borderColor: "#0c8959",
                         fill: true
-                    },{
+                    }/**,{
                         label: "Profit",
-                        data: data.sales_trends.profits,
+                        data: data.sales_trend.profit,
                         borderColor: "#FF9800",
                         fill: true
-                    },{
+                    }/**,{
                         label: "Cost",
                         data: data.sales_trends.costs,
                         borderColor: "#db134c",
                         fill: true
-                    }]
+                    }**/
+                    ]
                 },
                 options: {
                     scales: {
@@ -204,7 +205,7 @@
                 data: {
                     labels: ["Cash", "Mpesa"],
                     datasets: [{
-                        data: data.revenue_breakdown,
+                        data: [data.revenue_breakdown.cash, data.revenue_breakdown.mpesa],
                         backgroundColor: ["#2196F3", "#FF9800"]
                     }]
                 },
@@ -218,9 +219,9 @@
                 return new Intl.NumberFormat().format(value);
             };
 
-            document.getElementById("cash_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown[0])}`;
-            document.getElementById("mpesa_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown[1])}`;
-            document.getElementById("total_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown[0] + data.revenue_breakdown[1])}`;
+            document.getElementById("cash_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.cash)}`;
+            document.getElementById("mpesa_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.mpesa)}`;
+            document.getElementById("total_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.cash + data.revenue_breakdown.mpesa)}`;
                 
             // Top Selling Products Chart
             new Chart(document.getElementById("topSellingChart"), {
@@ -280,6 +281,7 @@
             e.preventDefault();
             loadChartData();
         });
+
         function loadChartData(){
             var formData = new FormData(document.getElementById("reports-filter-form"));
             var queryParams = new URLSearchParams(formData).toString();
