@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Case, When, F, Value, FloatField
-from django.db.models.functions import ExtractHour
+from django.db.models.functions import ExtractHour, TruncDate
 from datetime import datetime, timedelta
 from posApp.models import Sales, salesItems, Products  # Adjust imports as needed
 import json
@@ -19,11 +19,77 @@ def reports_data(request):
     if 'report_date' in request.GET:
         report_date = request.GET.get('report_date')
         sales = Sales.objects.filter(date_added__date=report_date)
+        hourly_sales = sales.annotate(hour=ExtractHour('date_added')
+            ).values('hour').annotate(
+            # Using distinct=True for grand_total avoids double-counting when a sale has multiple items.
+            hourly_total=Sum('grand_total', distinct=True),
+            hourly_cost=Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty')),
+            hourly_profit=Sum('grand_total', distinct=True) - Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty'))
+        ).order_by('hour')
+
+
+        sales_trend = {
+            "hours": [data['hour'] for data in hourly_sales],
+            "amounts": [data['hourly_total'] for data in hourly_sales],
+            "costs": [data['hourly_cost'] for data in hourly_sales],
+            "profits": [data['hourly_profit'] for data in hourly_sales],
+        }
+
+        # Day's Revenue
+        revenue = sales.aggregate(
+            cash=Sum(Case(When(payment_method='cash', then=F('grand_total')), default=Value(0), output_field=FloatField())),
+            mpesa=Sum(Case(When(payment_method='mpesa', then=F('grand_total')), default=Value(0), output_field=FloatField())),
+            revenue=Sum('grand_total')
+        )
+
+        # Top Selling Products
+        top_selling = salesItems.objects.filter(sale_id__date_added__date=report_date).values(
+            "product_id__description", "product_id__name"
+        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+        top_selling_data = {
+            "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
+            "quantities": [item["total_sold"] for item in top_selling]
+        }
+
 
     elif 'start_date' in request.GET and 'end_date' in request.GET:
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         sales = Sales.objects.filter(date_added__date__range=[start_date, end_date])
+
+        # Group by date using TruncDate
+        date_sales = sales.annotate(date=TruncDate('date_added')).values('date').annotate(
+            # Use distinct=True to avoid double-counting grand_total when joining with salesItems
+            date_total=Sum('grand_total', distinct=True),
+            date_cost=Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty')),
+            date_profit=Sum('grand_total', distinct=True) - Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty'))
+        ).order_by('date')
+
+        sales_trend = {
+            "dates": [data['date'] for data in date_sales],
+            "amounts": [data['date_total'] for data in date_sales],
+            "costs": [data['date_cost'] for data in date_sales],
+            "profits": [data['date_profit'] for data in date_sales],
+        }
+
+        # Revenue breakdown remains the same.
+        revenue = sales.aggregate(
+            cash=Sum(Case(When(payment_method='cash', then=F('grand_total')), default=Value(0), output_field=FloatField())),
+            mpesa=Sum(Case(When(payment_method='mpesa', then=F('grand_total')), default=Value(0), output_field=FloatField())),
+            revenue=Sum('grand_total')
+        )
+
+        # Fix the filter by using a date range filter rather than an invalid 'and' syntax.
+        top_selling = salesItems.objects.filter(
+            sale_id__date_added__date__range=[start_date, end_date]
+        ).values(
+            "product_id__description", "product_id__name"
+        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+
+        top_selling_data = {
+            "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
+            "quantities": [item["total_sold"] for item in top_selling]
+        }
 
     else:
         today = datetime.today().date()
@@ -51,14 +117,14 @@ def reports_data(request):
             revenue=Sum('grand_total')
         )
 
-    # Top Selling Products
-    top_selling = salesItems.objects.filter(sale_id__date_added__date=today).values(
-        "product_id__description", "product_id__name"
-    ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
-    top_selling_data = {
-        "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
-        "quantities": [item["total_sold"] for item in top_selling]
-    }
+        # Top Selling Products
+        top_selling = salesItems.objects.filter(sale_id__date_added__date=today).values(
+            "product_id__description", "product_id__name"
+        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+        top_selling_data = {
+            "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
+            "quantities": [item["total_sold"] for item in top_selling]
+        }
 
     # Stock Levels
     stock_levels = Products.objects.values("code", "name", "description").annotate(stock=Sum("available_quantity")).order_by("stock")[:5]
