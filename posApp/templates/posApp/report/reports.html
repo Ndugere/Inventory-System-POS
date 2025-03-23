@@ -1,4 +1,5 @@
 {% extends 'posApp/base.html' %}
+{% load humanize %}
 {% load static %}
 
 {% block pageContent %}
@@ -10,29 +11,41 @@
     </div>
 </div>
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
-    <div class="mdc-card py-2">
-        <!-- Filters Section -->
-        <form id="reports-filter-form" class="row">
-            <!-- Single Day Picker -->
+    <div class="mdc-card">
+        <form id="reports-filter-form" class="row align-items-end">
+            <!-- Selection Mode -->
             <div class="col-md-3 mb-3">
-            <label for="report-date" class="control-label">Select Day</label>
-            <input type="date" class="form-control form-control-sm rounded-0" id="report-date" name="report_date">
+                <label class="control-label">Filter By</label>
+                <select id="filter-type" class="form-control form-control-sm rounded-0">
+                    <option value="day">Date</option>
+                    <option value="range">Date Range</option>
+                </select>
             </div>
-            <!-- Date Range Pickers -->
-            <div class="col-md-3 mb-3">
-            <label for="start-date" class="control-label">Start Date</label>
-            <input type="date" class="form-control form-control-sm rounded-0" id="start-date" name="start_date">
+
+            <!-- Single Day Picker (Hidden by Default when Date Range is selected) -->
+            <div class="col-md-3 mb-3" id="single-day-filter">
+                <label for="report-date" class="control-label">Select Day</label>
+                <input type="date" class="form-control form-control-sm rounded-0" id="report-date" name="report_date">
             </div>
-            <div class="col-md-3 mb-3">
-            <label for="end-date" class="control-label">End Date</label>
-            <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date">
+
+            <!-- Date Range Pickers (Hidden by Default when Single Day is selected) -->
+            <div class="col-md-3 mb-3 d-none" id="date-range-filter">
+                <label for="start-date" class="control-label">Start Date</label>
+                <input type="date" class="form-control form-control-sm rounded-0" id="start-date" name="start_date">
             </div>
-            <div class="col-md-3 pt-6 text-center">
-            <button type="submit" class="btn btn-primary btn-sm">Generate Report</button>
+            <div class="col-md-3 mb-3 d-none" id="date-range-filter-end">
+                <label for="end-date" class="control-label">End Date</label>
+                <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-md-3 text-end">
+                <button type="submit" id="generate-report-btn" class="btn btn-primary btn-sm">Generate Report</button>
             </div>
         </form>
     </div>
 </div>
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card">
         <div class="container">
@@ -40,6 +53,24 @@
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <h4 class="text-lg font-semibold">Revenue Breakdown</h4>
                 <canvas id="revenueBreakdownChart"></canvas>
+            </div>
+        </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="row">
+                    <div class="col-4">
+                        <h5 class="text-lg font-semibold">Cash</h5>
+                        <p id="cash_revenue" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-lg font-semibold">Mpesa</h5>
+                        <p id="mpesa_revenue" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-lg font-semibold">Total</h5>
+                        <p id="total_revenue" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -110,12 +141,153 @@
 
 <script src="{% static 'posApp/assets/default/js/chart.min.js'%}"></script>
 <script>
+    function formatHour(hour) {
+        hour = parseInt(hour); // Ensure it's a number
+        if (hour === 0) {
+            return "12 AM";
+        } else if (hour < 12) {
+            return hour + " AM";
+        } else if (hour === 12) {
+            return "12 PM";
+        } else {
+            return (hour - 12) + " PM";
+        }
+    }
     document.addEventListener("DOMContentLoaded", function() {
-            fetch("{% url 'reports_data' %}")
+        fetch("{% url 'reports_data' %}")
+        .then(response => response.json())
+        .then(data => {
+            // Sales Trends Chart
+            const formattedHours = data.sales_trends.hours.map(formatHour);
+            new Chart(document.getElementById("salesTrendChart"), {
+                type: "line",
+                data: {
+                    labels: formattedHours,
+                    datasets: [{
+                        label: "Sales Revenue",
+                        data: data.sales_trends.amounts,
+                        borderColor: "#0c8959",
+                        fill: true
+                    },{
+                        label: "Profit",
+                        data: data.sales_trends.profits,
+                        borderColor: "#FF9800",
+                        fill: true
+                    },{
+                        label: "Cost",
+                        data: data.sales_trends.costs,
+                        borderColor: "#db134c",
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Hour of Day"
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: "Sales Revenue (Ksh)"
+                            }
+                        }
+                    },
+                }
+            });
+                
+            // Revenue Breakdown Chart
+            new Chart(document.getElementById("revenueBreakdownChart"), {
+                type: "pie",
+                data: {
+                    labels: ["Cash", "Mpesa"],
+                    datasets: [{
+                        data: data.revenue_breakdown,
+                        backgroundColor: ["#2196F3", "#FF9800"]
+                    }]
+                },
+                options:{
+                    legend: {
+                        position: "bottom",
+                    },
+                }
+            });
+            const formatRevenue = (value) => {
+                return new Intl.NumberFormat().format(value);
+            };
+
+            document.getElementById("cash_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown[0])}`;
+            document.getElementById("mpesa_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown[1])}`;
+            document.getElementById("total_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown[0] + data.revenue_breakdown[1])}`;
+                
+            // Top Selling Products Chart
+            new Chart(document.getElementById("topSellingChart"), {
+                type: "bar",
+                data: {
+                    labels: data.top_selling.products,
+                    datasets: [{
+                        label: "Units Sold",
+                        data: data.top_selling.quantities,
+                        backgroundColor: "#673AB7"
+                    }]
+                }
+            });
+                
+            // Stock Levels Chart
+            new Chart(document.getElementById("stockLevelsChart"), {
+                type: "bar",
+                data: {
+                    labels: data.stock_levels.products,
+                    datasets: [{
+                        label: "Stock Available",
+                        data: data.stock_levels.quantities,
+                        backgroundColor: "#E91E63"
+                    }]
+                }
+            });            
+        });
+
+        var today = new Date().toISOString().split('T')[0]; 
+        document.getElementById("report-date").value = today;
+        // Set default value for single date picker
+        document.getElementById("report-date").value = new Date().toISOString().split("T")[0];
+    
+        var filterType = document.getElementById("filter-type");
+        var singleDayFilter = document.getElementById("single-day-filter");
+        var dateRangeFilterStart = document.getElementById("date-range-filter");
+        var dateRangeFilterEnd = document.getElementById("date-range-filter-end");
+    
+        // Function to toggle filter visibility
+        function toggleFilters() {
+            if (filterType.value === "day") {
+                singleDayFilter.classList.remove("d-none");
+                dateRangeFilterStart.classList.add("d-none");
+                dateRangeFilterEnd.classList.add("d-none");
+            } else {
+                singleDayFilter.classList.add("d-none");
+                dateRangeFilterStart.classList.remove("d-none");
+                dateRangeFilterEnd.classList.remove("d-none");
+            }
+        } 
+
+        // Attach event listener
+        filterType.addEventListener("change", toggleFilters);
+        
+        // Load chart data via AJAX based on filter values
+        document.getElementById("reports-filter-form").addEventListener("submit", function(e) {
+            e.preventDefault();
+            loadChartData();
+        });
+        function loadChartData(){
+            var formData = new FormData(document.getElementById("reports-filter-form"));
+            var queryParams = new URLSearchParams(formData).toString();
+            fetch("{% url 'reports_data' %}?" + queryParams)
             .then(response => response.json())
             .then(data => {
-                // Sales Trends Chart
-                new Chart(document.getElementById("salesTrendChart"), {
+                // Create Sales Trends Chart
+                var salesTrendChart = new Chart(document.getElementById("salesTrendChart"), {
                     type: "line",
                     data: {
                         labels: data.sales_trends.dates,
@@ -125,52 +297,21 @@
                             borderColor: "#0c8959",
                             fill: true
                         }]
-                    }
-                });
-                
-                // Revenue Breakdown Chart
-                new Chart(document.getElementById("revenueBreakdownChart"), {
-                    type: "pie",
-                    data: {
-                        labels: ["Cash", "Mpesa"],
-                        datasets: [{
-                            data: data.revenue_breakdown,
-                            backgroundColor: ["#2196F3", "#FF9800"]
-                        }]
                     },
-                    options:{
-                        legend: {
-                            position: "bottom",
-                        },
-                    }
-                });
-                
-                // Top Selling Products Chart
-                new Chart(document.getElementById("topSellingChart"), {
-                    type: "bar",
-                    data: {
-                        labels: data.top_selling.products,
-                        datasets: [{
-                            label: "Units Sold",
-                            data: data.top_selling.quantities,
-                            backgroundColor: "#673AB7"
-                        }]
-                    }
-                });
-                
-                // Stock Levels Chart
-                new Chart(document.getElementById("stockLevelsChart"), {
-                    type: "bar",
-                    data: {
-                        labels: data.stock_levels.products,
-                        datasets: [{
-                            label: "Stock Available",
-                            data: data.stock_levels.quantities,
-                            backgroundColor: "#E91E63"
-                        }]
+                    options: {
+                        onClick: function(evt, activeEls) {
+                            // Get clicked element details
+                            var activePoint = salesTrendChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+                            if (activePoint.length) {
+                                var index = activePoint[0].index;
+                                var dateClicked = data.sales_trends.dates[index];
+                                loadChartDetail("sales", dateClicked);
+                            }
+                        }
                     }
                 });
             });
+        }
     });
 
 </script>

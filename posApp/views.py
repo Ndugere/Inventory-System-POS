@@ -448,11 +448,9 @@ def reports_view(request):
 @login_required
 def reports_data(request):
     today = datetime.today().astimezone()
-    last_7_days = today - timedelta(days=7)
-    last_1_year = today - timedelta(weeks=52)
     
     # Sales Trends (Last 7 Days)
-    sales_trends = Sales.objects.filter(date_added__gte=last_7_days)
+    sales_trends = Sales.objects.filter(date_added__gte= today - timedelta(days=1))
     trends_data = sales_trends.values_list("date_added__date").annotate(amount=Sum("grand_total"))
     sales_trends_data = {
         "dates": [str(data[0]) for data in trends_data],

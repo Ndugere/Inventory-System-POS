@@ -1,4 +1,4 @@
-from . import views
+from . import views, reports_views
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
@@ -46,5 +46,6 @@ urlpatterns = [
     path('payment/check', views.check_payment, name="check_payment"),
     
     path('reports_view', views.reports_view, name="reports_view"),
-    path('reports_data', views.reports_data, name="reports_data"),
+    path('reports_data', reports_views.reports_data, name="reports_data"),
+    path('reports_detail_data', reports_views.reports_detail_data, name="reports_detail_data"),
 ]
