@@ -29,13 +29,16 @@ def reports_data(request):
         today = datetime.today().date()
         sales = Sales.objects.filter(date_added__date=today)
         hourly_sales = sales.annotate(hour=ExtractHour('date_added')).values('hour').annotate(
-            hourly_total = Sum('grand_total')
+            hourly_total=Sum('grand_total'),
+            hourly_cost=Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty')),
+            hourly_profit=Sum('grand_total') - Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty'))
         ).order_by('hour')
-
 
         sales_trend = {
             "hours": [data['hour'] for data in hourly_sales],
-            "amounts": [data['hourly_total'] for data in hourly_sales]
+            "amounts": [data['hourly_total'] for data in hourly_sales],
+            "costs": [data['hourly_cost'] for data in hourly_sales],
+            "profits": [data['hourly_profit'] for data in hourly_sales],
         }
 
         # Day's Revenue
@@ -45,23 +48,25 @@ def reports_data(request):
             revenue=Sum('grand_total')
         )
 
-        # Top Selling Products
-        top_selling = salesItems.objects.filter(sale_id__date_added__date=today).values(
+    # Top Selling Products
+    top_selling = salesItems.objects.filter(sale_id__date_added__date=today).values(
         "product_id__description", "product_id__name"
-        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
-        top_selling_data = {
-            "products": [f"{item['product_id__name']}({item['product_id__description']})" for item in top_selling],
-            "quantities": [item["total_sold"] for item in top_selling]
-        }
+    ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+    top_selling_data = {
+        "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
+        "quantities": [item["total_sold"] for item in top_selling]
+    }
 
     # Stock Levels
     stock_levels = Products.objects.values("code", "name", "description").annotate(stock=Sum("available_quantity")).order_by("stock")[:5]
     stock_levels_data = {
-        "products": [f"{item['name']}({item['description']})" for item in stock_levels],
+        "products": [f"{item['name']} ({item['description']})" for item in stock_levels],
         "quantities": [item["stock"] for item in stock_levels]
     }
 
-    
+    # Convert Decimal to float for JSON serialization
+    revenue = {k: float(v) if isinstance(v, Decimal) else v for k, v in revenue.items()}
+
     data = {
         "sales_trend": sales_trend,
         "revenue_breakdown": revenue, 
