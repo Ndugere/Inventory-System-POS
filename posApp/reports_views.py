@@ -28,11 +28,14 @@ def reports_data(request):
     else:
         today = datetime.today().date()
         sales = Sales.objects.filter(date_added__date=today)
-        hourly_sales = sales.annotate(hour=ExtractHour('date_added')).values('hour').annotate(
-            hourly_total=Sum('grand_total'),
+        hourly_sales = sales.annotate(hour=ExtractHour('date_added')
+            ).values('hour').annotate(
+            # Using distinct=True for grand_total avoids double-counting when a sale has multiple items.
+            hourly_total=Sum('grand_total', distinct=True),
             hourly_cost=Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty')),
-            hourly_profit=Sum('grand_total') - Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty'))
+            hourly_profit=Sum('grand_total', distinct=True) - Sum(F('salesitems__product_id__buy_price') * F('salesitems__qty'))
         ).order_by('hour')
+
 
         sales_trend = {
             "hours": [data['hour'] for data in hourly_sales],
