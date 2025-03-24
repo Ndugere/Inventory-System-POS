@@ -23,9 +23,9 @@ def reports_data(request):
         output_field=FloatField()
     )
 
-    if 'report_date' in request.GET:
-        report_date = request.GET.get('report_date')
-        sales = Sales.objects.filter(date_added__date=report_date)
+    def day_report(date):        
+        # Sales trend
+        sales = Sales.objects.filter(date_added__date=date)
         hourly_sales = sales.annotate(hour=ExtractHour('date_added')
             ).values('hour').annotate(
             # Using distinct=True for grand_total avoids double-counting when a sale has multiple items.
@@ -33,30 +33,40 @@ def reports_data(request):
             hourly_cost=Sum(cost_expression),
             hourly_profit=Sum('grand_total', distinct=True) - Sum(cost_expression)
         ).order_by('hour')
-
+        
         sales_trend = {
             "hours": [data['hour'] for data in hourly_sales],
             "amounts": [data['hourly_total'] for data in hourly_sales],
             "costs": [data['hourly_cost'] for data in hourly_sales],
             "profits": [data['hourly_profit'] for data in hourly_sales],
         }
-
+        
         # Day's Revenue
         revenue = sales.aggregate(
             cash=Sum(Case(When(payment_method='cash', then=F('grand_total')), default=Value(0), output_field=FloatField())),
             mpesa=Sum(Case(When(payment_method='mpesa', then=F('grand_total')), default=Value(0), output_field=FloatField())),
             revenue=Sum('grand_total')
         )
-
+        
         # Top Selling Products
-        top_selling = salesItems.objects.filter(sale_id__date_added__date=report_date).values(
+        top_selling = salesItems.objects.filter(sale_id__date_added__date=date).values(
             "product_id__description", "product_id__name"
         ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
         top_selling_data = {
             "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
             "quantities": [item["total_sold"] for item in top_selling]
         }
+        
+        return {"sales_trend": sales_trend, "revenue": revenue, "top_selling": top_selling_data}
 
+    if 'report_date' in request.GET:
+        report_date = request.GET.get('report_date')
+        report = day_report(report_date)
+        sales_trend = report["sales_trend"]
+        revenue = report["revenue"]
+        top_selling_data = report["top_selling"]
+       
+    
     elif 'start_date' in request.GET and 'end_date' in request.GET:
         # Convert start_date and end_date strings to date objects.
         start_date_str = request.GET.get('start_date')
@@ -105,37 +115,10 @@ def reports_data(request):
 
     else:
         today = datetime.today().date()
-        sales = Sales.objects.filter(date_added__date=today)
-        hourly_sales = sales.annotate(hour=ExtractHour('date_added')
-            ).values('hour').annotate(
-            # Using distinct=True for grand_total avoids double-counting when a sale has multiple items.
-            hourly_total=Sum('grand_total', distinct=True),
-            hourly_cost=Sum(cost_expression),
-            hourly_profit=Sum('grand_total', distinct=True) - Sum(cost_expression)
-        ).order_by('hour')
-
-        sales_trend = {
-            "hours": [data['hour'] for data in hourly_sales],
-            "amounts": [data['hourly_total'] for data in hourly_sales],
-            "costs": [data['hourly_cost'] for data in hourly_sales],
-            "profits": [data['hourly_profit'] for data in hourly_sales],
-        }
-
-        # Day's Revenue
-        revenue = sales.aggregate(
-            cash=Sum(Case(When(payment_method='cash', then=F('grand_total')), default=Value(0), output_field=FloatField())),
-            mpesa=Sum(Case(When(payment_method='mpesa', then=F('grand_total')), default=Value(0), output_field=FloatField())),
-            revenue=Sum('grand_total')
-        )
-
-        # Top Selling Products
-        top_selling = salesItems.objects.filter(sale_id__date_added__date=today).values(
-            "product_id__description", "product_id__name"
-        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
-        top_selling_data = {
-            "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
-            "quantities": [item["total_sold"] for item in top_selling]
-        }
+        report = day_report(today)
+        sales_trend = report["sales_trend"]
+        revenue = report["revenue"]
+        top_selling_data = report["top_selling"]
 
     # Stock Levels
     stock_levels = Products.objects.values("code", "name", "description").annotate(

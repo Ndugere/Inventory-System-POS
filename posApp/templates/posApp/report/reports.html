@@ -23,23 +23,23 @@
             </div>
 
             <!-- Single Day Picker (Shown when filtering by day) -->
-            <div class="col-sm-3 mb-3" id="single-day-filter">
+            <div class="col-sm-4 col-md-3 mb-3" id="single-day-filter">
                 <label for="report-date" class="control-label">Select Day</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="report-date" name="report_date">
             </div>
 
             <!-- Date Range Pickers (Shown when filtering by range) -->
-            <div class="col-sm-3 mb-3 d-none" id="date-range-filter">
+            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter">
                 <label for="start-date" class="control-label">Start Date</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="start-date" name="start_date">
             </div>
-            <div class="col-sm-3 mb-3 d-none" id="date-range-filter-end">
+            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter-end">
                 <label for="end-date" class="control-label">End Date</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date">
             </div>
 
             <!-- Submit Button -->
-            <div class="mb-3 text-end">
+            <div class="col-md-3 text-end">
                 <button type="submit" id="generate-report-btn" class="btn btn-primary btn-sm">Generate Report</button>
             </div>
         </form>
@@ -83,6 +83,20 @@
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <h4 class="text-lg font-semibold">Sales Trends</h4>
                 <canvas id="salesTrendChart"></canvas>
+            </div>
+        </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="row">
+                    <div class="col-6">
+                        <h5 class="text-lg font-semibold">Total Sales Revenue</h5>
+                        <p id="total_revenue_trend" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-lg font-semibold">Total Profit</h5>
+                        <p id="total_profit_trend" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -138,7 +152,6 @@
         if (data.sales_trend.hours) {
             trendLabels = data.sales_trend.hours.map(formatHour);
         } else if (data.sales_trend.dates) {
-            // Format dates as needed (e.g., MM/DD/YYYY)
             trendLabels = data.sales_trend.dates;
         }
 
@@ -192,11 +205,17 @@
             options: { plugins: { legend: { position: "bottom" } } }
         });
 
-        // Update Revenue Figures
+        // Update Revenue Figures for breakdown
         const formatRevenue = (value) => new Intl.NumberFormat().format(value);
         document.getElementById("cash_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.cash)}`;
         document.getElementById("mpesa_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.mpesa)}`;
         document.getElementById("total_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.cash + data.revenue_breakdown.mpesa)}`;
+
+        // Calculate and display total revenue and profit from sales trend data
+        const totalRevenueTrend = data.sales_trend.amounts.reduce((sum, val) => sum + val, 0);
+        const totalProfitTrend = data.sales_trend.profits.reduce((sum, val) => sum + val, 0);
+        document.getElementById("total_revenue_trend").textContent = `Ksh. ${formatRevenue(totalRevenueTrend)}`;
+        document.getElementById("total_profit_trend").textContent = `Ksh. ${formatRevenue(totalProfitTrend)}`;
 
         // Top Selling Products Chart (Bar)
         topSellingChart = new Chart(document.getElementById("topSellingChart"), {
@@ -247,14 +266,11 @@
         const filterType = document.getElementById("filter-type").value;
         let queryParams = "";
 
-        // Build query parameters based on filter type
         if (filterType === "day") {
-            // Only single day parameter should be included
             queryParams = new URLSearchParams({
                 report_date: formData.get("report_date")
             }).toString();
         } else {
-            // Date range: include both start_date and end_date
             queryParams = new URLSearchParams({
                 start_date: formData.get("start_date"),
                 end_date: formData.get("end_date")
@@ -267,7 +283,6 @@
         .catch(error => console.error("Error loading report data:", error));
     }
 
-    // Set initial default values for the date inputs and toggle filters accordingly
     document.addEventListener("DOMContentLoaded", function() {
         let todayStr = new Date().toISOString().split("T")[0];
         document.getElementById("report-date").value = todayStr;
@@ -293,10 +308,8 @@
         filterType.addEventListener("change", toggleFilters);
         toggleFilters();
 
-        // Load default chart data on page load
         loadChartData();
 
-        // Handle filter form submission
         document.getElementById("reports-filter-form").addEventListener("submit", function(e) {
             e.preventDefault();
             loadChartData();
