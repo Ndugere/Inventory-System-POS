@@ -14,7 +14,7 @@
     <div class="mdc-card">
         <form id="reports-filter-form" class="row align-items-end">
             <!-- Selection Mode -->
-            <div class="col-sm-3 col-mb-3 mb-3">
+            <div class="col-sm-3 mb-3">
                 <label class="control-label">Filter By</label>
                 <select id="filter-type" class="form-control form-control-sm rounded-0">
                     <option value="day">Date</option>
@@ -23,23 +23,23 @@
             </div>
 
             <!-- Single Day Picker (Shown when filtering by day) -->
-            <div class="col-sm-4 col-mb-3 mb-3" id="single-day-filter">
+            <div class="col-sm-3 mb-3" id="single-day-filter">
                 <label for="report-date" class="control-label">Select Day</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="report-date" name="report_date">
             </div>
 
             <!-- Date Range Pickers (Shown when filtering by range) -->
-            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter">
+            <div class="col-sm-3 mb-3 d-none" id="date-range-filter">
                 <label for="start-date" class="control-label">Start Date</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="start-date" name="start_date">
             </div>
-            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter-end">
+            <div class="col-sm-3 mb-3 d-none" id="date-range-filter-end">
                 <label for="end-date" class="control-label">End Date</label>
                 <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date">
             </div>
 
             <!-- Submit Button -->
-            <div class="col-md-3 text-end">
+            <div class="mb-3 text-end">
                 <button type="submit" id="generate-report-btn" class="btn btn-primary btn-sm">Generate Report</button>
             </div>
         </form>
@@ -138,7 +138,7 @@
         if (data.sales_trend.hours) {
             trendLabels = data.sales_trend.hours.map(formatHour);
         } else if (data.sales_trend.dates) {
-            // Assuming dates are in YYYY-MM-DD format; format them as needed
+            // Format dates as needed (e.g., MM/DD/YYYY)
             trendLabels = data.sales_trend.dates;
         }
 
@@ -169,7 +169,6 @@
                     }
                 },
                 onClick: function(evt) {
-                    // Placeholder for handling click events on the sales trend chart.
                     const points = salesTrendChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
                     if (points.length) {
                         const index = points[0].index;
@@ -227,42 +226,58 @@
                 }]
             },
             options: {
-                scales: { x: { title: { display: true, text: "Products" } } }
+                scales: { 
+                    x: { title: { display: true, text: "Products" } }, 
+                    y: { title: { display: true, text: "No. Available" } }
+                }
             }
         });
     }
 
     // Placeholder: Load detailed report data when clicking on a chart point
     function loadChartDetail(chart, identifier) {
-        // Implement AJAX call to fetch detailed data from reports_detail_data view
         console.log("Load detail for", chart, identifier);
         // Example: window.location.href = `/reports/detail?chart=${chart}&id=${identifier}`;
     }
 
     // Function to load chart data based on current filter selections
     function loadChartData() {
-        let formData = new FormData(document.getElementById("reports-filter-form"));
-        let queryParams = new URLSearchParams(formData).toString();
+        const form = document.getElementById("reports-filter-form");
+        const formData = new FormData(form);
+        const filterType = document.getElementById("filter-type").value;
+        let queryParams = "";
+
+        // Build query parameters based on filter type
+        if (filterType === "day") {
+            // Only single day parameter should be included
+            queryParams = new URLSearchParams({
+                report_date: formData.get("report_date")
+            }).toString();
+        } else {
+            // Date range: include both start_date and end_date
+            queryParams = new URLSearchParams({
+                start_date: formData.get("start_date"),
+                end_date: formData.get("end_date")
+            }).toString();
+        }
+
         fetch("{% url 'reports_data' %}?" + queryParams)
         .then(response => response.json())
-        .then(data => {
-            renderCharts(data);
-        })
+        .then(data => renderCharts(data))
         .catch(error => console.error("Error loading report data:", error));
     }
 
-    // Set initial default values for the date inputs
+    // Set initial default values for the date inputs and toggle filters accordingly
     document.addEventListener("DOMContentLoaded", function() {
         let todayStr = new Date().toISOString().split("T")[0];
         document.getElementById("report-date").value = todayStr;
         document.getElementById("start-date").value = todayStr;
         document.getElementById("end-date").value = todayStr;
 
-        // Toggle filter visibility based on selection
-        let filterType = document.getElementById("filter-type");
-        let singleDayFilter = document.getElementById("single-day-filter");
-        let dateRangeFilter = document.getElementById("date-range-filter");
-        let dateRangeFilterEnd = document.getElementById("date-range-filter-end");
+        const filterType = document.getElementById("filter-type");
+        const singleDayFilter = document.getElementById("single-day-filter");
+        const dateRangeFilter = document.getElementById("date-range-filter");
+        const dateRangeFilterEnd = document.getElementById("date-range-filter-end");
 
         function toggleFilters() {
             if (filterType.value === "day") {

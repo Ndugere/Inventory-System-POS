@@ -47,5 +47,4 @@ urlpatterns = [
     
     path('reports_view', views.reports_view, name="reports_view"),
     path('reports_data', reports_views.reports_data, name="reports_data"),
-    path('reports_detail_data', reports_views.reports_detail_data, name="reports_detail_data"),
 ]
