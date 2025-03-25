@@ -1,0 +1,74 @@
+{% load static %}
+<!-- partial:partials/_sidebar.html -->
+<aside class="mdc-drawer mdc-drawer--dismissible mdc-drawer--open bg-dark-alt">
+    <div class="mdc-drawer__header border-bottom border-dark">
+        <a href="{% url 'home-page' %}" class="brand-logo">
+            <h5 class="text-center text-dark-alt">Inventory System & Pos</h5>
+        </a>
+    </div>
+    <div class="mdc-drawer__content">
+        <div class="mdc-list-group">
+            <nav class="mdc-list mdc-drawer-menu">
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'home-page' %}" title="Home">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">home</i> 
+                        <span class="text-dark-alt">Home</span>
+                    </a>
+                </div>
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'category-page' %}" title="Category List">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">list</i> 
+                        <span class="text-dark-alt">Category List</span>
+                    </a>
+                </div>
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'product-page' %}"title="Product List">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">label</i> 
+                        <span class="text-dark-alt">Product List</span>
+                    </a>
+                </div>
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Sales Manager' in value or 'Sales Person' in value or 'Admin' in value %}                    
+                    <div class="mdc-list-item mdc-drawer-item">
+                        <a class="mdc-drawer-link" href="{% url 'pos-page' %}" title="Point of Sales">
+                            <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">payment</i> 
+                            <span class="text-dark-alt">POS</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Sales Manager' in value or 'Admin' in value %}
+                        <div class="mdc-list-item mdc-drawer-item">
+                            <a class="mdc-drawer-link" href="{% url 'sales-page' %}" title="Sales">
+                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">receipt</i>
+                                <span class="text-dark-alt">Sales</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Sales Manager' in value or 'Inventory Manager' in value or 'Admin' in value %}
+                        <div class="mdc-list-item mdc-drawer-item">
+                            <a class="mdc-drawer-link" href="{% url 'reports-page' %}" title="Reports">
+                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">book</i> 
+                                <span class="text-dark-alt">Reports</span>
+                            </a>
+                        </div>
+                    {% endif %}                
+                {% endfor %}
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Sales Manager' in value or 'Inventory Manager' in value or 'Admin' in value %}
+                        <div class="mdc-list-item mdc-drawer-item">
+                            <a class="mdc-drawer-link" href="{% url 'reports_view' %}" title="Reports View">
+                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">book</i> 
+                                <span class="text-dark-alt">Reports View</span>
+                            </a>
+                        </div>
+                    {% endif %}                
+                {% endfor %}
+            </nav>
+        </div>
+    </div>
+</aside>
+<!-- partial -->
