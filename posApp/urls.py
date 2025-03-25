@@ -46,5 +46,5 @@ urlpatterns = [
     path('payment/check', views.check_payment, name="check_payment"),
     
     path('reports_view', views.reports_view, name="reports_view"),
-    path('reports_data', reports_views.reports_data, name="reports_data"),
+    path('reports_data', report_views2.reports_data, name="reports_data"),
 ]

@@ -3,7 +3,7 @@ from pickle import FALSE
 from django.shortcuts import redirect, render
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
-from models import Category, Products, Sales, salesItems, MeasurementType, Report, MpesaPaymentTransaction
+from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report, MpesaPaymentTransaction
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout

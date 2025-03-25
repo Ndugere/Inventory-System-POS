@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title|default:"Login" }}</title>
+    <link rel="stylesheet" href="{% static 'posApp/assets/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/css/demo/style.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/default/css/style.css' %}">
+    <script src="{% static 'posApp/assets/default/js/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'posApp/assets/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <style>
+        body, .blur-overlay {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .auth-container {
+            max-width: 500px;
+            width: 100%;
+            padding: 20px;
+            background: #b7a0e9;;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .mdc-text-field {
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+        .mdc-button {
+            width: 100%;
+        }
+        .stretch-card{
+            padding-top: 1rem;
+        }
+        h3{
+            border-bottom: 2px solid;
+            padding-bottom: 20px;
+        }
+        label{
+            display:flex;
+            justify-content: left;
+            font-weight:600;
+            color: rgb(33, 32, 32);
+        }
+        .form-control,
+        .form-control:focus,
+        .form-control:active{
+            margin-top:.5rem;
+            background-color:#efe9fc;
+        }
+        .form-group{
+            margin-top: 2rem;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        .btn-login{
+            font-weight:600;
+            background: #5d1b9e;
+        }
+        .btn-login:hover{
+            background:#672f9e;
+        }
+        #login-user{
+            padding-bottom: 1rem;
+            margin: 1rem;
+            border: 1px solid #828282;;;
+            border-radius: 10px;
+        }
+        #login-user header{
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            border-width: 0;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            background: #7a4cc5;
+            color: #fff;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="login-body">
+    <div class="blur-overlay">
+        <div class="auth-container text-center">
+            <h3>iPOS System</h3>
+            
+            <form id="login-user" method="post">
+                {% csrf_token %}
+                <header>
+                    <h4> Login</h4>
+                </header>
+                <div class="form-group">
+                    <label for="text-field-hero-input" class="label">Username</label>
+                    <input class="form-control" name="username" id="text-field-hero-input">
+                </div>
+                <div class="form-group">
+                    <label for="text-field-hero-password-input" class="label">Password</label>
+                    <input class="form-control" name="password" type="password" id="text-field-hero-password-input">                    
+                </div>
+                <div class="form-group text-center">
+                    <button class="btn btn-primary btn-login mdc-button mdc-button--raised w-50" title="Login">
+                        Login
+                    </button>
+                </div>
+            </form>
+        </div>        
+    </div>
+    <script>
+        $(function() {
+            $('#login-user').submit(function(e) {
+                e.preventDefault();
+                var _this = $(this);
+                $('.err-msg').remove();
+                var el = $('<div>').addClass("alert alert-danger err-msg").hide();
+                
+                if (!_this[0].checkValidity()) {
+                    _this[0].reportValidity();
+                    return false;
+                }
+                
+                $.ajax({
+                    headers: {"X-CSRFToken": '{{csrf_token}}'},
+                    url: "{% url 'login-user' %}",
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
+                    method: 'POST',
+                    dataType: 'json',
+                    error: err => {
+                        alert("An error occurred");
+                    },
+                    success: function(resp) {
+                        if (resp.status === 'success') {
+                            window.location.href = "{% url 'home-page' %}";
+                        } else {
+                            el.text(resp.msg || "Login failed");
+                            _this.prepend(el);
+                            el.show('slow');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
