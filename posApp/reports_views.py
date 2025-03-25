@@ -9,6 +9,7 @@ from posApp.models import Sales, salesItems, Products  # Adjust imports as neede
 from collections import Counter
 from decimal import Decimal
 
+
 @login_required
 def reports_data(request):
     """
