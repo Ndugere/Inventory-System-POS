@@ -18,7 +18,7 @@
                 <label class="control-label">Filter By</label>
                 <select id="filter-type" class="form-control form-control-sm rounded-0">
                     <option value="day">Date</option>
-                    <option value="range">Date Range</option>
+                    <option value="date_range">Date Range</option>
                 </select>
             </div>
 
@@ -46,8 +46,8 @@
     </div>
 </div>
 
-<!-- Revenue Breakdown and Sales Trends -->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
+<!-- Revenue Breakdown-->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-5">
     <div class="mdc-card">
         <div class="container">
             <!-- Revenue Breakdown -->
@@ -59,27 +59,30 @@
         <div class="container">
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <div class="row">
-                    <div class="col-4">
+                    <div class="col-md-4 p-0">
                         <h5 class="text-lg font-semibold">Cash</h5>
                         <p id="cash_revenue" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
-                    <div class="col-4">
+                    <div class="col-md-4 p-0">
                         <h5 class="text-lg font-semibold">Mpesa</h5>
                         <p id="mpesa_revenue" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
-                    <div class="col-4">
+                    <div class="col-md-4 p-0">
                         <h5 class="text-lg font-semibold">Total</h5>
                         <p id="total_revenue" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary " id="revenue-detail" title="Full Revenue Breakdown">Full Revenue Breakdown</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
+</div>          
+<!-- Sales Trends -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-7">
     <div class="mdc-card">
-        <div class="container">            
-            <!-- Sales Trends -->
+        <div class="container">  
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <h4 class="text-lg font-semibold">Sales Trends</h4>
                 <canvas id="salesTrendChart"></canvas>
@@ -96,12 +99,15 @@
                         <h5 class="text-lg font-semibold">Total Profit</h5>
                         <p id="total_profit_trend" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary " id="sales-trend-detail" title="Full Sales Trend">Full Sales Trend</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Top Selling and Stock Levels -->
+<!-- Top Selling -->
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card">
         <div class="container">            
@@ -111,8 +117,16 @@
                 <canvas id="topSellingChart"></canvas>
             </div>
         </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="col-12 text-end">
+                        <button class="btn btn-primary " id="product-sales" title="Full Product Sales">Full Product Sales</button>
+                    </div>
+            </div>
+        </div>
     </div>
 </div>
+<!--Stock Levels -->
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card">
         <div class="container">            
@@ -122,8 +136,19 @@
                 <canvas id="stockLevelsChart"></canvas>
             </div>
         </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="row">
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary " id="stock-detail" title="Full Stock Details">Full Stock Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+
 
 <script src="{% static 'posApp/assets/default/js/chart.min.js'%}"></script>
 <script>
