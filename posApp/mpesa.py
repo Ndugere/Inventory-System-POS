@@ -14,16 +14,16 @@ class MpesaClient:
         
         if environment == 'production':
             baseUrl = 'https://api.safaricom.co.ke/'
-            self.api_url = baseUrl+'/mpesa/stkpush/v1/processrequest'
-            self.c2b_url = baseUrl+'/mpesa/c2b/v1/registerurl'
-            self.b2b_url = baseUrl+'/mpesa/b2b/v1/registerurl'
-            self.b2c_url = baseUrl+'/mpesa/b2c/v1/registerurl'
+            self.api_url = baseUrl+'mpesa/stkpush/v1/processrequest'
+            self.c2b_url = baseUrl+'mpesa/c2b/v1/registerurl'
+            self.b2b_url = baseUrl+'mpesa/b2b/v1/registerurl'
+            self.b2c_url = baseUrl+'mpesa/b2c/v1/registerurl'
         else:
-            baseUrl = 'https://sandbox.safaricom.co.ke'
-            self.api_url = baseUrl+'/mpesa/stkpush/v1/processrequest'
-            self.c2b_url = baseUrl+'/mpesa/c2b/v1/registerurl'
-            self.b2b_url = baseUrl+'/mpesa/b2b/v1/registerurl'
-            self.b2c_url = baseUrl+'/mpesa/b2c/v1/registerurl'
+            baseUrl = 'https://sandbox.safaricom.co.ke/'
+            self.api_url = baseUrl+'mpesa/stkpush/v1/processrequest'
+            self.c2b_url = baseUrl+'mpesa/c2b/v1/registerurl'
+            self.b2b_url = baseUrl+'mpesa/b2b/v1/registerurl'
+            self.b2c_url = baseUrl+'mpesa/b2c/v1/registerurl'
 
     def register_urls(self):
         confirmation_url = settings.MPESA_CONFIRMATION_URL

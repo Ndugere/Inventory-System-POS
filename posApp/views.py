@@ -441,7 +441,7 @@ def reports(request):
 @login_required
 def reports_view(request):
     context = {
-        "page_title": "Sales & Inventory Reports"
+        "page_title": "Reports"
     }
     return render(request, "posApp/report/reports.html", context)
 
