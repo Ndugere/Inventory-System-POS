@@ -6,10 +6,11 @@
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h3 class="mb-0">Sales & Inventory Reports</h3>
+            <h3 class="mb-0">Reports</h3>
         </div>
     </div>
 </div>
+<!-- Filters -->
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
         <form id="reports-filter-form" class="row align-items-end">
@@ -72,13 +73,14 @@
                         <p id="total_revenue" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
                     <div class="col-12 text-end">
-                        <button class="btn btn-primary " id="revenue-detail" title="Full Revenue Breakdown">Full Revenue Breakdown</button>
+                        <button class="btn btn-primary " id="revenue-detail" title="Full Revenue Breakdown" data-bs-toggle="modal" data-bs-target="#details-modal">Full Revenue Breakdown</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>          
+</div>   
+
 <!-- Sales Trends -->
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-7">
     <div class="mdc-card">
@@ -100,13 +102,14 @@
                         <p id="total_profit_trend" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
                     <div class="col-12 text-end">
-                        <button class="btn btn-primary " id="sales-trend-detail" title="Full Sales Trend">Full Sales Trend</button>
+                        <button class="btn btn-primary " id="sales-trend-detail" title="Full Sales Trend" data-bs-toggle="modal" data-bs-target="#details-modal">Full Sales Trend</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <!-- Top Selling -->
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card">
@@ -120,12 +123,13 @@
         <div class="container">
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <div class="col-12 text-end">
-                        <button class="btn btn-primary " id="product-sales" title="Full Product Sales">Full Product Sales</button>
+                        <button class="btn btn-primary " id="product-sales-detail" title="Full Product Sales" data-bs-toggle="modal" data-bs-target="#details-modal">Full Product Sales</button>
                     </div>
             </div>
         </div>
     </div>
 </div>
+
 <!--Stock Levels -->
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card">
@@ -140,7 +144,7 @@
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <div class="row">
                     <div class="col-12 text-end">
-                        <button class="btn btn-primary " id="stock-detail" title="Full Stock Details">Full Stock Details</button>
+                        <button class="btn btn-primary " id="stock-detail" title="Full Stock Details" data-bs-toggle="modal" data-bs-target="#details-modal">Full Stock Details</button>
                     </div>
                 </div>
             </div>
@@ -148,10 +152,84 @@
     </div>
 </div>
 
-
+<!-- Modal Body -->
+ <div class="modal" id="details-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-fullscreen-md-down" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">Modal title </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close" id="close-modal"></button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                Body
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="{% static 'posApp/assets/default/js/chart.min.js'%}"></script>
 <script>
+    // Placeholder: Load detailed report data when clicking on a chart point
+    function renderChartDetail(data){
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        
+        if(data.chart == 'revenue'){
+            modalTitle.innerText = 'Revenue Breakdown'
+            const summary = document.createElement('table')
+            summary.innerHTML = `
+                <thead>
+                    <tr> 
+                        <th>Cash </th><th> Mpesa </th><th>Total Revenue </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>${data.revenue.cash} </td> <td>${data.revenue.mpesa} </td>${data.revenue.total} <td> </td>
+                    </tr>
+                </tbody>
+            `
+
+            modalBody.appendchild(summary);
+        }
+        else if(data.chart == 'sales_trend'){
+            modalTitle.innerText = 'Sales Trend'
+        }
+        else if(data.chart == 'top_selling'){
+            modalTitle.innerText = 'Product Sales'
+        }
+        else if(data.chart == 'stock'){
+            modalTitle.innerText = 'Stock Levels'
+        }
+        else{
+            modalTitle.innerText = '';
+            modalBody.innerHTML = '';
+        }
+    }
+    function loadChartDetail(chart) {
+        const form = document.getElementById("reports-filter-form");
+        const formData = new FormData(form);
+        const filterType = document.getElementById("filter-type").value;
+        let queryParams = "";
+
+        if (filterType === "day") {
+            queryParams = new URLSearchParams({
+                report_date: formData.get("report_date"),
+                chart: chart
+            }).toString();
+        } else {
+            queryParams = new URLSearchParams({
+                start_date: formData.get("start_date"),
+                end_date: formData.get("end_date"),
+                chart: chart
+            }).toString();
+        }
+        fetch("{% url 'chart_detail' %}?" + queryParams)
+        .then(response => response.json())
+        .then(data => renderChartDetail(data))
+        .catch(error => console.error("Error loading chart data"));
+    }
+
     // Helper: Format hour for display
     function formatHour(hour) {
         hour = parseInt(hour);
@@ -278,11 +356,7 @@
         });
     }
 
-    // Placeholder: Load detailed report data when clicking on a chart point
-    function loadChartDetail(chart, identifier) {
-        console.log("Load detail for", chart, identifier);
-        // Example: window.location.href = `/reports/detail?chart=${chart}&id=${identifier}`;
-    }
+    
 
     // Function to load chart data based on current filter selections
     function loadChartData() {
@@ -313,7 +387,7 @@
         document.getElementById("report-date").value = todayStr;
         document.getElementById("start-date").value = todayStr;
         document.getElementById("end-date").value = todayStr;
-
+        
         const filterType = document.getElementById("filter-type");
         const singleDayFilter = document.getElementById("single-day-filter");
         const dateRangeFilter = document.getElementById("date-range-filter");
@@ -339,6 +413,20 @@
             e.preventDefault();
             loadChartData();
         });
+
+        document.getElementById('revenue-detail').addEventListener('click', function(e){
+            loadChartDetail('revenue');
+        });
+        document.getElementById('sales-trend-detail').addEventListener('click', function(e){
+            loadChartDetail('sales-trend');
+        });
+        document.getElementById('product-sales-detail').addEventListener('click', function(e){
+            loadChartDetail('sales');
+        });
+        document.getElementById('stock-detail').addEventListener('click', function(e){
+            loadChartDetail('stock');
+        });
+    
     });
 </script>
 {% endblock %}
