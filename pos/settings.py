@@ -32,6 +32,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://simple-humane-kitten.ngrok-free.app',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://dev.10percent.shop',
 ]
 
 #Mpesa
@@ -39,11 +40,14 @@ MPESA_CONSUMER_KEY = config('CONSUMER_KEY')
 MPESA_CONSUMER_SECRET = config('CONSUMER_SECRET')
 MPESA_PASSKEY = config("PASSKEY")
 MPESA_SECURITY_CREDENTIALS = config('SECURITY_CREDENTIALS')
-MPESA_CALLBACK_URL = config('CALLBACK_URL')
-MPESA_CONFIRMATION_URL = config('CONFIRMATION_URL')
-MPESA_VALIDATION_URL = config('VALIDATION_URL')
-MPESA_RESULT_URL = config('RESULT_URL')
-MPESA_TIMEOUT_URL = config('TIMEOUT_URL')
+
+# Mpesa API Urls
+API_URL = "https://dev.10percent.shop/payment/"
+MPESA_CALLBACK_URL =  API_URL + 'callback/'
+MPESA_CONFIRMATION_URL =  API_URL + 'confirmation/'
+MPESA_VALIDATION_URL = API_URL + 'validation/'
+MPESA_RESULT_URL = API_URL + 'result/'
+MPESA_TIMEOUT_URL = API_URL + 'timeout/'
 
 MPESA_C2B_SHORTCODE = config("C2B_SHORTCODE")
 MPESA_BUSINESS_SHORTCODE = config("BUSINESS_SHORTCODE")
@@ -58,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'rest_framework',
     'corsheaders',
     'posApp',
 ]

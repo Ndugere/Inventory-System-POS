@@ -141,3 +141,209 @@ def reports_data(request):
         "stock_levels": stock_levels_data
     }
     return JsonResponse(data, safe=False)
+
+@login_required
+def chart_detail(request):
+    data = {"detail": {}}
+    chart = request.GET.get('chart')
+
+    # Single day report implementation
+    if "report_date" in request.GET:
+        report_date = request.GET.get('report_date')
+        try:
+            date_value = datetime.strptime(report_date, "%Y-%m-%d").date()
+        except ValueError:
+            return JsonResponse({"error": "Invalid report_date format. Expected YYYY-MM-DD."}, status=400)
+        sales = Sales.objects.filter(date_added__date=date_value)
+
+        if chart == 'revenue':
+            revenue = sales.aggregate(
+                cash=Sum(
+                    Case(
+                        When(payment_method='cash', then=F('grand_total')),
+                        default=Value(0),
+                        output_field=FloatField()
+                    )
+                ),
+                mpesa=Sum(
+                    Case(
+                        When(payment_method='mpesa', then=F('grand_total')),
+                        default=Value(0),
+                        output_field=FloatField()
+                    )
+                ),
+                total=Sum('grand_total')
+            )
+            sales_data = []
+            for sale in sales:
+                sales_data.append({
+                    "id": sale.id,
+                    "code": sale.code,
+                    "payment_method": sale.payment_method,
+                    "grand_total": sale.grand_total,
+                })
+            data["chart"] = chart
+            data["revenue"] = revenue
+            data["detail"]["sales"] = sales_data
+
+        elif chart == 'sales_trend':
+            # Define cost expression as in reports_data.
+            cost_expression = ExpressionWrapper(
+                F('salesitems__product_id__buy_price') * F('salesitems__qty'),
+                output_field=FloatField()
+            )
+            hourly_sales = sales.annotate(
+                hour=ExtractHour('date_added')
+            ).values('hour').annotate(
+                sales_revenue=Sum('grand_total', distinct=True),
+                cost=Sum(cost_expression),
+                profit=Sum('grand_total', distinct=True) - Sum(cost_expression)
+            ).order_by('hour')
+            data["chart"] = chart
+            data["detail"]["hourly"] = list(hourly_sales)
+
+        elif chart == 'top_selling':
+            top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
+                "product_id__description", "product_id__name"
+            ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+            data["chart"] = chart
+            data["top_selling"] = {
+                "products": [
+                    f"{item['product_id__name']} ({item['product_id__description']})"
+                    for item in top_selling
+                ],
+                "quantities": [item["total_sold"] for item in top_selling]
+            }
+
+        elif chart == 'stock':
+            stock_levels = Products.objects.values("code", "name", "description").annotate(
+                stock=Sum("available_quantity")
+            ).order_by("stock")[:5]
+            data["chart"] = chart
+            data["stock_levels"] = {
+                "products": [
+                    f"{item['name']} ({item['description']})"
+                    for item in stock_levels
+                ],
+                "quantities": [item["stock"] for item in stock_levels]
+            }
+
+        else:
+            data["chart"] = chart
+            data["detail"] = {"message": "Invalid chart type for single day report."}
+
+    # Date range report implementation
+    elif "start_date" in request.GET and "end_date" in request.GET:
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return JsonResponse({"error": "Invalid date format. Expected YYYY-MM-DD."}, status=400)
+
+        # Build a dictionary with sales for each date in the range.
+        date_sales = {}
+        current_date = start_date
+        while current_date <= end_date:
+            date_str = current_date.strftime('%Y-%m-%d')
+            date_sales[date_str] = Sales.objects.filter(date_added__date=current_date)
+            current_date += timedelta(days=1)
+
+        if chart == 'revenue':
+            revenue = {"cash": 0, "mpesa": 0, "total": 0}
+            detail = {}
+            for date_str, sales_qs in date_sales.items():
+                daily_revenue = sales_qs.aggregate(
+                    cash=Sum(
+                        Case(
+                            When(payment_method='cash', then=F('grand_total')),
+                            default=Value(0),
+                            output_field=FloatField()
+                        )
+                    ),
+                    mpesa=Sum(
+                        Case(
+                            When(payment_method='mpesa', then=F('grand_total')),
+                            default=Value(0),
+                            output_field=FloatField()
+                        )
+                    ),
+                    total=Sum('grand_total')
+                )
+                revenue["cash"] += daily_revenue.get("cash") or 0
+                revenue["mpesa"] += daily_revenue.get("mpesa") or 0
+                revenue["total"] += daily_revenue.get("total") or 0
+
+                sales_list = []
+                for sale in sales_qs:
+                    items_qs = salesItems.objects.filter(sale_id=sale.id)
+                    sale_items = list(items_qs.values())
+                    sales_list.append({
+                        "id": sale.id,
+                        "code": sale.code,
+                        "payment_method": sale.payment_method,
+                        "grand_total": sale.grand_total,
+                        "sale_items": sale_items,
+                    })
+                detail[date_str] = sales_list
+            data["chart"] = chart
+            data["revenue"] = revenue
+            data["detail"] = detail
+
+        elif chart == 'sales_trend':
+            cost_expression = ExpressionWrapper(
+                F('salesitems__product_id__buy_price') * F('salesitems__qty'),
+                output_field=FloatField()
+            )
+            detail = {}
+            for date_str, sales_qs in date_sales.items():
+                hourly_sales = sales_qs.annotate(
+                    hour=ExtractHour('date_added')
+                ).values('hour').annotate(
+                    sales_revenue=Sum('grand_total', distinct=True),
+                    cost=Sum(cost_expression),
+                    profit=Sum('grand_total', distinct=True) - Sum(cost_expression)
+                ).order_by('hour')
+                detail[date_str] = list(hourly_sales)
+            data["chart"] = chart
+            data["detail"] = detail
+
+        elif chart == 'top_selling':
+            top_counter = Counter()
+            for date_str, sales_qs in date_sales.items():
+                daily_top = salesItems.objects.filter(sale_id__in=sales_qs).values(
+                    "product_id__description", "product_id__name"
+                ).annotate(total_sold=Sum("qty"))
+                for item in daily_top:
+                    product_key = f"{item['product_id__name']} ({item['product_id__description']})"
+                    top_counter[product_key] += item["total_sold"]
+            sorted_top = top_counter.most_common(10)
+            data["chart"] = chart
+            data["top_selling"] = {
+                "products": [item[0] for item in sorted_top],
+                "quantities": [item[1] for item in sorted_top]
+            }
+
+        elif chart == 'stock':
+            stock_levels = Products.objects.values("code", "name", "description").annotate(
+                stock=Sum("available_quantity")
+            ).order_by("stock")[:5]
+            data["chart"] = chart
+            data["stock_levels"] = {
+                "products": [
+                    f"{item['name']} ({item['description']})"
+                    for item in stock_levels
+                ],
+                "quantities": [item["stock"] for item in stock_levels]
+            }
+
+        else:
+            data["chart"] = chart
+            data["detail"] = {"message": "Invalid chart type for date range report."}
+
+    else:
+        data["detail"] = {"message": "No valid date parameters provided."}
+
+    return JsonResponse(data, safe=False)
+

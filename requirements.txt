@@ -2,6 +2,8 @@ django==3.2.25
 python-decouple
 psycopg2-binary
 requests
-django-cors-headers
 whitenoise
-flask
+django-cors-headers
+djangorestframework
+pyotp
+plotly
