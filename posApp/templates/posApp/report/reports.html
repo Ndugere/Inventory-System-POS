@@ -269,7 +269,10 @@
         }
         else if(data.chart === 'sales_trend'){
             modalTitle.innerText = 'Sales Trend Details';
-            html += `
+            
+            // Assuming data.detail.hourly contains an array of objects with hour, sales_revenue, cost, and profit.
+            if(data.detail && data.detail.hourly){
+                html += `
                 <div class="mb-4">
                     <h5 class="border-bottom pb-2">Hourly Sales Trend</h5>
                     <div class="table-responsive">
@@ -284,8 +287,6 @@
                                 </tr>
                             </thead>
                             <tbody>`;
-            // Assuming data.detail.hourly contains an array of objects with hour, sales_revenue, cost, and profit.
-            if(data.detail && data.detail.hourly){
                 let count = 0;
                 data.detail.hourly.forEach(item => {
                     html += `<tr>
@@ -296,6 +297,43 @@
                         <td>Ksh. ${item.profit}</td>
                     </tr>`;
                 });
+            }
+            else if(data.detail && typeof data.detail === 'object'){
+                html += `<div class="mb-4"><h5 class="border-bottom pb-2">Sales Trend Details by Date</h5>`;
+                for(const date in data.detail){
+                    html += `
+                        <div class="mb-3">
+                            <h6 class="text-primary">${date}</h6>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-left">No.</th>
+                                            <th class="text-left">Hour</th>
+                                            <th class="text-left">Sales Revenue</th>
+                                            <th class="text-left">Cost</th>
+                                            <th>Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    let count = 0;
+                    data.detail[date].forEach(item => {
+                        html += `<tr>
+                                    <td class="text-left">${++count}</td>
+                                    <td class="text-left">${formatHour(item.hour)}</td>
+                                    <td class="text-left">Ksh. ${item.sales_revenue}</td>
+                                    <td class="text-left">Ksh. ${item.cost}</td>
+                                    <td>Ksh. ${item.profit}</td>
+                                </tr>`;
+                    });
+                    html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div><br>`;
+
+                }
+                html += `</div>`;
             } else {
                 html += `<tr><td colspan="5" class="text-center">No detailed sales trend data available.</td></tr>`;
             }

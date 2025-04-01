@@ -47,6 +47,7 @@
                         </div>
                     {% endif %}
                 {% endfor %}
+                <!--
                 {% for value in request.user.groups.values_list %}
                     {% if 'Sales Manager' in value or 'Inventory Manager' in value or 'Admin' in value %}
                         <div class="mdc-list-item mdc-drawer-item">
@@ -57,12 +58,13 @@
                         </div>
                     {% endif %}                
                 {% endfor %}
+                -->
                 {% for value in request.user.groups.values_list %}
                     {% if 'Sales Manager' in value or 'Inventory Manager' in value or 'Admin' in value %}
                         <div class="mdc-list-item mdc-drawer-item">
-                            <a class="mdc-drawer-link" href="{% url 'reports_view' %}" title="Reports View">
+                            <a class="mdc-drawer-link" href="{% url 'reports_view' %}" title="Reports">
                                 <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">book</i> 
-                                <span class="text-dark-alt">Reports View</span>
+                                <span class="text-dark-alt">Reports</span>
                             </a>
                         </div>
                     {% endif %}                
