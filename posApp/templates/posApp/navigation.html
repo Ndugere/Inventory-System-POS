@@ -9,12 +9,17 @@
     <div class="mdc-drawer__content">
         <div class="mdc-list-group">
             <nav class="mdc-list mdc-drawer-menu">
-                <div class="mdc-list-item mdc-drawer-item">
-                    <a class="mdc-drawer-link" href="{% url 'home-page' %}" title="Home">
-                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">home</i> 
-                        <span class="text-dark-alt">Home</span>
-                    </a>
-                </div>
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Sales Manager' in value or 'Admin' in value %}                    
+                    <div class="mdc-list-item mdc-drawer-item">
+                        <a class="mdc-drawer-link" href="{% url 'home-page' %}" title="Home">
+                            <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">home</i> 
+                            <span class="text-dark-alt">Home</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                
                 <div class="mdc-list-item mdc-drawer-item">
                     <a class="mdc-drawer-link" href="{% url 'category-page' %}" title="Category List">
                         <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">list</i> 
