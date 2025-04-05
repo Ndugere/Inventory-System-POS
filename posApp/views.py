@@ -418,17 +418,6 @@ def delete_sale(request):
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
 @login_required
-def get_measurements(request, category_id):
-    category = Category.objects.get(id=category_id)
-    measurement_type = category.measurement_type
-    measurements = MeasurementType.objects.filter(type=measurement_type)
-    data = {
-        'measurements': list(measurements.values('id', 'name', 'short_name'))
-    }
-    
-    return HttpResponse(json.dumps(data), content_type="application/json")
-
-@login_required
 def reports(request):
     try:
         reports = Report.objects.all()
