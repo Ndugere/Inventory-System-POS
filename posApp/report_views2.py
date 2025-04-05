@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Case, When, F, Value, FloatField
@@ -9,6 +9,14 @@ from posApp.models import Sales, salesItems, Products  # Adjust imports as neede
 from collections import Counter
 from decimal import Decimal
 
+@login_required
+def home(request):
+    if request.user.is_superuser:
+        context = {}        
+        return render(request, "posApp/home-alt.html", context)
+    else:
+        return redirect("pos-page")
+    
 @login_required
 def reports_data(request):
     """

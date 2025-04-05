@@ -97,9 +97,8 @@
                 </div>
             </fieldset>
             <div class="row">
-                <div class="col-6"></div>
-                <div class="col-6 text-end">
-                    <button class="btn btn-primary w-50 btn-sm rounded-0" type="button" id="check_out" title="Check out"><i class="mdi mdi-save"></i> Checkout</button>
+                <div class="col-12 text-end">
+                    <button class="btn btn-primary btn-sm w-80 rounded-0" type="button" id="check_out" title="Check out"><i class="mdi mdi-save"></i> Checkout</button>
                 </div>
             </div>
         </form>
@@ -123,6 +122,7 @@
 </noscript> {% endblock pageContent %} {% block ScriptBlock %}
 
 <script>
+    var submitAction = '';
     $(document).ready(function() {
         fetch("{% url 'get_product_json' %}")
         .then(response => {
@@ -281,27 +281,45 @@
                 return false;
             }
     
-            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val());
+            pos_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val());
         });
-    
+
+
+        
+        var submitButtonId = '';
+
+        $('#submit').on('click', function(e) {
+            e.preventDefault();
+            submitButtonId === 'submit'
+            $('#pos-form').submit();
+        });
+
+        $('#submit-print').on('click', function(e) {
+            e.preventDefault();
+            submitButtonId = 'submit-print'
+            $('#pos-form').submit();
+        });
+        
+        var isSubmitting = false;
         $('#pos-form').submit(function(e) {
             e.preventDefault();
+
+            if (isSubmitting) return;
+            isSubmitting = true;
+
             var _this = $(this);
             $('.err-msg').remove();
-            var el = $('<div>');
-            el.addClass("alert alert-danger err-msg");
-            el.hide();
+            var el = $('<div>').addClass("alert alert-danger err-msg").hide();
+
             if (_this[0].checkValidity() == false) {
                 _this[0].reportValidity();
                 return false;
             }
             start_loader();
             $.ajax({
-                headers: {
-                    "X-CSRFToken": '{{csrf_token}}'
-                },
+                headers: { "X-CSRFToken": '{{csrf_token}}' },
                 url: "{% url 'save-pos' %}",
-                data: new FormData($(this)[0]),
+                data: new FormData(_this[0]),
                 cache: false,
                 contentType: false,
                 processData: false,
@@ -309,22 +327,26 @@
                 type: 'POST',
                 dataType: 'json',
                 error: err => {
-                    console.log(err);
+                    console.error("An error occurred:", err);
                     end_loader();
                 },
                 success: function(resp) {
                     if (typeof resp == 'object' && resp.status == 'success') {
                         el.removeClass("alert alert-danger err-msg");
-                        uni_modal("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id);
-                        $('#uni_modal').on('hide.bs.modal', function() {
+                        if (submitButtonId === 'submit-print') {
+                            uni_modal("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id);
+                            $('#pos_modal').hide();
+                            $('#uni_modal').on('hide.bs.modal', function() {
+                                location.reload();
+                            });
+                        } else {
                             location.reload();
-                        });
+                        }
                     } else if (resp.status == 'failed' && !!resp.msg) {
                         el.text(resp.msg);
                     } else {
-                        el.text("An error occurred", 'error');
-                        end_loader();
-                        console.err(resp);
+                        el.text("An error occurred");
+                        console.error(resp);
                     }
                     _this.prepend(el);
                     el.show('slow');
@@ -333,6 +355,7 @@
                 }
             });
         });
+
     });
     
 </script>
