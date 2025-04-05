@@ -18,7 +18,7 @@
                             <select id="product-id" class="form-select form-select-sm">
                                 <option value="" disabled selected></option>
                                 {% for product in products %}
-                                    <option value="{{ product.pk }}" data-available-qty="{{ product.available_quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
+                                    <option value="{{ product.pk }}" data-volume="{{product.measurement_value}}{{product.volume_type}}" data-available-qty="{{ product.available_quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -52,7 +52,7 @@
                                     <th class="py-1 px-2 text-center text-light"></th>
                                     <th class="py-1 px-2 text-center text-light">QTY</th>
                                     <th class="py-1 px-2 text-center text-light">Product</th>
-                                    <th class="py-1 px-2 text-center text-light">Description</th>
+                                    <th class="py-1 px-2 text-center text-light">Volume</th>
                                     <th class="py-1 px-2 text-center text-light">Price</th>
                                     <th class="py-1 px-2 text-center text-light">Total</th>
                                 </tr>
@@ -115,7 +115,7 @@
             <input type="number" name="qty[]" min="1" step="1" class="form-control form-control-sm rounded-0 text-center">
         </td>
         <td class="px-2 py-1 text-start product-name"></td>
-        <td class="px-2 py-1 text-start product-description"></td>
+        <td class="px-2 py-1 text-start product-volume"></td>
         <td class="px-2 py-1 text-end product-price"></td>
         <td class="px-2 py-1 text-end product-total"></td>
     </tr>
@@ -171,7 +171,7 @@
             $('[name="sub_total"]').val(parseFloat(sub_total));
         }
     
-        function addItemToPOS(id, qty, price) {
+        function addItemToPOS(id,qty, price) {
             if ($('#POS-field table tbody input[name="product_id[]"][value="' + id + '"]').length > 0) {
                 alert('Item Already in the List.');
                 return false;
@@ -183,7 +183,7 @@
             tr.find('[name="product_id[]"]').val(id);
             tr.find('[name="price[]"]').val(parseFloat(price));
             tr.find('.product-name').text(data.name);
-            tr.find('.product-description').text(data.description);
+            tr.find('.product-volume').text(data.value+data.volume);
             tr.find('.product-price').text(parseFloat(price).toLocaleString('en-US'));
             tr.find('.product-total').text(parseFloat(price * qty).toLocaleString('en-US'));
     
@@ -213,7 +213,7 @@
             });
     
             tr.find('.rem-item').click(function() {
-                if (confirm(`Are you sure to remove ${data.name} (${data.description}) product from list?`) == true) {
+                if (confirm(`Are you sure to remove ${data.name} (${data.measurement_type}${data.volume_type}) product from list?`) == true) {
                     tr.remove();
                     calc();
                 }

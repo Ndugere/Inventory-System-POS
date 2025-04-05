@@ -23,16 +23,23 @@
             <input type="text" name="name" id="name" class="form-control form-control-sm rounded-0" value="{% if product.name %}{{product.name}}{% endif %}" required>
         </div>
         <div class="form-group mb-3">
-            <label for="measurement_value" class="control-label">Measure</label>
-            <select name="measurement_value" id="measurement_value" class="form-control form-control-sm rounded-0" required>
-                {% if product.measurement_value %}
-                    <option value="{{product.measurement_value.id}}" selected>{{product.measurement_value.name}} ({{product.measurement_value.short_name}})</option>                  
-                {% endif %}
-            </select>
-        </div>
-        <div class="form-group mb-3">
-            <label for="description" class="control-label">Description</label>
-            <textarea rows="5" name="description" id="description" class="form-control form-control-sm rounded-0" required>{% if product.description %}{{product.description}}{% endif %}</textarea>
+            <label for="measurement_value" class="control-label">Volume</label>
+            <div class="row">
+                <div class="col-6">
+                    <input type="number" name="measurement_value" id="measurement_value" class="form-control form-control-sm rounded-0" value="{% if product.measurement_value %}{{product.measurement_value}}{% endif %}" min="0" step="any" required>
+                </div>
+                <div class="col-6">
+                    <select name="volume_type" id="volume_type" class="form-select form-select-sm rounded-0" required>
+                        {% for volume in volume_type %}
+                            {% if product.volume_type == volume %}
+                            <option value="{{ volume}}" selected>{{ volume }}</option>
+                            {% else %}
+                            <option value="{{ volume }}">{{ volume }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="form-group mb-3">
             <label for="available_quantity" class="control-label">Available QTY</label>
@@ -120,35 +127,5 @@
                 }
             })
         });
-        $('#measurement_value').focus(function(e){
-            var categoryId = document.getElementById('category_id').value;
-            fetch(`/get_measurements/${categoryId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    var measurementValueSelect = document.getElementById('measurement_value');
-                    measurementValueSelect.innerHTML = '';
-                    data.measurements.forEach(function(measurement) {
-                        var option = document.createElement('option');
-                        option.value = measurement.id;
-                        option.text = `${measurement.name} (${measurement.short_name})`;
-                        measurementValueSelect.appendChild(option);
-                    });
-                });
-        });
-        $('#category_id').change(function(e){
-            var categoryId = this.value;
-            fetch(`/get_measurements/${categoryId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    var measurementValueSelect = document.getElementById('measurement_value');
-                    measurementValueSelect.innerHTML = '';
-                    data.measurements.forEach(function(measurement) {
-                        var option = document.createElement('option');
-                        option.value = measurement.id;
-                        option.text = `${measurement.name} (${measurement.short_name})`;
-                        measurementValueSelect.appendChild(option);
-                    });
-                });
-        })
     })
 </script>

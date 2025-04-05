@@ -3,7 +3,7 @@ from pickle import FALSE
 from django.shortcuts import redirect, render
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report, MpesaPaymentTransaction
+from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -69,6 +69,7 @@ def home(request):
             'products' : products,
             'transaction' : transaction,
             'total_sales' : total_sales,
+            "today": datetime.now().date(),
         }
         return render(request, 'posApp/home-alt.html',context)
 
@@ -96,7 +97,6 @@ def category(request):
 @login_required
 def manage_category(request):
     category = {}
-    measurements = MeasurementType.MEASUREMENT_CHOICES
     if request.method == 'GET':
         data =  request.GET
         id = ''
@@ -107,7 +107,6 @@ def manage_category(request):
     
     context = {
         'category' : category,
-        'measurement_types': measurements,
     }
     return render(request, 'posApp/manage_category.html',context)
 
@@ -120,15 +119,13 @@ def save_category(request):
         if data['id'].isnumeric() and int(data['id']) > 0:
             Category.objects.filter(id=data['id']).update(
                 name=data['name'],
-                description=data['description'],
-                measurement_type=data['measurement_type'],
+                #description=data['description'],
                 status=data['status']
             )
         else:
             new_category = Category(
                 name=data['name'],
-                description=data['description'],
-                measurement_type=data['measurement_type'],
+                #description=data['description'],
                 status=data['status']
             )
             new_category.save()
@@ -165,6 +162,7 @@ def products(request):
 def manage_products(request):
     product = {}
     categories = Category.objects.filter(status = 1).all()
+    volume_type = Products.VolumeType
     if request.method == 'GET':
         data =  request.GET
         id = ''
@@ -175,6 +173,7 @@ def manage_products(request):
     
     context = {
         'product' : product,
+        'volume_type': volume_type,
         'categories' : categories
     }
     return render(request, 'posApp/manage_product.html',context)
@@ -201,7 +200,6 @@ def save_product(request):
         resp['msg'] = "Product Code Already Exists in the database"
     else:
         category = Category.objects.filter(id=data['category_id']).first()
-        measurement_value = MeasurementType.objects.filter(id=data['measurement_value']).first()
         try:
             if id.isnumeric() and int(id) > 0:
                 if  int(data['available_quantity']) > 0:
@@ -212,8 +210,9 @@ def save_product(request):
                     code=data['code'],
                     category_id=category,
                     name=data['name'],
-                    description=data['description'],
-                    measurement_value=measurement_value,
+                    #description=data['description'],
+                    volume_type = data['volume_type'],
+                    measurement_value=int(data['measurement_value']),
                     available_quantity=data['available_quantity'],
                     buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
@@ -225,8 +224,9 @@ def save_product(request):
                     code=data['code'],
                     category_id=category,
                     name=data['name'],
-                    description=data['description'],
-                    measurement_value=measurement_value,
+                    #description=data['description'],
+                    volume_type = data['volume_type'],
+                    measurement_value=int(data['measurement_value']),
                     available_quantity=data['available_quantity'],
                     buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
@@ -273,7 +273,7 @@ def pos(request):
 def get_product_json(request):     
     try:
         products = Products.objects.filter(status=1)
-        product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
+        product_json = [{'id': product.id, 'name': product.name, 'volume': product.volume_type, 'value': product.measurement_value, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
         return JsonResponse(product_json, safe=False)
     
     except Exception as e:

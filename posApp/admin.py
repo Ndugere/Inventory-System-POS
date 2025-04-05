@@ -1,31 +1,21 @@
 from django.contrib import admin
-from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report
+from posApp.models import Category, Products, Sales, salesItems, Report
 
 # Register your models here.
-
-@admin.register(MeasurementType)
-class MeasurementTypeAdmin(admin.ModelAdmin):
-    model = MeasurementType
-    fieldsets=[
-        ("Measurement Info:", {"fields": ['name', 'short_name', 'type']})
-    ]
-    list_display = ['name', 'short_name', 'type']
-    list_filter = ['type']
-    
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     model = Category
     fieldsets = [
-        ("Category Info: ", {"fields": ['name', 'description', 'measurement_type']})
+        ("Category Info: ", {"fields": ['name']})
     ]
-    list_display = ['name', 'measurement_type']
-    list_filter = ['name', 'measurement_type']
+    list_display = ['name']
+    list_filter = ['name']
     
 @admin.register(Products)
 class ProductAdmin(admin.ModelAdmin):
     model = Products
     fieldsets =[
-        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "measurement_value",'description', 'available_quantity', 'buy_price', 'min_sell_price', 'max_sell_price', 'status']})
+        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "volume_type", "measurement_value", 'available_quantity', 'buy_price', 'min_sell_price', 'max_sell_price', 'status']})
     ]
     list_display = ['name', 'category_id', 'buy_price', 'min_sell_price', "max_sell_price",]
     list_filter = ['category_id', 'name', 'buy_price',  'min_sell_price', "max_sell_price",]

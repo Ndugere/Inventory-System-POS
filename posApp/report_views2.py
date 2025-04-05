@@ -57,10 +57,10 @@ def reports_data(request):
 
         # Top selling products for the day.
         top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
-            "product_id__description", "product_id__name"
-        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+            "product_id__measurement_value", "product_id__volume_type", "product_id__name"
+        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:5]
         top_selling_data = {
-            "products": [f"{item['product_id__name']} ({item['product_id__description']})" for item in top_selling],
+            "products": [f"{item['product_id__name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})" for item in top_selling],
             "quantities": [item["total_sold"] for item in top_selling]
         }
         return {"sales_trend": sales_trend, "revenue": revenue, "top_selling": top_selling_data}
@@ -131,11 +131,11 @@ def reports_data(request):
         top_selling_data = report["top_selling"]
 
     # Stock Levels: fetch products with the lowest available_quantity.
-    stock_levels = Products.objects.values("code", "name", "description").annotate(
+    stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
         stock=Sum("available_quantity")
     ).order_by("stock")[:5]
     stock_levels_data = {
-        "products": [f"{item['name']} ({item['description']})" for item in stock_levels],
+        "products": [f"{item['name']} ({item['measurement_value']}{item['volume_type']})" for item in stock_levels],
         "quantities": [item["stock"] for item in stock_levels]
     }
 
@@ -217,20 +217,20 @@ def chart_detail(request):
             data["chart"] = chart
             data["top_selling"] = {
                 "products": [
-                    f"{item['product_id__name']} ({item['product_id__description']})"
+                    f"{item['product_id__name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
                     for item in top_selling
                 ],
                 "quantities": [item["total_sold"] for item in top_selling]
             }
 
         elif chart == 'stock':
-            stock_levels = Products.objects.values("code", "name", "description").annotate(
+            stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
                 stock=Sum("available_quantity")
             ).order_by("stock")[:5]
             data["chart"] = chart
             data["stock_levels"] = {
                 "products": [
-                    f"{item['name']} ({item['description']})"
+                    f"{item['name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
                     for item in stock_levels
                 ],
                 "quantities": [item["stock"] for item in stock_levels]
@@ -321,10 +321,10 @@ def chart_detail(request):
             top_counter = Counter()
             for date_str, sales_qs in date_sales.items():
                 daily_top = salesItems.objects.filter(sale_id__in=sales_qs).values(
-                    "product_id__description", "product_id__name"
+                    "measurement_value", "volume_type", "product_id__name"
                 ).annotate(total_sold=Sum("qty"))
                 for item in daily_top:
-                    product_key = f"{item['product_id__name']} ({item['product_id__description']})"
+                    product_key = f"{item['product_id__name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
                     top_counter[product_key] += item["total_sold"]
             sorted_top = top_counter.most_common(10)
             data["chart"] = chart
@@ -334,13 +334,13 @@ def chart_detail(request):
             }
 
         elif chart == 'stock':
-            stock_levels = Products.objects.values("code", "name", "description").annotate(
+            stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
                 stock=Sum("available_quantity")
             ).order_by("stock")[:5]
             data["chart"] = chart
             data["stock_levels"] = {
                 "products": [
-                    f"{item['name']} ({item['description']})"
+                    f"{item['name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
                     for item in stock_levels
                 ],
                 "quantities": [item["stock"] for item in stock_levels]

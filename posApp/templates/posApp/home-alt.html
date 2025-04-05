@@ -649,7 +649,13 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        let todayStr = new Date().toISOString().split("T")[0];
+        let today = new Date();
+        let year = today.getFullYear();
+        let month = String(today.getMonth() + 1).padStart(2, '0');
+        let day = String(today.getDate()).padStart(2, '0');
+        let todayStr = `${year}-${month}-${day}`;
+
+        //let todayStr = new Date().toISOString().split("T")[0];
         document.getElementById("report-date").value = todayStr;
         document.getElementById("start-date").value = todayStr;
         document.getElementById("end-date").value = todayStr;

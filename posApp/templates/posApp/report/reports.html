@@ -36,7 +36,7 @@
             </div>
             <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter-end">
                 <label for="end-date" class="control-label">End Date</label>
-                <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date">
+                <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date" value="{{ today|date:'m-d-Y' }}">
             </div>
 
             <!-- Submit Button -->
@@ -594,7 +594,13 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        let todayStr = new Date().toISOString().split("T")[0];
+        let today = new Date();
+        let year = today.getFullYear();
+        let month = String(today.getMonth() + 1).padStart(2, '0');
+        let day = String(today.getDate()).padStart(2, '0');
+        let todayStr = `${year}-${month}-${day}`;
+
+        //let todayStr = new Date().toISOString().split("T")[0];
         document.getElementById("report-date").value = todayStr;
         document.getElementById("start-date").value = todayStr;
         document.getElementById("end-date").value = todayStr;

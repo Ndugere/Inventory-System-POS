@@ -53,28 +53,10 @@ class Branch(models.Model):
         verbose_name = "Store Branches"
         verbose_name_plural = "Stores Branches"
 
-class MeasurementType(models.Model):
-    class MEASUREMENT_CHOICES(models.TextChoices):
-        SIZE = 'size', 'Size'
-        LENGTH = 'length', 'Length'
-        VOLUME = 'volume', 'Volume'
-        WEIGHT = 'weight', 'Weight'
-    
-    name = models.CharField("Measurement Name", max_length=50)
-    short_name = models.CharField("Short Name", max_length=5)
-    type = models.CharField("Measurement Type", max_length=10, choices=MEASUREMENT_CHOICES.choices, default=MEASUREMENT_CHOICES.SIZE)
-    
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        verbose_name = "Measurement Type"
-        verbose_name_plural = "Measurement Type"
-        
+      
 class Category(models.Model):
     name = models.CharField("Category Name", max_length=100, blank=False)
-    description = models.TextField("Description")
-    measurement_type = models.CharField(_("Measurement"), choices=MeasurementType.MEASUREMENT_CHOICES.choices, max_length=10, blank=True)
+    #description = models.TextField("Description")
     status = models.IntegerField("Status", default=1) 
     date_added = models.DateTimeField(default=timezone.now) 
     date_updated = models.DateTimeField(auto_now=True) 
@@ -88,11 +70,16 @@ class Category(models.Model):
         ordering = ['name']
 
 class Products(models.Model):
+    class VolumeType(models.TextChoices):
+        MILLILITERS = "ml", _("Milliliters")
+        LITERS = "L", _("Liters")
+        
     code = models.CharField("Product Code", max_length=100, unique=True, blank=False)
     category_id = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField("Product Name", max_length=100, blank=False)
-    description = models.TextField("Description")
-    measurement_value = models.ForeignKey(MeasurementType, on_delete=models.SET_NULL, null=True)
+    #description = models.TextField("Description")
+    volume_type = models.CharField("Volume Type", max_length=100, choices=VolumeType.choices, default=VolumeType.MILLILITERS, blank=False)
+    measurement_value = models.IntegerField("Measurement Value", default=0)
     buy_price = models.FloatField("Buy Price", default=0)
     min_sell_price = models.FloatField("Min Sell Price", default=0)    
     max_sell_price = models.FloatField("Max Sell Price", default=0)
@@ -100,14 +87,17 @@ class Products(models.Model):
     status = models.IntegerField(default=0) 
     date_added = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
+    
+    def get_volume(self):
+        return f"{self.measurement_value}{self.volume_type}"
 
     def __str__(self):
-        return self.code + " - " + self.name + " (" + self.description +")"
+        return f"{self.name} ({self.measurement_value}{self.volume_type})"
     
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"
-        unique_together = (("name", "measurement_value", "description"))
+        unique_together = (("name", "measurement_value"))
         ordering = ["code", "name"]
 
 class Sales(models.Model):

@@ -33,7 +33,7 @@
                         <th class="text-center py-1">Category</th>
                         <th class="text-center py-1">Product Code</th>
                         <th class="text-center py-1">Product</th>
-                        <th class="text-center py-1">Description</th>
+                        <th class="text-center py-1">Volume</th>
                         <th class="text-center py-1">Available QTY</th>                        
                         <th class="text-center py-1">Buying Price</th>
                         <th class="text-center py-1">Min Price</th>
@@ -52,8 +52,8 @@
                         <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
                         <td class="px-2 py-1 text-start">{{ product.category_id }}</td>
                         <td class="px-2 py-1 text-start">{{ product.code }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.name }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.description }}</td>     
+                        <td class="px-2 py-1 text-start">{{ product.name }}</td>                        
+                        <td class="px-2 py-1 text-start">{{ product.measurement_value }}{{product.volume_type}}</td>   
                         <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>                           
                         <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
                         <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
