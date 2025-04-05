@@ -3,13 +3,13 @@
 {% load static %}
 
 {% block pageContent %}
-<!--div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h3 class="mb-0">Home</h3>
+            <h4 class="card-title mb-0">Home</h4>            
         </div>
-    </div>
-</div-->
+    </div>    
+</div>
 
 {% if 'Sales Manager' in request.user.groups.values_list or request.user.is_superuser%}
 <a href="{% url 'sales-page'%}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Sales">

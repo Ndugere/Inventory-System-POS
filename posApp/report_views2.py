@@ -212,7 +212,7 @@ def chart_detail(request):
 
         elif chart == 'top_selling':
             top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
-                "product_id__description", "product_id__name"
+               "product_id__measurement_value", "product_id__volume_type", "product_id__name"
             ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
             data["chart"] = chart
             data["top_selling"] = {
@@ -230,7 +230,7 @@ def chart_detail(request):
             data["chart"] = chart
             data["stock_levels"] = {
                 "products": [
-                    f"{item['name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
+                    f"{item['name']} ({item[ "measurement_value"]}{item[ "volume_type"]})"
                     for item in stock_levels
                 ],
                 "quantities": [item["stock"] for item in stock_levels]
