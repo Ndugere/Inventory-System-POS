@@ -281,14 +281,11 @@
                 return false;
             }
     
-            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val());
+            pos_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val());
         });
 
 
-        // Save POS
-        function savePOS(){
-
-        }
+        
         var submitButtonId = '';
 
         $('#submit').on('click', function(e) {
@@ -338,6 +335,7 @@
                         el.removeClass("alert alert-danger err-msg");
                         if (submitButtonId === 'submit-print') {
                             uni_modal("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id);
+                            $('#pos_modal').hide();
                             $('#uni_modal').on('hide.bs.modal', function() {
                                 location.reload();
                             });

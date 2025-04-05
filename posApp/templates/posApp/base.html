@@ -107,7 +107,32 @@
                                 <button type="button" class="btn btn-sm btn-flat btn-primary modal-btn btn-new rounded-0" id='submit' onclick="$('#uni_modal form').submit()" title="Save">Save</button>
                             </div>
                             <div class="col-6 text-right">
-                                <button type="button" class="btn btn-sm btn-flat btn-secondary modal-btn rounded-0" id='submit-print' onclick="$('#uni_modal form').submit()" title="Save and Print Receipt">Save and Print Receipt</button>
+                                <button type="button" class="btn btn-sm btn-flat btn-secondary modal-btn rounded-0" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="pos_modal" role='dialog'>
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content rounded-0">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-6">
+                                <button type="button" class="btn btn-sm btn-flat btn-primary modal-btn btn-new rounded-0" id='submit' onclick="$('#pos_modal form').submit()" title="Save">Save</button>
+                            </div>
+                            <div class="col-6 text-right">
+                                <button type="button" class="btn btn-sm btn-flat btn-secondary modal-btn rounded-0" id='submit-print' onclick="$('#pos_modal form').submit()" title="Save and Print Receipt">Save and Print Receipt</button>
                             </div>
                         </div>
                     </div>
@@ -172,15 +197,15 @@
             $.ajax({
                 url: $url,
                 error: err => {
-                    console.log()
-                    alert("An error occured")
+                    console.log(err)
+                    alert("An error occurred")
                 },
                 success: function(resp) {
                     if (resp) {
                         $('#uni_modal .modal-title').html($title)
                         $('#uni_modal .modal-body').html(resp)
                         if ($size != '') {
-                            $('#uni_modal .modal-dialog').addClass($size + '  modal-dialog-centered')
+                            $('#uni_modal .modal-dialog').addClass($size + ' modal-dialog-centered')
                         } else {
                             $('#uni_modal .modal-dialog').removeAttr("class").addClass("modal-dialog modal-md modal-dialog-centered")
                         }
@@ -190,6 +215,34 @@
                             focus: true
                         })
                         $('#uni_modal').modal('show')
+                        end_loader()
+                    }
+                }
+            })
+        }
+        window.pos_modal = function($title = '', $url = '', $size = "") {
+            start_loader()
+            $.ajax({
+                url: $url,
+                error: err => {
+                    console.log(err)
+                    alert("An error occurred")
+                },
+                success: function(resp) {
+                    if (resp) {
+                        $('#pos_modal .modal-title').html($title)
+                        $('#pos_modal .modal-body').html(resp)
+                        if ($size != '') {
+                            $('#pos_modal .modal-dialog').addClass($size + ' modal-dialog-centered')
+                        } else {
+                            $('#pos_modal .modal-dialog').removeAttr("class").addClass("modal-dialog modal-md modal-dialog-centered")
+                        }
+                        $('#pos_modal').modal({
+                            backdrop: 'static',
+                            keyboard: false,
+                            focus: true
+                        })
+                        $('#pos_modal').modal('show')
                         end_loader()
                     }
                 }
