@@ -45,31 +45,35 @@ def logoutuser(request):
 # Create your views here.
 @login_required
 def home(request):
-    now = datetime.now()
-    current_year = now.strftime("%Y")
-    current_month = now.strftime("%m")
-    current_day = now.strftime("%d")
-    categories = len(Category.objects.all())
-    products = len(Products.objects.all())
-    transaction = len(Sales.objects.filter(
-        date_added__year=current_year,
-        date_added__month = current_month,
-        date_added__day = current_day
-    ))
-    today_sales = Sales.objects.filter(
-        date_added__year=current_year,
-        date_added__month = current_month,
-        date_added__day = current_day
-    ).all()
-    total_sales = sum(today_sales.values_list('grand_total',flat=True))
-    context = {
-        'page_title':'Home',
-        'categories' : categories,
-        'products' : products,
-        'transaction' : transaction,
-        'total_sales' : total_sales,
-    }
-    return render(request, 'posApp/home.html',context)
+    if request.user.is_superuser:
+        now = datetime.now()
+        current_year = now.strftime("%Y")
+        current_month = now.strftime("%m")
+        current_day = now.strftime("%d")
+        categories = len(Category.objects.all())
+        products = len(Products.objects.all())
+        transaction = len(Sales.objects.filter(
+            date_added__year=current_year,
+            date_added__month = current_month,
+            date_added__day = current_day
+        ))
+        today_sales = Sales.objects.filter(
+            date_added__year=current_year,
+            date_added__month = current_month,
+            date_added__day = current_day
+        ).all()
+        total_sales = sum(today_sales.values_list('grand_total',flat=True))
+        context = {
+            'page_title':'Home',
+            'categories' : categories,
+            'products' : products,
+            'transaction' : transaction,
+            'total_sales' : total_sales,
+        }
+        return render(request, 'posApp/home-alt.html',context)
+
+    else:
+        return redirect("pos-page")
 
 
 def about(request):

@@ -3,13 +3,68 @@
 {% load static %}
 
 {% block pageContent %}
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+<!--div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
             <h3 class="mb-0">Home</h3>
         </div>
     </div>
-</div>
+</div-->
+
+{% if 'Sales Manager' in request.user.groups.values_list or request.user.is_superuser%}
+<a href="{% url 'sales-page'%}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Sales">
+    <div class="mdc-card info-card info-card--warning">
+        <div class="card-inner">
+            <h5 class="card-title">Today's Sales</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_sales|intcomma }}</h5>
+            <p class="tx-12 text-muted">Today's Total Sales </p>
+            <div class="card-icon-wrapper">
+                <i class="mdi mdi-cash-multiple"></i>
+            </div>
+        </div>
+    </div>
+</a>
+{% endif %}
+
+<a  href="{% url 'category-page' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Categories">
+    <div class="mdc-card info-card info-card--success">
+        <div class="card-inner">
+            <h5 class="card-title">Categories</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ categories|intcomma }}</h5>
+            <p class="tx-12 text-muted">Product Categories</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">list</i>
+            </div>
+        </div>
+    </div>
+</a>
+<a href="{% url 'product-page' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Products">
+    <div class="mdc-card info-card info-card--primary">
+        <div class="card-inner">
+            <h5 class="card-title">Products</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ products|intcomma }}</h5>
+            <p class="tx-12 text-muted">Available Products</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">label</i>
+            </div>
+        </div>
+    </div>
+</a>
+{%if 'Inventory Manager' in request.user.groups.values_list or 'Sales Manager' in request.user.groups.values_list or request.user.is_superuser%}
+<a href="{% url 'reports-page' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Reports">
+    <div class="mdc-card info-card info-card--info">
+        <div class="card-inner">
+            <h5 class="card-title">Reports</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">Reports</h5>
+            <p class="tx-12 text-muted">Inventory & Sales Reports</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">book</i>
+            </div>
+        </div>
+    </div>
+</a>
+
+{% endif %}
 <!-- Filters -->
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12" hidden="true">
     <div class="mdc-card">
@@ -47,8 +102,8 @@
     </div>
 </div>
 
-<!-- Revenue Breakdown-->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-5">
+<!-- Revenue Breakdown -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-5" hidden="true">
     <div class="mdc-card">
         <div class="container">
             <!-- Revenue Breakdown -->
@@ -82,7 +137,7 @@
 </div>   
 
 <!-- Sales Trends -->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-7">
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
         <div class="container">  
             <div class="bg-white p-4 shadow-lg rounded-lg">
@@ -111,10 +166,10 @@
 </div>
 
 <!-- Top Selling -->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6" hidden="true">
     <div class="mdc-card">
         <div class="container">            
-            <!-- Top Selling Products -->
+            <!-- Top Selling Products-->
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <h4 class="text-lg font-semibold">Top Selling Products</h4>
                 <canvas id="topSellingChart"></canvas>
@@ -131,7 +186,7 @@
 </div>
 
 <!--Stock Levels -->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6" hidden="true">
     <div class="mdc-card">
         <div class="container">            
             <!-- Stock Levels -->
