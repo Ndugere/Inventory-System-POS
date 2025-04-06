@@ -45,9 +45,9 @@ def reports_data(request):
 
         sales_trend = {
             "hours": [record['hour'] for record in hourly_sales],
-            "amounts": [record['hourly_total'] for record in hourly_sales],
-            "costs": [record['hourly_cost'] for record in hourly_sales],
-            "profits": [record['hourly_profit'] for record in hourly_sales],
+            "amounts": [record['hourly_total'] or 0 for record in hourly_sales],  # Handle None
+            "costs": [record['hourly_cost'] or 0 for record in hourly_sales],    # Handle None
+            "profits": [record['hourly_profit'] or 0 for record in hourly_sales] # Handle None
         }
 
         # Revenue breakdown by payment method.
@@ -68,6 +68,7 @@ def reports_data(request):
             ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
             revenue=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
         )
+        revenue = {k: v or 0 for k, v in revenue.items()}  # Handle None in aggregation results
 
         # Top selling products for the day.
         top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
@@ -118,19 +119,19 @@ def reports_data(request):
         for date_str, data in date_reports.items():
             sales_trend["dates"].append(date_str)
             daily_trend = data["sales_trend"]
-            sales_trend["amounts"].append(sum(daily_trend["amounts"]))
-            sales_trend["costs"].append(sum(daily_trend["costs"]))
-            sales_trend["profits"].append(sum(daily_trend["profits"]))
+            sales_trend["amounts"].append(sum(filter(None, daily_trend["amounts"])))  # Filter None
+            sales_trend["costs"].append(sum(filter(None, daily_trend["costs"])))      # Filter None
+            sales_trend["profits"].append(sum(filter(None, daily_trend["profits"])))  # Filter None
 
             daily_revenue = data["revenue"]
-            revenue["cash"] += daily_revenue.get("cash") or 0
-            revenue["mpesa"] += daily_revenue.get("mpesa") or 0
-            revenue["revenue"] += daily_revenue.get("revenue") or 0
+            revenue["cash"] += daily_revenue.get("cash", 0)
+            revenue["mpesa"] += daily_revenue.get("mpesa", 0)
+            revenue["revenue"] += daily_revenue.get("revenue", 0)
 
             # Update the counter for top-selling products.
             daily_top = data["top_selling"]
             for product, qty in zip(daily_top["products"], daily_top["quantities"]):
-                top_counter[product] += qty
+                top_counter[product] += qty or 0  # Handle None
 
         sorted_top = top_counter.most_common(10)
         top_selling_data = {
