@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Case, When, F, Value, FloatField
-from django.db.models.functions import ExtractHour
+from django.db.models.functions import ExtractHour, Coalesce
 from django.db.models import ExpressionWrapper
 from datetime import datetime, timedelta
 from posApp.models import Sales, salesItems, Products  # Adjust imports as needed
@@ -34,11 +34,13 @@ def reports_data(request):
     def day_report(date_value):
         # Sales trend: group sales by hour.
         sales = Sales.objects.filter(date_added__date=date_value)
-        hourly_sales = sales.annotate(hour=ExtractHour('date_added')
-            ).values('hour').annotate(
-            hourly_total=Sum('grand_total', distinct=True),
-            hourly_cost=Sum(cost_expression),
-            hourly_profit=Sum('grand_total', distinct=True) - Sum(cost_expression)
+        hourly_sales = sales.annotate(
+            hour=ExtractHour('date_added')
+        ).values('hour').annotate(
+            hourly_total=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+            hourly_cost=Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+            hourly_profit=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()) - 
+                          Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField())
         ).order_by('hour')
 
         sales_trend = {
@@ -50,17 +52,32 @@ def reports_data(request):
 
         # Revenue breakdown by payment method.
         revenue = sales.aggregate(
-            cash=Sum(Case(When(payment_method='cash', then=F('grand_total')), default=Value(0), output_field=FloatField())),
-            mpesa=Sum(Case(When(payment_method='mpesa', then=F('grand_total')), default=Value(0), output_field=FloatField())),
-            revenue=Sum('grand_total')
+            cash=Coalesce(Sum(
+                Case(
+                    When(payment_method='cash', then=F('grand_total')),
+                    default=Value(0.0, output_field=FloatField()),
+                    output_field=FloatField()
+                )
+            ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+            mpesa=Coalesce(Sum(
+                Case(
+                    When(payment_method='mpesa', then=F('grand_total')),
+                    default=Value(0.0, output_field=FloatField()),
+                    output_field=FloatField()
+                )
+            ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+            revenue=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
         )
 
         # Top selling products for the day.
         top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
             "product_id__measurement_value", "product_id__volume_type", "product_id__name"
-        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:5]
+        ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField())).order_by("-total_sold")[:5]
         top_selling_data = {
-            "products": [f"{item['product_id__name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})" for item in top_selling],
+            "products": [
+                f"{item['product_id__name']} ({item['product_id__measurement_value']}{item['product_id__volume_type']})"
+                for item in top_selling
+            ],
             "quantities": [item["total_sold"] for item in top_selling]
         }
         return {"sales_trend": sales_trend, "revenue": revenue, "top_selling": top_selling_data}
@@ -68,7 +85,6 @@ def reports_data(request):
     # Determine the date(s) for which to generate the report.
     if 'report_date' in request.GET:
         report_date = request.GET.get('report_date')
-        # Ensure proper date conversion if needed.
         try:
             report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").date()
         except ValueError:
@@ -132,10 +148,13 @@ def reports_data(request):
 
     # Stock Levels: fetch products with the lowest available_quantity.
     stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
-        stock=Sum("available_quantity")
+        stock=Coalesce(Sum("available_quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
     ).order_by("stock")[:5]
     stock_levels_data = {
-        "products": [f"{item['name']} ({item['measurement_value']}{item['volume_type']})" for item in stock_levels],
+        "products": [
+            f"{item['name']} ({item['measurement_value']}{item['volume_type']})"
+            for item in stock_levels
+        ],
         "quantities": [item["stock"] for item in stock_levels]
     }
 
@@ -155,7 +174,6 @@ def chart_detail(request):
     data = {"detail": {}}
     chart = request.GET.get('chart')
 
-    # Single day report implementation
     if "report_date" in request.GET:
         report_date = request.GET.get('report_date')
         try:
@@ -166,21 +184,21 @@ def chart_detail(request):
 
         if chart == 'revenue':
             revenue = sales.aggregate(
-                cash=Sum(
+                cash=Coalesce(Sum(
                     Case(
                         When(payment_method='cash', then=F('grand_total')),
-                        default=Value(0),
+                        default=Value(0.0, output_field=FloatField()),
                         output_field=FloatField()
                     )
-                ),
-                mpesa=Sum(
+                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                mpesa=Coalesce(Sum(
                     Case(
                         When(payment_method='mpesa', then=F('grand_total')),
-                        default=Value(0),
+                        default=Value(0.0, output_field=FloatField()),
                         output_field=FloatField()
                     )
-                ),
-                total=Sum('grand_total')
+                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                total=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
             )
             sales_data = []
             for sale in sales:
@@ -195,7 +213,6 @@ def chart_detail(request):
             data["detail"]["sales"] = sales_data
 
         elif chart == 'sales_trend':
-            # Define cost expression as in reports_data.
             cost_expression = ExpressionWrapper(
                 F('salesitems__product_id__buy_price') * F('salesitems__qty'),
                 output_field=FloatField()
@@ -203,21 +220,22 @@ def chart_detail(request):
             hourly_sales = sales.annotate(
                 hour=ExtractHour('date_added')
             ).values('hour').annotate(
-                sales_revenue=Sum('grand_total', distinct=True),
-                cost=Sum(cost_expression),
-                profit=Sum('grand_total', distinct=True) - Sum(cost_expression)
+                sales_revenue=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                cost=Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                profit=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()) - 
+                       Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by('hour')
             data["chart"] = chart
             data["detail"]["hourly"] = list(hourly_sales)
 
         elif chart == 'top_selling':
             top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
-               "product_id__measurement_value", "product_id__volume_type", "product_id__name"
-            ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+                "product_id__measurement_value", "product_id__volume_type", "product_id__name"
+            ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField())).order_by("-total_sold")[:10]
             data["chart"] = chart
             data["top_selling"] = {
                 "products": [
-                    f"{item['product_id__name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
+                    f"{item['product_id__name']} ({item['product_id__measurement_value']}{item['product_id__volume_type']})"
                     for item in top_selling
                 ],
                 "quantities": [item["total_sold"] for item in top_selling]
@@ -225,12 +243,12 @@ def chart_detail(request):
 
         elif chart == 'stock':
             stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
-                stock=Sum("available_quantity")
+                stock=Coalesce(Sum("available_quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by("stock")[:5]
             data["chart"] = chart
             data["stock_levels"] = {
                 "products": [
-                    f"{item['name']} ({item[ "measurement_value"]}{item[ "volume_type"]})"
+                    f"{item['name']} ({item['measurement_value']}{item['volume_type']})"
                     for item in stock_levels
                 ],
                 "quantities": [item["stock"] for item in stock_levels]
@@ -240,7 +258,6 @@ def chart_detail(request):
             data["chart"] = chart
             data["detail"] = {"message": "Invalid chart type for single day report."}
 
-    # Date range report implementation
     elif "start_date" in request.GET and "end_date" in request.GET:
         start_date_str = request.GET.get('start_date')
         end_date_str = request.GET.get('end_date')
@@ -250,7 +267,6 @@ def chart_detail(request):
         except ValueError:
             return JsonResponse({"error": "Invalid date format. Expected YYYY-MM-DD."}, status=400)
 
-        # Build a dictionary with sales for each date in the range.
         date_sales = {}
         current_date = start_date
         while current_date <= end_date:
@@ -263,21 +279,21 @@ def chart_detail(request):
             detail = {}
             for date_str, sales_qs in date_sales.items():
                 daily_revenue = sales_qs.aggregate(
-                    cash=Sum(
+                    cash=Coalesce(Sum(
                         Case(
                             When(payment_method='cash', then=F('grand_total')),
-                            default=Value(0),
+                            default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )
-                    ),
-                    mpesa=Sum(
+                    ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                    mpesa=Coalesce(Sum(
                         Case(
                             When(payment_method='mpesa', then=F('grand_total')),
-                            default=Value(0),
+                            default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )
-                    ),
-                    total=Sum('grand_total')
+                    ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                    total=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
                 )
                 revenue["cash"] += daily_revenue.get("cash") or 0
                 revenue["mpesa"] += daily_revenue.get("mpesa") or 0
@@ -309,9 +325,10 @@ def chart_detail(request):
                 hourly_sales = sales_qs.annotate(
                     hour=ExtractHour('date_added')
                 ).values('hour').annotate(
-                    sales_revenue=Sum('grand_total', distinct=True),
-                    cost=Sum(cost_expression),
-                    profit=Sum('grand_total', distinct=True) - Sum(cost_expression)
+                    sales_revenue=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                    cost=Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                    profit=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()) - 
+                           Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField())
                 ).order_by('hour')
                 detail[date_str] = list(hourly_sales)
             data["chart"] = chart
@@ -322,9 +339,9 @@ def chart_detail(request):
             for date_str, sales_qs in date_sales.items():
                 daily_top = salesItems.objects.filter(sale_id__in=sales_qs).values(
                     "measurement_value", "volume_type", "product_id__name"
-                ).annotate(total_sold=Sum("qty"))
+                ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField()))
                 for item in daily_top:
-                    product_key = f"{item['product_id__name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
+                    product_key = f"{item['product_id__name']} ({item['measurement_value']}{item['volume_type']})"
                     top_counter[product_key] += item["total_sold"]
             sorted_top = top_counter.most_common(10)
             data["chart"] = chart
@@ -335,12 +352,12 @@ def chart_detail(request):
 
         elif chart == 'stock':
             stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
-                stock=Sum("available_quantity")
+                stock=Coalesce(Sum("available_quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by("stock")[:5]
             data["chart"] = chart
             data["stock_levels"] = {
                 "products": [
-                    f"{item['name']} ({item[ "product_id__measurement_value"]}{item[ "product_id__volume_type"]})"
+                    f"{item['name']} ({item['measurement_value']}{item['volume_type']})"
                     for item in stock_levels
                 ],
                 "quantities": [item["stock"] for item in stock_levels]
@@ -354,4 +371,3 @@ def chart_detail(request):
         data["detail"] = {"message": "No valid date parameters provided."}
 
     return JsonResponse(data, safe=False)
-
