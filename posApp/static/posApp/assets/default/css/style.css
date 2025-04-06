@@ -34,6 +34,9 @@ body {
     color: var(--bs-primary) !important
 }
 
+.mdc-icon-button.mdc-top-app-bar__navigation-icon{
+    color: #fff;
+}
 .mdc-drawer {
     background: unset;
 }
@@ -144,7 +147,19 @@ body {
     font-weight: 600;
     background: rgb(3, 114, 66);
 }
-.mdc-button.mdc-menu-button .d-flex .user-name{
+
+.mdc-menu-button{
+    background: rgb(4, 146, 84) !important;
+    color: #fff !important;
+    border: 1px solid rgb(3, 114, 66) !important;
+    font-weight: 600 !important;
+}
+.mdc-menu-button:hover{
+    background: rgb(3, 114, 66) !important;
+    color: #fff !important;
+    border-color: rgb(4, 146, 84) !important;
+}
+.mdc-button.mdc-menu-button .user-name{
     color: #fff;
     font-weight: 600;
 }
