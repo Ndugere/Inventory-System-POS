@@ -4,7 +4,7 @@ from django.shortcuts import redirect, render
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
 from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report, MpesaPaymentTransaction
-from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField
+from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -45,31 +45,35 @@ def logoutuser(request):
 # Create your views here.
 @login_required
 def home(request):
-    now = datetime.now()
-    current_year = now.strftime("%Y")
-    current_month = now.strftime("%m")
-    current_day = now.strftime("%d")
-    categories = len(Category.objects.all())
-    products = len(Products.objects.all())
-    transaction = len(Sales.objects.filter(
-        date_added__year=current_year,
-        date_added__month = current_month,
-        date_added__day = current_day
-    ))
-    today_sales = Sales.objects.filter(
-        date_added__year=current_year,
-        date_added__month = current_month,
-        date_added__day = current_day
-    ).all()
-    total_sales = sum(today_sales.values_list('grand_total',flat=True))
-    context = {
-        'page_title':'Home',
-        'categories' : categories,
-        'products' : products,
-        'transaction' : transaction,
-        'total_sales' : total_sales,
-    }
-    return render(request, 'posApp/home.html',context)
+    if request.user.is_superuser:
+        now = datetime.now()
+        current_year = now.strftime("%Y")
+        current_month = now.strftime("%m")
+        current_day = now.strftime("%d")
+        categories = len(Category.objects.all())
+        products = len(Products.objects.all())
+        transaction = len(Sales.objects.filter(
+            date_added__year=current_year,
+            date_added__month = current_month,
+            date_added__day = current_day
+        ))
+        today_sales = Sales.objects.filter(
+            date_added__year=current_year,
+            date_added__month = current_month,
+            date_added__day = current_day
+        ).all()
+        total_sales = sum(today_sales.values_list('grand_total',flat=True))
+        context = {
+            'page_title':'Home',
+            'categories' : categories,
+            'products' : products,
+            'transaction' : transaction,
+            'total_sales' : total_sales,
+        }
+        return render(request, 'posApp/home-alt.html',context)
+
+    else:
+        return redirect("pos-page")
 
 
 def about(request):
@@ -436,6 +440,54 @@ def reports(request):
         'reports': reports,
     }
     return render(request, 'posApp/reports.html', context)
+
+
+@login_required
+def reports_view(request):
+    context = {
+        "page_title": "Reports"
+    }
+    return render(request, "posApp/report/reports.html", context)
+
+@login_required
+def reports_data(request):
+    today = datetime.today().astimezone()
+    
+    # Sales Trends (Last 7 Days)
+    sales_trends = Sales.objects.filter(date_added__gte= today - timedelta(days=1))
+    trends_data = sales_trends.values_list("date_added__date").annotate(amount=Sum("grand_total"))
+    sales_trends_data = {
+        "dates": [str(data[0]) for data in trends_data],
+        "amounts": [data[1] for data in trends_data]
+    }
+    
+    # Revenue Breakdown
+    revenue_breakdown = Sales.objects.aggregate(
+        cash=Sum(Case(When(payment_method="cash", then=F("grand_total")), default=Value(0), output_field=FloatField())),
+        mpesa=Sum(Case(When(payment_method="mpesa", then=F("grand_total")), default=Value(0), output_field=FloatField()))
+    )
+    
+    # Top Selling Products
+    top_selling = salesItems.objects.values("product_id__code").annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+    top_selling_data = {
+        "products": [item["product_id__code"] for item in top_selling],
+        "quantities": [item["total_sold"] for item in top_selling]
+    }
+    
+    # Stock Levels
+    stock_levels = Products.objects.values("code").annotate(stock=Sum("available_quantity")).order_by("stock")
+    stock_levels_data = {
+        "products": [item["code"] for item in stock_levels],
+        "quantities": [item["stock"] for item in stock_levels]
+    }
+    
+    data = {
+        "sales_trends": sales_trends_data,
+        "revenue_breakdown": [revenue_breakdown["cash"] or 0, revenue_breakdown["mpesa"] or 0],
+        "top_selling": top_selling_data,
+        "stock_levels": stock_levels_data,
+    }
+    return JsonResponse(data)
 
 @login_required
 def generate_report(request):

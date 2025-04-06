@@ -1,9 +1,10 @@
-from . import views
+from . import views, reports_views, report_views2
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from django.views.generic.base import RedirectView
 
+#app_name = "posApp"
 urlpatterns = [
     path('redirect-admin', RedirectView.as_view(url="/admin"),name="redirect-admin"),
     path('', views.home, name="home-page"),
@@ -44,4 +45,8 @@ urlpatterns = [
     path("payment/result", views.payment_result, name="payment_result"),
     path("payment/timeout", views.payment_timeout, name="payment_timeout"),
     path('payment/check', views.check_payment, name="check_payment"),
+    
+    path('reports_view', views.reports_view, name="reports_view"),
+    path('reports_data', report_views2.reports_data, name="reports_data"),
+    path('chart_detail', report_views2.chart_detail, name="chart_detail"),
 ]

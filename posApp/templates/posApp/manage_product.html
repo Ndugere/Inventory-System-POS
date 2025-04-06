@@ -10,7 +10,7 @@
             <label for="category_id" class="control-label">Category</label>
             <select name="category_id" id="category_id" class="form-select form-select-sm rounded-0" required>            
                 {% for category in categories %}
-                    {% if product.category_id == category.id %}
+                    {% if product.category_id == category %}
                     <option value="{{ category.id }}" selected>{{ category.name }}</option>
                     {% else %}
                     <option value="{{ category.id }}">{{ category.name }}</option>

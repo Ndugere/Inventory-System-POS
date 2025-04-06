@@ -5,4 +5,14 @@ venv/
 env/
 frontend/
 ui/
-app/
+db.sqlite3
+migrations/
+*.json
+tailwindcss3.14
+less/
+scss/
+sprites/
+svgs/
+brands/
+metadata/
+LICENSE.txt
