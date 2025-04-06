@@ -17,12 +17,14 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            background-color: #f3f3f3;
         }
         .auth-container {
             max-width: 500px;
             width: 100%;
             padding: 20px;
-            background: #b7a0e9;;
+            color: #fff;
+            background: rgb(3, 116, 66);
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
@@ -44,31 +46,34 @@
             display:flex;
             justify-content: left;
             font-weight:600;
-            color: rgb(33, 32, 32);
+            color: #fff;
         }
         .form-control,
         .form-control:focus,
         .form-control:active{
             margin-top:.5rem;
-            background-color:#efe9fc;
+            background-color:#f3f3f3;
         }
         .form-group{
             margin-top: 2rem;
             padding-left: 20px;
             padding-right: 20px;
         }
-        .btn-login{
+        .btn-login.mdc-button{
             font-weight:600;
-            background: #5d1b9e;
+            background-color: rgb(4, 146, 84);
+            border: 1px solid #f3f3f3;
+            border-radius: 12px;
         }
-        .btn-login:hover{
-            background:#672f9e;
+        .btn-login.mdc-button:hover,
+        .btn-login.mdc-button:focus{
+            background-color: rgb(3, 116, 66);
         }
         #login-user{
             padding-bottom: 1rem;
             margin: 1rem;
-            border: 1px solid #828282;;;
             border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
         #login-user header{
             padding-top: 1rem;
@@ -76,7 +81,7 @@
             border-width: 0;
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
-            background: #7a4cc5;
+            background: rgb(4, 146, 84);
             color: #fff;
             font-weight: 600;
         }

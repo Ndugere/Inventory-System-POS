@@ -51,7 +51,30 @@ body {
     margin-left: 0 !important;
     margin-right: 0 !important;
 }
-
+.mdc-drawer-link.active{
+    background-color: rgb(3, 116, 66) !important;
+    border: 2px solid rgb(4, 146, 84) !important;
+    color: #fff !important;
+}
+.mdc-button{
+    background: rgb(3, 114, 66) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+}
+.mdc-button:hover,
+.mdc-button:active{
+    background: rgb(4, 146, 84) !important;
+    color: #fff !important;
+}
+.mdc-button-danger{
+    background: rgb(186, 21, 21) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+}
+.mdc-button-danger:hover{
+    background: rgb(198, 4, 4) !important;
+    color: #fff !important;
+}
 .icon-small{
     font-size: .75rem;
 }
@@ -87,14 +110,14 @@ body {
     width: 60%;
     margin-top: 2rem;
     color: #fff;
-    background: rgb(106, 15, 106);
-    border-color: rgb(106, 15, 106);
+    background: rgb(3, 114, 66);
+    border-color: rgb(3, 114, 66);
     font-weight: 600;
 }
 .login-btn:hover,
 .login-btn:active{
-    background: rgb(68, 2, 68);
-    border-color: rgb(68, 2, 68);
+    background: rgb(4, 146, 84);
+    border-color: rgb(4, 146, 84);
 }
 .login-body{
     /*background-image: url('../images/hanson-lu-sq5P00L7lXc-unsplash.jpg');*/
@@ -117,9 +140,9 @@ body {
 .mdc-menu,
 .mdc-menu-surface,
 .bg-dark-alt{
-    color: #000;
+    color: #fff;
     font-weight: 600;
-    background: #8162c5;
+    background: rgb(3, 114, 66);
 }
 .mdc-button.mdc-menu-button .d-flex .user-name{
     color: #fff;
@@ -129,7 +152,7 @@ body {
     box-shadow: 2px ,2px, 2px, -2px, -2px, rgba(206, 206, 206, 0.3);
 }
 .mdc-menu .item-thumbnail{
-    color: #0c0c0c;
+    color: #fff;
     font-size: 10px;
 }
 .mdc-menu .mdc-list{
@@ -138,35 +161,37 @@ body {
 }
 
 .mdc-list-item{
-    background: #8162c5;
-    border: 2px solid #8162c5; 
-    margin-bottom: .15rem;
+    color:#fff;
+    background: rgb(4, 146, 84);
+    border: 2px solid rgb(3, 114, 66); 
+    margin-bottom: 1.2rem;
     font-size: 14px;
 }
-.mdc-list-item:hover{
-    background: rgb(150, 120, 201);
-    border-color: rgb(150, 120, 201);
+.mdc-list-item:hover,
+.mdc-list-item:active{
+    background: rgb(3, 114, 66);
+    border-color: rgb(4, 146, 84);
 }
 .mdi{
-    color: #0c0c0c;
+    color: #fff;
 }
 .text-dark-alt{
-    color: #000000;
+    color: #fff;
     font-weight: 600;
 }
 .btn-new,
 .btn-new:active{
-    background: #8162c5;
+    background: rgb(3, 114, 66);
     border-width: 0;
-    color: #0c0c0c;
+    color: #fff;
     font-weight:600;
 }
 .btn-new:hover,
 .btn-new:focus{
-    background:rgb(150, 120, 201);
+    background:rgb(4, 146, 84);
 }
 .bg-primary-alt{
-    background: rgb(27, 145, 27);
+    background: rgb(3, 114, 66);
     padding: 5px;
 }
 .modal-content{
@@ -176,17 +201,18 @@ body {
     width: 50%;
 }
 .modal-header{
+    color: #fff;
     border-radius:0;
-    background:#b091f3
+    background:rgb(3, 114, 66)
 }
 .modal-footer{
-    border-top-color:#b091f3
+    border-top-color:rgb(3, 114, 66);
 }
 
 legend{
     margin:0;
     padding: 10px;
-    background: #dcdcdc;
+    background: #e2e2e2;
 }
 .table{
     padding: 0;
