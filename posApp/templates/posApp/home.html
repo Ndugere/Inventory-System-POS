@@ -50,7 +50,7 @@
     </div>
 </a>
 {%if 'Inventory Manager' in request.user.groups.values_list or 'Sales Manager' in request.user.groups.values_list or request.user.is_superuser%}
-<a href="{% url 'reports-page' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Reports">
+<a href="{% url 'reports_view' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Reports">
     <div class="mdc-card info-card info-card--info">
         <div class="card-inner">
             <h5 class="card-title">Reports</h5>
