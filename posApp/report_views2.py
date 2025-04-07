@@ -52,21 +52,21 @@ def reports_data(request):
 
         # Revenue breakdown by payment method.
         revenue = sales.aggregate(
-            cash=Coalesce(Sum(
+            cash=Sum(
                 Case(
                     When(payment_method='cash', then=F('grand_total')),
                     default=Value(0.0, output_field=FloatField()),
                     output_field=FloatField()
                 )
-            ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-            mpesa=Coalesce(Sum(
+            ),
+            mpesa=Sum(
                 Case(
                     When(payment_method='mpesa', then=F('grand_total')),
                     default=Value(0.0, output_field=FloatField()),
                     output_field=FloatField()
                 )
-            ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-            revenue=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
+            ),
+            revenue=Sum('grand_total'), 
         )
         revenue = {k: v or 0 for k, v in revenue.items()}  # Handle None in aggregation results
 
@@ -280,21 +280,21 @@ def chart_detail(request):
             detail = {}
             for date_str, sales_qs in date_sales.items():
                 daily_revenue = sales_qs.aggregate(
-                    cash=Coalesce(Sum(
+                    cash=Sum(
                         Case(
                             When(payment_method='cash', then=F('grand_total')),
                             default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )
-                    ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                    mpesa=Coalesce(Sum(
+                    ), 
+                    mpesa=Sum(
                         Case(
                             When(payment_method='mpesa', then=F('grand_total')),
                             default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )
-                    ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                    total=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
+                    ),
+                    total=Sum('grand_total')
                 )
                 revenue["cash"] += daily_revenue.get("cash") or 0
                 revenue["mpesa"] += daily_revenue.get("mpesa") or 0
