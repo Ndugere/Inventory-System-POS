@@ -76,7 +76,18 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'posApp.middleware.AutoLogoutMiddleware',  # Custom middleware for auto logout
 ]
+
+# Inactivity timeout: 5 minutes (300 seconds)
+SESSION_COOKIE_AGE = 300
+
+# Reset timer on every request
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Clear session when browser is closed
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 
 ROOT_URLCONF = 'pos.urls'
 
