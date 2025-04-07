@@ -137,7 +137,7 @@
 </div>   
 
 <!-- Sales Trends -->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12" hidden="true">
     <div class="mdc-card">
         <div class="container">  
             <div class="bg-white p-4 shadow-lg rounded-lg">
@@ -186,7 +186,7 @@
 </div>
 
 <!--Stock Levels -->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6" hidden="true">
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card">
         <div class="container">            
             <!-- Stock Levels -->
@@ -198,9 +198,9 @@
         <div class="container">
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <div class="row">
-                    <!--div class="col-12 text-end">
-                        <button class="btn btn-primary" id="stock-detail" title="Full Stock Details" data-bs-toggle="modal" data-bs-target="#details-modal">Full Stock Details</button>
-                    </div-->
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary mdc-button" id="stock-detail" title="Full Stock Details" data-bs-toggle="modal" data-bs-target="#details-modal">Full Stock Details</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -208,7 +208,7 @@
 </div>
 
 <!-- Modal Body -->
-<!--div class="modal" id="details-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+<div class="modal" id="details-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-fullscreen-md-down modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -218,11 +218,11 @@
             <div class="modal-body bg-light" id="modal-body"></div>
         </div>
     </div>
-</div-->
+</div>
 
 <script src="{% static 'posApp/assets/default/js/chart.min.js' %}"></script>
 <script>
-    /** Placeholder: Load detailed report data when clicking on a chart point
+    // Placeholder: Load detailed report data when clicking on a chart point
     function renderChartDetail(data) {
         const modalTitle = document.getElementById('modal-title');
         const modalBody = document.getElementById('modal-body');
@@ -498,7 +498,7 @@
         .then(data => renderChartDetail(data))
         .catch(error => console.error("Error loading chart data"));
     }
-    **/
+    
     // Helper: Format hour for display
     function formatHour(hour) {
         hour = parseInt(hour);
@@ -690,10 +690,10 @@
         document.getElementById('product-sales-detail').addEventListener('click', function(e){
             loadChartDetail('top_selling');
         });
+        **/
         document.getElementById('stock-detail').addEventListener('click', function(e){
             loadChartDetail('stock');
         });
-        **/
     });
 </script>
 {% endblock %}
