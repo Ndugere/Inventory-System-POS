@@ -62,7 +62,14 @@ def inventory_data(request):
             "categories": [category.name for category in categories],
             "values": [
                 Stocks.objects.filter(product_id__category_id=category).aggregate(
-                    total_value=Sum(F('quantity') * F('cost_price'), output_field=FloatField())
+                    total_value=Sum(
+                        Case(
+                            When(quantity__gt=0, then=(F('cost_price') / F('quantity')) * F('quantity')),
+                            default=Value(0.0, output_field=FloatField()),
+                            output_field=FloatField()
+                        )
+                        , output_field=FloatField()
+                    )
                 )['total_value'] or 0 for category in categories
             ]
         }
@@ -126,27 +133,52 @@ def search(request):
       - search_query
     """
     search_query = request.GET.get('q', '')
-    search_scope = request.GET.get('scope', 'products')
-    
-    if search_query and search_scope == 'products':
-        products = Products.objects.filter(name__icontains=search_query).values(
-            "id", "name", "measurement_value", "volume_type", "code"
-        )
-        return JsonResponse(list(products), safe=False)
-    elif search_query and search_scope == "suppliers":
+    search_scope = request.GET.get('scope', 'stock')  # Default to 'stock'
+
+    if search_query and search_scope == "suppliers":
         suppliers = Supplier.objects.filter(name__icontains=search_query).values(
-            "id", "name", "phone_number", "email", "address"
+            "id", "name", "phone_number", "email", "address", "status"
         )
         return JsonResponse(list(suppliers), safe=False)
+    elif search_scope == "suppliers":
+        suppliers = Supplier.objects.all().values(
+            "id", "name", "phone_number", "email", "address", "status"
+        )
+        return JsonResponse(list(suppliers), safe=False)
+    
     elif search_query and search_scope == "stocks":
-        stocks = Stocks.objects.filter(batch_number__icontains=search_query).values(
-            "id", "product_id__name", "supplier_id__name", "batch_number", "expiry_date", "quantity", "cost_price"
+        stocks = Stocks.objects.filter(name__icontains=search_query).values(
+            "id", "batch_number", "product_id", "supplier_id", "expiry_date", "quantity", "cost_price", "status"
         )
         return JsonResponse(list(stocks), safe=False)
-    
+    elif search_scope == "suppliers":
+        stocks = Stocks.objects.filter(name__icontains=search_query).values(
+            "id", "batch_number", "product_id", "supplier_id", "expiry_date", "quantity", "cost_price", "status"
+        )
+        return JsonResponse(list(stocks), safe=False)
+    elif search_query and search_scope == "products":
+        products = Products.objects.filter(name__icontains=search_query).values(
+            "id", "name", "measurement_value", "volume_type", "quantity", "buy_price", "sell_price"
+        )
+        return JsonResponse(list(products), safe=False)
+    elif search_scope == "products":
+        products = Products.objects.all().values(
+            "id", "name", "measurement_value", "volume_type", "quantity", "buy_price", "sell_price"
+        )
+        return JsonResponse(list(products), safe=False)
+    elif search_query and search_scope == "categories":
+        categories = Category.objects.filter(name__icontains=search_query).values(
+            "id", "name"
+        )
+        return JsonResponse(list(categories), safe=False)
+    elif search_scope == "categories":
+        categories = Category.objects.all().values(
+            "id", "name"
+        )
+        return JsonResponse(list(categories), safe=False)
     else:
         return JsonResponse([], safe=False)
-    
+
 @login_required
 def reports_data(request):
     """

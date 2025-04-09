@@ -210,7 +210,7 @@
 <script>
     $(document).ready(function() {
         let stockIdToDelete = null;
-       
+
         // Add/Edit Stock
         $('#create_new').click(function() {
             $('#stock_id').val('');
@@ -259,10 +259,10 @@
                         $('#addStockModal').modal('hide');
                         location.reload();
                     } else {
-                        console.error(`Error: ${error}`);
+                        console.error(`Error: ${response.error}`);
                     }
                 },
-                error: function() {
+                error: function(error) {
                     console.error(`Error: ${error}`);
                 }
             });
@@ -290,10 +290,10 @@
                         if (response.status === 'success') {
                             location.reload();
                         } else {
-                            console.error(`Error: ${error}`);
+                            console.error(`Error: ${response.error}`);
                         }
                     },
-                    error: function() {
+                    error: function(error) {
                         console.error(`Error: ${error}`);
                     }
                 });
@@ -302,10 +302,25 @@
 
         // Search functionality
         $("#searchInput").on("keyup", function() {
-            var value = $(this).val().toLowerCase();
+            const value = $(this).val().toLowerCase();
             $("table tbody tr").filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                const rowText = $(this).text().toLowerCase();
+                $(this).toggle(rowText.indexOf(value) > -1);
             });
+
+            // Show "No results found" message if no rows are visible
+            const visibleRows = $("table tbody tr:visible").length;
+            if (visibleRows === 0) {
+                if (!$("table tbody").find(".no-results").length) {
+                    $("table tbody").append(`
+                        <tr class="no-results">
+                            <td class="text-center" colspan="10">No results found</td>
+                        </tr>
+                    `);
+                }
+            } else {
+                $("table tbody").find(".no-results").remove();
+            }
         });
     });
 </script>

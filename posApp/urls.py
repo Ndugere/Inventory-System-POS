@@ -51,8 +51,8 @@ urlpatterns = [
     path('inventory', report_views2.inventory, name="inventory"),
     path('inventory/suppliers', report_views2.suppliers, name="supplier-page"),
     path('inventory/stocks', report_views2.stocks, name="stocks-page"),
-    path('inventory_data', report_views2.inventory_data, name="inventory_data"),
-    path('search_inventory', report_views2.search, name="search"),
+    path('inventory/data', report_views2.inventory_data, name="inventory_data"),
+    path('inventory/search', report_views2.search, name="search"),
     
     path('reports_view', views.reports_view, name="reports_view"),
     path('reports_data', report_views2.reports_data, name="reports_data"),
