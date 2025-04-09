@@ -50,13 +50,13 @@ def home(request):
         current_year = now.strftime("%Y")
         current_month = now.strftime("%m")
         current_day = now.strftime("%d")
-        categories = len(Category.objects.all())
-        products = len(Products.objects.all())
-        transaction = len(Sales.objects.filter(
+        categories = Category.objects.count()
+        products = Products.objects.count()
+        transaction = Sales.objects.filter(
             date_added__year=current_year,
             date_added__month = current_month,
             date_added__day = current_day
-        ))
+        ).count()
         today_sales = Sales.objects.filter(
             date_added__year=current_year,
             date_added__month = current_month,
@@ -118,13 +118,17 @@ def save_category(request):
     try:
         if data['id'].isnumeric() and int(data['id']) > 0:
             Category.objects.filter(id=data['id']).update(
-                name=data['name'],
+                name=str.capitalize(data['name']),
                 #description=data['description'],
                 status=data['status']
             )
         else:
+            if Category.objects.filter(name=str.capitalize(data['name'])).exists():
+                resp['msg'] = "Category Already Exists in the database"
+                return HttpResponse(json.dumps(resp), content_type="application/json")
+            
             new_category = Category(
-                name=data['name'],
+                name=str.capitalize(data['name']),
                 #description=data['description'],
                 status=data['status']
             )
@@ -209,29 +213,29 @@ def save_product(request):
                 Products.objects.filter(id=id).update(
                     code=data['code'],
                     category_id=category,
-                    name=data['name'],
+                    name=str.capitalize(data['name']),
                     #description=data['description'],
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
-                    available_quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    #quantity=data['available_quantity'],
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    status=status
+                    #status=status
                 )
             else:
                 new_product = Products(
                     code=data['code'],
                     category_id=category,
-                    name=data['name'],
+                    name=str.capitalize(data['name']),
                     #description=data['description'],
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
-                    available_quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    #quantity=data['available_quantity'],
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    status=1
+                    #status=1
                 )
                 new_product.save()
 

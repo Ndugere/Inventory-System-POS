@@ -1,5 +1,5 @@
 from django.contrib import admin
-from posApp.models import Category, Products, Sales, salesItems, Report
+from posApp.models import Category, Products, Sales, salesItems, Report, Supplier, Stocks
 
 # Register your models here.
 @admin.register(Category)
@@ -15,10 +15,46 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     model = Products
     fieldsets =[
-        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "volume_type", "measurement_value", 'available_quantity', 'buy_price', 'min_sell_price', 'max_sell_price', 'status']})
+        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "volume_type", "measurement_value"]})
     ]
-    list_display = ['name', 'category_id', 'buy_price', 'min_sell_price', "max_sell_price",]
-    list_filter = ['category_id', 'name', 'buy_price',  'min_sell_price', "max_sell_price",]
+    list_display = ['name', 'category_id', "volume_type", ]
+    list_filter = ['category_id', 'name', "volume_type", ]
+    search_fields = ['name', 'category_id__name']
+    ordering = ['name']
+    list_per_page = 10
+    list_select_related = True
+
+@admin.register(Supplier)
+class Supplieradmin(admin.ModelAdmin):
+    model = Supplier
+    fieldsets = (
+        ("Supplier Info", {
+            "fields": (
+                ('name', 'phone_number'),
+                ('email', 'address'),
+            ),
+        }),
+    )
+    list_display = ['name', 'phone_number', 'email']
+    list_filter = ['name', 'phone_number', 'email']
+    search_fields = ['name', 'phone_number', 'email']
+    ordering = ['name']
+    list_per_page = 10
+    list_select_related = True
+
+@admin.register(Stocks)
+class StocksAdmin(admin.ModelAdmin):
+    model = Stocks
+    fieldsets = [
+        ("Stocks Info: ", {"fields": ['product_id__name', 'batch_number','quantity', 'cost_price']})
+    ]
+    list_display = ['product_id', 'batch_number', 'quantity']
+    list_filter = ['product_id']
+    search_fields = ['product_id__name']
+    ordering = ['product_id']
+    list_per_page = 10
+    list_select_related = True
+    
 
 class SaleItemsAdmin(admin.TabularInline):
     model = salesItems

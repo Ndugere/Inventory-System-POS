@@ -1,8 +1,50 @@
 {% extends "posApp/base.html" %} {% block pageContent %}
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Category List</h4>
+            <h4 class="card-title mb-0">Inventory &middot; Category</h4>
+            <ul class="nav flex-row">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'inventory' %}">
+                        Stock
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product-page' %}">
+                        Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'category-page' %}">
+                        Categories
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier-page' %}">
+                        Suppliers
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <form id="search" action="" method="get">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control w-80" placeholder="Search category" title="Search Category" value="">
+                        <div class="input-group-prepend">
+                            <button type="submit" class="input-group-text btn btn-primary mdc-button" id="submit">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div> 
+            </form>
             <div class="text-start">
                 {% if request.user.is_staff %}
                 <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new" title="Add Category"><i class="mdi mdi-plus"></i><span> Add New</span></button>
@@ -33,7 +75,7 @@
                     {% for cat in category %}
                     <tr>
                         <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
-                        <td class="px-2 py-1 text-start">{{ cat.name }}</td>
+                        <td class="px-2 py-1 text-start">{{ cat.name|capfirst }}</td>
                         <!--td class="px-2 py-1 text-start">{{ cat.description }}</td-->
                         <td class="px-2 py-1 text-center">
                             {% if cat.status == 1 %}

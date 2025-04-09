@@ -1,10 +1,52 @@
 {% extends "posApp/base.html" %}
 {% load humanize %}
 {% block pageContent %}
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Product List</h4>
+            <h4 class="card-title mb-0">Inventory &middot; Products</h4>
+            <ul class="nav flex-row">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'inventory' %}">
+                        Stock
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product-page' %}">
+                        Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'category-page' %}">
+                        Categories
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier-page' %}">
+                        Suppliers
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-1">
+        <div class="d-flex justify-content-between align-items-center">
+            <form id="search" action="" method="get">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control w-80" placeholder="Search products" title="Search products" value="">
+                        <div class="input-group-prepend">
+                            <button type="submit" class="input-group-text btn btn-primary mdc-button" id="submit">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div> 
+            </form>
             <div class="text-start">
                 {% for value in request.user.groups.values_list %}
                     {% if 'Inventory Manager' in value or 'Admin' in value %}
@@ -34,7 +76,7 @@
                         <th class="text-center py-1">Product Code</th>
                         <th class="text-center py-1">Product</th>
                         <th class="text-center py-1">Volume</th>
-                        <th class="text-center py-1">Available QTY</th>                        
+                        <th class="text-center py-1">Quantity</th>                        
                         <th class="text-center py-1">Buying Price</th>
                         <th class="text-center py-1">Min Price</th>
                         <th class="text-center py-1">Max Price</th>
@@ -50,11 +92,11 @@
                     {% for product in products %}
                     <tr>
                         <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.category_id }}</td>
+                        <td class="px-2 py-1 text-start">{{ product.category_id__name|capfirst }}</td>
                         <td class="px-2 py-1 text-start">{{ product.code }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.name }}</td>                        
+                        <td class="px-2 py-1 text-start">{{ product.name|capfirst }}</td>                        
                         <td class="px-2 py-1 text-start">{{ product.measurement_value }}{{product.volume_type}}</td>   
-                        <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>                           
+                        <td class="px-2 py-1 text-center">{{ product.quantity }}</td>                           
                         <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
                         <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
                         <td class="px-2 py-1 text-end">{{ product.max_sell_price|floatformat:2|intcomma }}</td>

@@ -5,9 +5,10 @@ from django.db.models import Sum, Case, When, F, Value, FloatField
 from django.db.models.functions import ExtractHour, Coalesce
 from django.db.models import ExpressionWrapper
 from datetime import datetime, timedelta
-from posApp.models import Sales, salesItems, Products  # Adjust imports as needed
+from posApp.models import Sales, salesItems, Products, Supplier, Stocks
 from collections import Counter
 from decimal import Decimal
+import json
 
 @login_required
 def home(request):
@@ -16,6 +17,95 @@ def home(request):
         return render(request, "posApp/home-alt.html", context)
     else:
         return redirect("pos-page")
+
+@login_required
+def inventory(request):
+    if request.user.is_superuser:
+        context = {
+            "stocks": stocks
+        }
+        return render(request, "posApp/inventory/inventory.html", context)
+    else:
+        return redirect("pos-page")
+
+@login_required
+def inventory_data(request):
+    """
+    Returns inventory data for the products.
+    """
+    products = {}
+    return JsonResponse(list(products), safe=False)
+
+@login_required
+def suppliers(request):
+    if request.user.is_superuser:
+        suppliers = Supplier.objects.all()
+        
+        supplier_list = [{
+            "id": supplier.id, "name":supplier.name, "email":supplier.email, "phone_number":supplier.phone_number,
+            "address": supplier.address, "status": supplier.status
+        } for supplier in suppliers]
+        context = {
+            "suppliers": suppliers,
+            "json": json.dumps(supplier_list),
+            "page": "Suppliers"
+        }
+        return render(request, "posApp/inventory/suppliers.html", context)
+    else:
+        return redirect("pos-page")
+
+@login_required
+def stocks(request):
+    if request.user.is_superuser:
+        stocks = Stocks.objects.all()
+        stock_list = [{
+            "id": stock.id, "batch_number": stock.batch_number, "product_id": stock.product_id.id,
+            "product_name": stock.product_id.name, "supplier_id": stock.supplier_id.id,
+            "supplier_name": stock.supplier_id.name, "expiry_date": stock.expiry_date,
+            "quantity": stock.quantity, "cost_price": stock.cost_price, "status": stock.status,
+            "delivery_date": stock.delivered_on,
+        } for stock in stocks]
+        context = {
+            "stocks": stocks,
+            "page": "Stocks",
+            "json": json.dumps(stock_list),
+        }
+        return render(request, "posApp/inventory/stocks.html", context)
+    else:
+        return redirect("pos-page")
+
+@login_required
+def manage_inventory(request):
+    pass
+    
+@login_required
+def search(request):
+    """
+    Returns data based on the search query.
+    Expected GET parameter:
+      - search_query
+    """
+    search_query = request.GET.get('q', '')
+    search_scope = request.GET.get('scope', 'products')
+    
+    if search_query and search_scope == 'products':
+        products = Products.objects.filter(name__icontains=search_query).values(
+            "id", "name", "measurement_value", "volume_type", "code"
+        )
+        return JsonResponse(list(products), safe=False)
+    elif search_query and search_scope == "suppliers":
+        suppliers = Supplier.objects.filter(name__icontains=search_query).values(
+            "id", "name", "phone_number", "email", "address"
+        )
+        return JsonResponse(list(suppliers), safe=False)
+    elif search_query and search_scope == "stocks":
+        stocks = Stocks.objects.filter(batch_number__icontains=search_query).values(
+            "id", "product_id__name", "supplier_id__name", "batch_number", "expiry_date", "quantity", "cost_price"
+        )
+        return JsonResponse(list(stocks), safe=False)
+    
+    else:
+        return JsonResponse([], safe=False)
     
 @login_required
 def reports_data(request):
@@ -147,9 +237,9 @@ def reports_data(request):
         revenue = report["revenue"]
         top_selling_data = report["top_selling"]
 
-    # Stock Levels: fetch products with the lowest available_quantity.
+    # Stock Levels: fetch products with the lowest quantity.
     stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
-        stock=Coalesce(Sum("available_quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
+        stock=Coalesce(Sum("quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
     ).order_by("stock")[:5]
     stock_levels_data = {
         "products": [
@@ -244,7 +334,7 @@ def chart_detail(request):
 
         elif chart == 'stock':
             stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
-                stock=Coalesce(Sum("available_quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
+                stock=Coalesce(Sum("quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by("stock")[:5]
             data["chart"] = chart
             data["stock_levels"] = {
@@ -353,7 +443,7 @@ def chart_detail(request):
 
         elif chart == 'stock':
             stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
-                stock=Coalesce(Sum("available_quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
+                stock=Coalesce(Sum("quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by("stock")[:5]
             data["chart"] = chart
             data["stock_levels"] = {
