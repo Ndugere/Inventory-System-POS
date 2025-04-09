@@ -18,7 +18,7 @@
                             <select id="product-id" class="form-select form-select-sm">
                                 <option value="" disabled selected></option>
                                 {% for product in products %}
-                                    <option value="{{ product.pk }}" data-volume="{{product.measurement_value}}{{product.volume_type}}" data-available-qty="{{ product.available_quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
+                                    <option value="{{ product.pk }}" data-volume="{{product.measurement_value}}{{product.volume_type}}" data-available-qty="{{ product.quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -26,7 +26,7 @@
                     <div class="col-lg-2 col-md-2 col-sm-12">
                         <div class="form-group mb-3">
                             <label for="product-qty">Qty <small>(<span id="qty-available">0</span> Available)</small></label>
-                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" min="1" max="{{product.available_quantity}}" value="1">
+                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" min="1" max="{{product.quantity}}" value="1">
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-4 col-sm-12">

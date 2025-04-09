@@ -3,7 +3,7 @@ from pickle import FALSE
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier
+from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier, Stocks
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -1021,4 +1021,70 @@ def delete_supplier(request):
     
         
     return JsonResponse({"success": False}, status=400)
-            
+
+@login_required
+def stocks_page(request):
+    context = {
+        'page_title': 'Stocks',
+        'stocks': Stocks.objects.select_related('product_id', 'supplier_id').all(),
+        'products': Products.objects.filter(status=1),
+        'suppliers': Supplier.objects.filter(status=1)
+    }
+    return render(request, 'posApp/inventory/stocks.html', context)
+
+@login_required
+def get_stock(request):
+    stock_id = request.GET.get('id')
+    try:
+        stock = Stocks.objects.get(id=stock_id)
+        data = {
+            'product_id': stock.product_id.id,
+            'supplier_id': stock.supplier_id.id,
+            'batch_number': stock.batch_number,
+            'quantity': stock.quantity,
+            'cost_price': stock.cost_price,
+            'expiry_date': stock.expiry_date.strftime('%Y-%m-%d') if stock.expiry_date else '',
+        }
+        return JsonResponse(data)
+    except Stocks.DoesNotExist:
+        return JsonResponse({'error': 'Stock not found'}, status=404)
+
+@login_required
+def save_stock(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
+
+    stock_id = request.POST.get('id')
+    
+    try:
+        if stock_id:
+            # Update existing stock
+            stock = Stocks.objects.get(id=stock_id)
+        else:
+            # Create new stock
+            stock = Stocks()
+        
+        stock.product_id_id = request.POST.get('product_id')
+        stock.supplier_id_id = request.POST.get('supplier_id')
+        stock.batch_number = request.POST.get('batch_number')
+        stock.quantity = float(request.POST.get('quantity'))
+        stock.cost_price = float(request.POST.get('cost_price'))
+        stock.expiry_date = request.POST.get('expiry_date')
+        
+        stock.save()
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'msg': str(e)})
+
+@login_required
+def delete_stock(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
+        
+    try:
+        stock_id = request.POST.get('id')
+        Stocks.objects.filter(id=stock_id).delete()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'msg': str(e)})

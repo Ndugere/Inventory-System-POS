@@ -61,4 +61,9 @@ urlpatterns = [
     path('get-supplier/', views.get_supplier, name='get-supplier'),
     path('save-supplier/', views.save_supplier, name='save-supplier'),
     path('delete-supplier/', views.delete_supplier, name='delete-supplier'),
+    
+    # Add these to your urlpatterns
+    path('stocks/get/', views.get_stock, name='get-stock'),
+    path('stocks/save/', views.save_stock, name='save-stock'),
+    path('stocks/delete/', views.delete_stock, name='delete-stock'),
 ]

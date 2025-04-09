@@ -82,7 +82,7 @@ def suppliers(request):
         } for supplier in suppliers]
         context = {
             "suppliers": suppliers,
-            "json": json.dumps(supplier_list),
+            #"json": json.dumps(supplier_list),
             "page": "Suppliers"
         }
         return render(request, "posApp/inventory/suppliers.html", context)
@@ -92,18 +92,23 @@ def suppliers(request):
 @login_required
 def stocks(request):
     if request.user.is_superuser:
+        products = Products.objects.all()
+        suppliers = Supplier.objects.all()
         stocks = Stocks.objects.all()
         stock_list = [{
             "id": stock.id, "batch_number": stock.batch_number, "product_id": stock.product_id.id,
             "product_name": stock.product_id.name, "supplier_id": stock.supplier_id.id,
             "supplier_name": stock.supplier_id.name, "expiry_date": stock.expiry_date,
             "quantity": stock.quantity, "cost_price": stock.cost_price, "status": stock.status,
-            "delivery_date": stock.delivered_on,
+            "delivery_date": stock.delivery_date, "date_updated": stock.date_updated
         } for stock in stocks]
+        
         context = {
             "stocks": stocks,
+            "products": products,
+            "suppliers": suppliers,
             "page": "Stocks",
-            "json": json.dumps(stock_list),
+            #"json": json.dumps(stock_list),
         }
         return render(request, "posApp/inventory/stocks.html", context)
     else:
