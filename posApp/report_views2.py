@@ -5,10 +5,11 @@ from django.db.models import Sum, Case, When, F, Value, FloatField
 from django.db.models.functions import ExtractHour, Coalesce
 from django.db.models import ExpressionWrapper
 from datetime import datetime, timedelta
-from posApp.models import Sales, salesItems, Products, Supplier, Stocks
+from posApp.models import Sales, salesItems, Products, Supplier, Stocks, Category
 from collections import Counter
 from decimal import Decimal
 import json
+from django.utils import timezone
 
 @login_required
 def home(request):
@@ -33,8 +34,42 @@ def inventory_data(request):
     """
     Returns inventory data for the products.
     """
-    products = {}
-    return JsonResponse(list(products), safe=False)
+    data_type = request.GET.get('type', '')
+
+    if data_type == 'expiring_soon':
+        stocks = Stocks.objects.filter(expiry_date__lte=timezone.now().date() + timedelta(days=7), status=1)
+        data = {
+            "products": [f"{stock.product_id.name} (Batch: {stock.batch_number})" for stock in stocks],
+            "quantities": [stock.quantity for stock in stocks]
+        }
+    elif data_type == 'low_stock':
+        products = Products.objects.filter(quantity__lte=10).order_by('quantity')
+        data = {
+            "products": [f"{product.name}({product.get_volume()})" for product in products],
+            "quantities": [product.quantity for product in products]
+        }
+    elif data_type == 'top_selling':
+        top_selling = salesItems.objects.values(
+            "product_id__name"
+        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:5]
+        data = {
+            "products": [item["product_id__name"] for item in top_selling],
+            "quantities": [item["total_sold"] for item in top_selling]
+        }
+    elif data_type == 'stock_value':
+        categories = Category.objects.all()
+        data = {
+            "categories": [category.name for category in categories],
+            "values": [
+                Stocks.objects.filter(product_id__category_id=category).aggregate(
+                    total_value=Sum(F('quantity') * F('cost_price'), output_field=FloatField())
+                )['total_value'] or 0 for category in categories
+            ]
+        }
+    else:
+        data = {"error": "Invalid data type requested."}
+
+    return JsonResponse(data, safe=False)
 
 @login_required
 def suppliers(request):

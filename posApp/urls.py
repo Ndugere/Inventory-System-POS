@@ -52,8 +52,13 @@ urlpatterns = [
     path('inventory/suppliers', report_views2.suppliers, name="supplier-page"),
     path('inventory/stocks', report_views2.stocks, name="stocks-page"),
     path('inventory_data', report_views2.inventory_data, name="inventory_data"),
-    path('search', report_views2.search, name="search"),
+    path('search_inventory', report_views2.search, name="search"),
+    
     path('reports_view', views.reports_view, name="reports_view"),
     path('reports_data', report_views2.reports_data, name="reports_data"),
     path('chart_detail', report_views2.chart_detail, name="chart_detail"),
+    
+    path('get-supplier/', views.get_supplier, name='get-supplier'),
+    path('save-supplier/', views.save_supplier, name='save-supplier'),
+    path('delete-supplier/', views.delete_supplier, name='delete-supplier'),
 ]

@@ -1,9 +1,9 @@
 import logging, json
 from pickle import FALSE
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction
+from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -954,4 +954,71 @@ def check_payment(request):
         
     else:
         return JsonResponse({"success": False}, status=401)
+
+@login_required
+def get_supplier(request):
+    """
+    Fetch a supplier's data by ID.
+    """
+    supplier_id = request.GET.get('id', '')
+    supplier = get_object_or_404(Supplier, id=supplier_id)
+    data = {
+        "id": supplier.id,
+        "name": supplier.name,
+        "phone_number": supplier.phone_number,
+        "email": supplier.email,
+        "address": supplier.address,
+        "status": supplier.status,
+    }
+    return JsonResponse(data)
+
+@csrf_exempt
+@login_required
+def save_supplier(request):
+    """
+    Save or update a supplier.
+    """
+    if request.method == "POST":
+        supplier_id = request.POST.get('supplierId')
+        name = request.POST.get('name')
+        phone_number = request.POST.get('phone_number')
+        email = request.POST.get('email')
+        address = request.POST.get('address')
+        status = request.POST.get('status')
     
+        if supplier_id:
+            supplier = get_object_or_404(Supplier, id=supplier_id)
+            supplier.name = name
+            supplier.phone_number = phone_number
+            supplier.email = email
+            supplier.address = address
+            supplier.status = status
+            supplier.save()
+        else:
+            Supplier.objects.create(
+                name=name,
+                phone_number=phone_number,
+                email=email,
+                address=address,
+                status=status,
+            )
+        messages.success(request, 'supplier created Successfully.')
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False}, status=400)
+
+@login_required
+def delete_supplier(request):
+    if request.method == "POST":
+        supplier_id = request.POST.get('id')
+        if supplier_id:
+            supplier = get_object_or_404(Supplier, id=supplier_id)
+            supplier.delete()
+            messages.success(request, 'Supplier deleted Successfully.')
+            return JsonResponse({"success": True})
+        else:
+            messages.error(request, 'Supplier ID not provided.')
+            return JsonResponse({"success": False, "error": "Supplier ID not provided"}, status=400)
+    
+        
+    return JsonResponse({"success": False}, status=400)
+            

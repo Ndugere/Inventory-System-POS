@@ -79,8 +79,8 @@ MIDDLEWARE = [
     'posApp.middleware.AutoLogoutMiddleware',  # Custom middleware for auto logout
 ]
 
-# Inactivity timeout: 5 minutes (300 seconds)
-SESSION_COOKIE_AGE = 300
+# Inactivity timeout: 15 minutes (900 seconds)
+SESSION_COOKIE_AGE = 900
 
 # Reset timer on every request
 SESSION_SAVE_EVERY_REQUEST = True
