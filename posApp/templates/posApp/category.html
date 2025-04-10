@@ -3,8 +3,8 @@
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Inventory &middot; Category</h4>
-            <ul class="nav flex-row">
+            <h4 class="card-title mb-0">Category</h4>
+            <!--ul class="nav flex-row">
                 <li class="nav-item">
                     <a class="nav-link active" href="{% url 'inventory' %}">
                         Inventory
@@ -31,7 +31,7 @@
                         Suppliers
                     </a>
                 </li>
-            </ul>
+            </ul-->
         </div>
     </div>
 </div>
@@ -50,16 +50,20 @@
                     </div>
                 </div> 
             </form>
-            <div class="text-start">
-                {% if request.user.is_staff %}
-                <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new" title="Add Category"><i class="mdi mdi-plus"></i><span> Add New</span></button>
-                {% endif %}
-            </div>
         </div>
     </div>
 </div>
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-start">
+                    {% if request.user.is_staff %}
+                    <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new" title="Add Category"><i class="mdi mdi-plus"></i><span> Add New</span></button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-bordered">
                 <thead>

@@ -72,7 +72,7 @@
                             <th class="text-center py-1">#</th>
                             <th class="text-center py-1">Product Code</th>
                             <th class="text-center py-1">Product Name</th>
-                            <th class="text-center py-1">Description</th>
+                            <th class="text-center py-1">Batch No.</th>
                             <th class="text-center py-1">Quantity</th>
                             <th class="text-center py-1">Buy Price</th>
                             <th class="text-center py-1">Sell Price</th>
@@ -83,9 +83,9 @@
                         {% for item in sale.items %}
                             <tr>
                                 <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
-                                <td class="px-2 py-1 text-start">{{ item.product_code }}</td>
-                                <td class="px-2 py-1 text-start">{{ item.product_name }}</td>
-                                <td class="px-2 py-1 text-start">{{ item.description }}</td>
+                                <td class="px-2 py-1 text-start">{{ item.product_id__code }}</td>
+                                <td class="px-2 py-1 text-start">{{ item.product_id__name }}</td>
+                                <td class="px-2 py-1 text-start">{{ item.stock_id__batch_number }}</td>
                                 <td class="px-2 py-1 text-center">{{ item.quantity }}</td>
                                 <td class="px-2 py-1 text-center">{{ item.buy_price|floatformat:2 }}</td>
                                 <td class="px-2 py-1 text-center">{{ item.price|floatformat:2 }}</td>

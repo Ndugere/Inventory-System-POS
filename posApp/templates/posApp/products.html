@@ -5,8 +5,8 @@
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Inventory &middot; Products</h4>
-            <ul class="nav flex-row">
+            <h4 class="card-title mb-0">Products</h4>
+            <!--ul class="nav flex-row">
                 <li class="nav-item">
                     <a class="nav-link active" href="{% url 'inventory' %}">
                         Inventory
@@ -33,7 +33,7 @@
                         Suppliers
                     </a>
                 </li>
-            </ul>
+            </ul-->
         </div>
     </div>
 </div>
@@ -52,81 +52,88 @@
                     </div>
                 </div> 
             </form>
-            <div class="text-start">
-                {% for value in request.user.groups.values_list %}
-                    {% if 'Inventory Manager' in value or 'Admin' in value %}
-                    <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new"><i class="mdi mdi-plus"></i><span> Add New</span></button>
-                    {% endif %}
-                {% endfor %}
-            </div>
         </div>
     </div>
 </div>
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <!--colgroup>
-                    <col width="5%">
-                    <col width="20%">
-                    <col width="20%">
-                    <col width="25%">
-                    <col width="15%">
-                    <col width="15%">
-                </colgroup-->
-                <thead>
-                    <tr>
-                        <th class="text-center py-1">#</th>
-                        <th class="text-center py-1">Product Code</th>
-                        <th class="text-center py-1">Product</th>
-                        <th class="text-center py-1">Category</th>
-                        <th class="text-center py-1">Volume</th>
-                        <th class="text-center py-1">Quantity</th>                        
-                        <th class="text-center py-1">Buying Price</th>
-                        <th class="text-center py-1">Min Price</th>
-                        <th class="text-center py-1">Max Price</th>
-                        <th class="text-center py-1">Status</th>
-                        {% for value in request.user.groups.values_list%}
-                            {% if 'Inventory Manager' in  value or 'Admin' in value%}
-                            <th class="text-center py-1">Action</th>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr>
-                        <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.code }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.name|capfirst }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.category_id|capfirst }}</td>                        
-                        <td class="px-2 py-1 text-start">{{ product.measurement_value }}{{product.volume_type}}</td>   
-                        <td class="px-2 py-1 text-center">{{ product.quantity }}</td>                           
-                        <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
-                        <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
-                        <td class="px-2 py-1 text-end">{{ product.max_sell_price|floatformat:2|intcomma }}</td>
-                        <td class="px-2 py-1 text-center">
-                            {% if product.status == 1 %}
-                            <span class="badge bg-primary-alt rounded-pill px-3">Available</span> {% else %}
-                            <span class="badge bg-secondary rounded-pill px-3">Soldout</span> {% endif %}
-                        </td>
-                        {% for value in request.user.groups.values_list%}
-                            {% if 'Inventory Manager' in value or 'Admin' in value %}
-                            <td class="px-2 py-1 text-center">
-                                
-                                <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ product.pk }}" title="Edit">
-                                    <i class="material-icons mdc-button__icon">edit</i>
-                                </button>
-                                <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ product.pk }}" title="Delete">
-                                    <i class="material-icons mdc-button__icon">deleteoutline</i>
-                                </button>
-                            </td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
+        <div class="row">
+            <div class="col-12">
+                <div class="text-start">
+                    {% for value in request.user.groups.values_list %}
+                        {% if 'Inventory Manager' in value or 'Admin' in value %}
+                        <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new"><i class="mdi mdi-plus"></i><span> Add New</span></button>
+                        {% endif %}
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            </div>
+            <div class="col-12">
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <!--colgroup>
+                            <col width="5%">
+                            <col width="20%">
+                            <col width="20%">
+                            <col width="25%">
+                            <col width="15%">
+                            <col width="15%">
+                        </colgroup-->
+                        <thead>
+                            <tr>
+                                <th class="text-center py-1">#</th>
+                                <th class="text-center py-1">Product Code</th>
+                                <th class="text-center py-1">Product</th>
+                                <th class="text-center py-1">Category</th>
+                                <th class="text-center py-1">Volume</th>
+                                <th class="text-center py-1">Quantity</th>                        
+                                <th class="text-center py-1">Buying Price</th>
+                                <th class="text-center py-1">Min Price</th>
+                                <th class="text-center py-1">Max Price</th>
+                                <th class="text-center py-1">Status</th>
+                                {% for value in request.user.groups.values_list%}
+                                    {% if 'Inventory Manager' in  value or 'Admin' in value%}
+                                    <th class="text-center py-1">Action</th>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                                <td class="px-2 py-1 text-start">{{ product.code }}</td>
+                                <td class="px-2 py-1 text-start">{{ product.name|capfirst }}</td>
+                                <td class="px-2 py-1 text-start">{{ product.category_id|capfirst }}</td>                        
+                                <td class="px-2 py-1 text-start">{{ product.measurement_value }}{{product.volume_type}}</td>   
+                                <td class="px-2 py-1 text-center">{{ product.quantity }}</td>                           
+                                <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
+                                <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
+                                <td class="px-2 py-1 text-end">{{ product.max_sell_price|floatformat:2|intcomma }}</td>
+                                <td class="px-2 py-1 text-center">
+                                    {% if product.status == 1 %}
+                                    <span class="badge bg-primary-alt rounded-pill px-3">Available</span> {% else %}
+                                    <span class="badge bg-secondary rounded-pill px-3">Soldout</span> {% endif %}
+                                </td>
+                                {% for value in request.user.groups.values_list%}
+                                    {% if 'Inventory Manager' in value or 'Admin' in value %}
+                                    <td class="px-2 py-1 text-center">
+                                        
+                                        <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ product.pk }}" title="Edit">
+                                            <i class="material-icons mdc-button__icon">edit</i>
+                                        </button>
+                                        <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ product.pk }}" title="Delete">
+                                            <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                        </button>
+                                    </td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>

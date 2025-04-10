@@ -294,75 +294,65 @@ def checkout_modal(request):
 def save_pos(request):
     resp = {'status': 'failed', 'msg': ''}
     data = request.POST
-    payment_method = data.get("payment_method").strip().lower()  # Default to cash
-    pos_number = data.get("pos_number", "").strip()  # Reference for M-Pesa payments
-    grand_total = float(data.get("grand_total", 0))
-
-    pref = datetime.now().year + datetime.now().year
-    i = 1
-    while True:
-        code = '{:0>5}'.format(i)
-        i += 1
-        if not Sales.objects.filter(code=str(pref) + str(code)).exists():
-            break
-    code = str(pref) + str(code)
-
-    # Validate M-Pesa payment if required
-    """
-    if payment_method == "mpesa":
-        payment = MpesaPaymentTransaction.objects.filter(
-            account_reference=pos_number,
-            amount_received=grand_total,
-            status=MpesaPaymentTransaction.StatusChoices.COMPLETED
-        ).first()
-        if not payment:
-            return JsonResponse({"status": "failed", "msg": "No matching M-Pesa payment found."}, status=400)
-    """
+    def generate_sale_code():
+        pref = datetime.now().year + datetime.now().year
+        i = 1
+        while True:
+            code = '{:0>5}'.format(i)
+            i += 1
+            if not Sales.objects.filter(code=str(pref) + str(code)).exists():
+                break
+        code = str(pref) + str(code)
+        return code
     try:
         # Create a new Sales record
         sale = Sales(
-            code=code, 
-            sub_total=data['sub_total'], 
-            tax=data['tax'], 
-            tax_amount=data['tax_amount'], 
-            grand_total=grand_total, 
-            tendered_amount=data['tendered_amount'], 
+            code=generate_sale_code(),
+            sub_total=data['sub_total'],
+            tax=data['tax'],
+            tax_amount=data['tax_amount'],
+            grand_total=data['grand_total'],
+            tendered_amount=data['tendered_amount'],
             amount_change=data['amount_change'],
-            payment_method=payment_method,  # Save payment method
+            payment_method=data['payment_method'],
             served_by=request.user
         )
         sale.save()
-        sale_id = sale.pk
 
-        # Iterate over the list of products
-        for i, prod in enumerate(data.getlist('product_id[]')):
-            product = Products.objects.filter(id=prod).first()
-            qty = data.getlist('qty[]')[i]
-            price = float(data.getlist('price[]')[i])           
-            total = float(qty) * float(price)
+        # Process each product in the sale
+        for i, product_id in enumerate(data.getlist('product_id[]')):
+            qty = float(data.getlist('qty[]')[i])
+            price = float(data.getlist('price[]')[i])
+            product = Products.objects.get(id=product_id)
 
-            # Validate the price
-            if int(price) in range(int(product.min_sell_price), int(product.max_sell_price)):
-                # Create a new sales item
-                salesItems(sale_id=sale, product_id=product, qty=qty, price=price, total=total).save()
-            else:
-                raise Exception(f"Price should be in the within the range {product.min_sell_price} - {product.max_sell_price}")
+            # Find the stock batch with sufficient quantity
+            stock = Stocks.objects.filter(product_id=product, quantity__gte=qty).order_by('expiry_date').first()
+            if not stock:
+                raise Exception(f"Insufficient stock for product {product.name}")
 
-            # Update product quantity
-            product.quantity = product.quantity - int(qty)
-            if product.quantity == 0:
-                product.status = 0
-            product.save()
+            # Reduce stock quantity
+            stock.quantity -= qty
+            stock.save()
 
-        # Set response status to success
+            # Create a sales item linked to the stock batch
+            sales_item = salesItems(
+                sale_id=sale,
+                product_id=product,
+                stock_id=stock,
+                qty=qty,
+                price=price,
+                total=qty * price
+            )
+            sales_item.save()
+
         resp['status'] = 'success'
-        resp['sale_id'] = sale_id
-        messages.success(request, "Sale Record has been saved.")
+        resp['sale_id'] = sale.id
+        messages.success(request, "Sale record has been saved.")
     except Exception as e:
         logger.error(f"Error saving POS: {e}")
-        resp['msg'] = "An error occurred"
+        resp['msg'] = str(e)
 
-    return HttpResponse(json.dumps(resp), content_type="application/json")
+    return JsonResponse(resp)
 
 @login_required
 def salesList(request):

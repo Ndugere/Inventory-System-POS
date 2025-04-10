@@ -39,7 +39,7 @@ def inventory_data(request):
     if data_type == 'expiring_soon':
         stocks = Stocks.objects.filter(expiry_date__lte=timezone.now().date() + timedelta(days=7), status=1)
         data = {
-            "products": [f"{stock.product_id.name} (Batch: {stock.batch_number})" for stock in stocks],
+            "products": [f"{stock.product_id.name}" for stock in stocks],
             "quantities": [stock.quantity for stock in stocks]
         }
     elif data_type == 'low_stock':

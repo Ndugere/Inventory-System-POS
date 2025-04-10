@@ -140,6 +140,7 @@ class Sales(models.Model):
 class salesItems(models.Model):
     sale_id = models.ForeignKey(Sales, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
+    stock_id = models.ForeignKey(Stocks, on_delete=models.CASCADE)
     price = models.FloatField(default=0)
     qty = models.FloatField(default=0)
     total = models.FloatField(default=0)
