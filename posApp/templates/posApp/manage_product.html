@@ -41,24 +41,24 @@
                 </div>
             </div>
         </div>
-        <div class="form-group mb-3">
+        <!--div class="form-group mb-3">
             <label for="available_quantity" class="control-label">Available Quantity</label>
-            <input type="number" disabled name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.quantity %}{{product.quantity}}{% endif %}" min="0" step="any" required>
+            <input type="number" disabled name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.quantity %}{{product.quantity}} {% else %} 0 {% endif %}" min="0" step="any">
         </div>
         <div class="form-group mb-3">
             <label for="buy_price" class="control-label"> Buying Price</label>
-            <input type="number" disabled name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2|intcomma}}{% endif %}"value="0.00" min="0.00" step="any" required>
+            <input type="number" disabled name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2|intcomma}} {% else %} 0.00 {% endif %}" min="0.00" step="any">
         </div>
         <div class="form-group mb-3">
             <h6 for="sell_price" class="control-label">Selling Price Range</h6>
             <div class="row">
                 <div class="col-md-6">
                     <h6 for="min_sell_price" class="control-label">Min</h6>
-                    <input type="number" name="min_sell_price" id="min_sell_price" class="form-control form-control-sm rounded-0" value="{% if product.min_sell_price %}{{product.min_sell_price|floatformat:2|intcomma}}{% endif %}" value="0.00" min="0.00" step="any" required>
+                    <input type="number" name="min_sell_price" id="min_sell_price" class="form-control form-control-sm rounded-0" value="{% if product.min_sell_price %}{{product.min_sell_price|floatformat:2|intcomma}}{% else %}0.00{% endif %}" min="0.00" step="any" required>
                 </div>
                 <div class="col-md-6">
                     <h6 for="max_sell_price" class="control-label">Max</h6>
-                    <input type="number" name="max_sell_price" id="max_sell_price" class="form-control form-control-sm rounded-0" value="{% if product.max_sell_price %}{{product.max_sell_price|floatformat:2|intcomma}}{% endif %}" value="0.00" min="0.00" step="any" required>
+                    <input type="number" name="max_sell_price" id="max_sell_price" class="form-control form-control-sm rounded-0" value="{% if product.max_sell_price %}{{product.max_sell_price|floatformat:2|intcomma}}{% else %}0.00{% endif %}" min="0.00" step="any" required>
                 </div>
             </div>
         </div>

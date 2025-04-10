@@ -206,10 +206,7 @@ def save_product(request):
         category = Category.objects.filter(id=data['category_id']).first()
         try:
             if id.isnumeric() and int(id) > 0:
-                if  int(data['available_quantity']) > 0:
-                    status = 1 
-                else:
-                    status = 0
+                
                 Products.objects.filter(id=id).update(
                     code=data['code'],
                     category_id=category,
@@ -219,8 +216,8 @@ def save_product(request):
                     measurement_value=int(data['measurement_value']),
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),
-                    min_sell_price=float(data['min_sell_price']),
-                    max_sell_price=float(data['max_sell_price']),
+                    #min_sell_price=float(data['min_sell_price']),
+                    #max_sell_price=float(data['max_sell_price']),
                     #status=status
                 )
             else:
@@ -233,8 +230,8 @@ def save_product(request):
                     measurement_value=int(data['measurement_value']),
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),
-                    min_sell_price=float(data['min_sell_price']),
-                    max_sell_price=float(data['max_sell_price']),
+                    #min_sell_price=float(data['min_sell_price']),
+                    #max_sell_price=float(data['max_sell_price']),
                     #status=1
                 )
                 new_product.save()
@@ -352,8 +349,8 @@ def save_pos(request):
                 raise Exception(f"Price should be in the within the range {product.min_sell_price} - {product.max_sell_price}")
 
             # Update product quantity
-            product.available_quantity = product.available_quantity - int(qty)
-            if product.available_quantity == 0:
+            product.quantity = product.quantity - int(qty)
+            if product.quantity == 0:
                 product.status = 0
             product.save()
 
@@ -520,7 +517,7 @@ def generate_report(request):
                     "buy_price": product.buy_price,
                     "min_sell_price": product.min_sell_price,
                     "max_sell_price": product.max_sell_price,
-                    "available_quantity": product.available_quantity,
+                    "available_quantity": product.quantity,
                     "status": product.status,
                     "date_added": product.date_added.isoformat(),
                     "date_updated": product.date_updated.isoformat(),
