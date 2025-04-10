@@ -12,7 +12,12 @@ def update_product_prices(sender, instance, **kwargs):
     product = instance.product_id
     # Calculate the weighted average cost price
     stocks = Stocks.objects.filter(product_id=product, status=1)  # Only consider active stocks
-    total_cost = stocks.aggregate(total_cost=Sum(F('cost_price') * F('quantity')))['total_cost'] or 0
+
+    # Adjust total_cost calculation to use per-unit cost
+    total_cost = stocks.aggregate(
+        total_cost=Sum(F('cost_price') / F('quantity') * F('quantity'))
+    )['total_cost'] or 0
+
     total_quantity = stocks.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
 
     if total_quantity > 0:
