@@ -95,7 +95,7 @@ def suppliers(request):
             "suppliers": suppliers,
             #"json": json.dumps(supplier_list),
             "page": "Suppliers",
-            "page-group": "Inventory",
+            "page_group": "Inventory",
         }
         return render(request, "posApp/inventory/suppliers.html", context)
     else:
@@ -120,7 +120,7 @@ def stocks(request):
             "products": products,
             "suppliers": suppliers,
             "page": "Stocks",
-            "page-group": "Inventory",
+            "page_group": "Inventory",
             #"json": json.dumps(stock_list),
         }
         return render(request, "posApp/inventory/stocks.html", context)

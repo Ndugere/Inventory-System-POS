@@ -246,3 +246,15 @@ legend{
 .w-fit{
     width:fit-content;
 }
+.bg-dark-alt .navbar-nav .nav-item {
+    color: #fff;
+    border: 1px solid rgb(4, 146, 84);
+    background-color: rgb(4, 146, 84);
+}
+.bg-dark-alt .navbar-nav .nav-item .nav-link{
+    color: #fff;
+}
+.bg-dark-alt .navbar-nav .nav-item .nav-link:hover{
+    color: #fff;
+    background-color: rgb(3, 116, 66);
+}

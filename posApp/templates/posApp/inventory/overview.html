@@ -50,8 +50,8 @@
         labels.forEach((label, index) => {
             const legendItem = `
                 <div class="d-flex align-items-center mb-2">
-                    <div style="width: 20px; height: 20px; background-color: ${colors[index]}; margin-right: 10px;"></div>
-                    <span>${label}: ${data[index].toLocaleString()} units</span>
+                    <div style="width: 20px; height: 20px; background-color: ${colors[index % colors.length]}; margin-right: 10px;"></div>
+                    <span>${label}: ${data[index]}</span>
                 </div>
             `;
             legendContainer.innerHTML += legendItem;
@@ -85,7 +85,19 @@
             });
 
             // Generate custom legends
-            generateLegend('expiringSoonLegend', data.products, data.quantities, ['#FF6666']);
+            let new_data = data.quantities.map((value, index) => {
+                return {
+                    label: data.products[index],
+                    value: `${value} units`, // Prepend 'units' for quantities
+                };
+            });
+
+            generateLegend(
+                'expiringSoonLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                ['#FF6666']
+            );
         });
 
     // Fetch data for Low Stocks
@@ -115,7 +127,19 @@
             });
 
             // Generate custom legends
-            generateLegend('lowStockLegend', data.products, data.quantities, ['#66FF66']);
+            let new_data = data.quantities.map((value, index) => {
+                return {
+                    label: data.products[index],
+                    value: `${value} units`, // Prepend 'units' for quantities
+                };
+            });
+
+            generateLegend(
+                'lowStockLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                ['#66FF66']
+            );
         });
 
     // Fetch data for Top-Selling Products
@@ -145,7 +169,19 @@
             });
 
             // Generate custom legends
-            generateLegend('topSellingLegend', data.products, data.quantities, ['#66FFFF']);
+            let new_data = data.quantities.map((value, index) => {
+                return {
+                    label: data.products[index],
+                    value: `${value} units`, // Prepend 'units' for quantities
+                };
+            });
+
+            generateLegend(
+                'topSellingLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                ['#66FFFF']
+            );
         });
 
     // Fetch data for Stock Value by Category
@@ -180,11 +216,23 @@
                 }
             });
 
+            let new_data = data.values.map((value, index) => {
+                return {
+                    label: data.categories[index],
+                    value: `Ksh. ${value.toLocaleString()}`, // Prepend 'Ksh.' to the value
+                };
+            });
+
             // Generate custom legends
-            generateLegend('stockValueLegend', data.categories, data.values, [
-                '#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF',
-                '#6699FF', '#CC66FF', '#FF99CC', '#CCCCCC', '#FF9966'
-            ]);
+            generateLegend(
+                'stockValueLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                [
+                    '#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF',
+                    '#6699FF', '#CC66FF', '#FF99CC', '#CCCCCC', '#FF9966'
+                ]
+            );
         });
 </script>
 {% endblock ScriptBlock %}

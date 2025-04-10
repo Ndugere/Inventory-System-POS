@@ -2,37 +2,36 @@
 {% load humanize %}
 {% block pageContent %}
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
-    <div class="mdc-card py-2">
-        <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Inventory</h4>
-            <ul class="nav flex-row">
-                <li class="nav-item">
-                    <a class="nav-link active" href="{% url 'inventory' %}">
-                        Inventory
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{% url 'stocks-page' %}">
-                        Stock
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'product-page' %}">
-                        Products
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'category-page' %}">
-                        Categories
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'supplier-page' %}">
-                        Suppliers
-                    </a>
-                </li>
-            </ul>
-        </div>
+    <div class="mdc-card p-0">
+                <div class="navbar navbar-expand-md bg-dark-alt p-0 pt-2 pb-2">
+                    <ul class="navbar-nav mx-auto flex-row">
+                        <li class="nav-item mr-2">
+                            <a class="nav-link active" href="{% url 'inventory' %}" title="View Inventory Overview">
+                                Overview
+                            </a>
+                        </li>
+                        <li class="nav-item mr-2">
+                            <a class="nav-link" href="{% url 'stocks-page' %}" title="Manage Stocks">
+                                Stock
+                            </a>
+                        </li>
+                        <li class="nav-item mr-2">
+                            <a class="nav-link" href="{% url 'product-page' %}" title="View and Manage Products">
+                                Products
+                            </a>
+                        </li>
+                        <li class="nav-item mr-2">
+                            <a class="nav-link" href="{% url 'category-page' %}" title="View and Manage Categories">
+                                Categories
+                            </a>
+                        </li>
+                        <li class="nav-item ">
+                            <a class="nav-link" href="{% url 'supplier-page' %}" title="View and Manage Suppliers">
+                                Suppliers
+                            </a>
+                        </li>
+                    </ul>
+                </div>
     </div>
 </div>
 
