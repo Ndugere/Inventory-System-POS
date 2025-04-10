@@ -25,7 +25,7 @@ def inventory(request):
         context = {
             "stocks": stocks
         }
-        return render(request, "posApp/inventory/inventory.html", context)
+        return render(request, "posApp/inventory/overview.html", context)
     else:
         return redirect("pos-page")
 

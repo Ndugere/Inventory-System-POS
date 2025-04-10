@@ -40,7 +40,7 @@ def login_user(request):
 #Logout
 def logoutuser(request):
     logout(request)
-    return redirect('/')
+    return redirect('login')
 
 # Create your views here.
 @login_required
@@ -92,7 +92,7 @@ def category(request):
         'page_title':'Category List',
         'category':category_list,
     }
-    return render(request, 'posApp/category.html',context)
+    return render(request, 'posApp/inventory/category.html',context)
 
 @login_required
 def manage_category(request):
@@ -108,7 +108,7 @@ def manage_category(request):
     context = {
         'category' : category,
     }
-    return render(request, 'posApp/manage_category.html',context)
+    return render(request, 'posApp/inventory/manage_category.html',context)
 
 @login_required
 def save_category(request):
@@ -160,7 +160,7 @@ def products(request):
         'page_title':'Product List',
         'products':product_list,
     }
-    return render(request, 'posApp/products.html',context)
+    return render(request, 'posApp/inventory/products.html',context)
 
 @login_required
 def manage_products(request):
@@ -180,7 +180,7 @@ def manage_products(request):
         'volume_type': volume_type,
         'categories' : categories
     }
-    return render(request, 'posApp/manage_product.html',context)
+    return render(request, 'posApp/inventory/manage_product.html',context)
 
 def test(request):
     categories = Category.objects.all()
@@ -205,11 +205,7 @@ def save_product(request):
     else:
         category = Category.objects.filter(id=data['category_id']).first()
         try:
-            if id.isnumeric() and int(id) > 0:
-                if  int(data['available_quantity']) > 0:
-                    status = 1 
-                else:
-                    status = 0
+            if id.isnumeric() and int(id) > 0:                
                 Products.objects.filter(id=id).update(
                     code=data['code'],
                     category_id=category,
@@ -219,10 +215,11 @@ def save_product(request):
                     measurement_value=int(data['measurement_value']),
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),
-                    min_sell_price=float(data['min_sell_price']),
-                    max_sell_price=float(data['max_sell_price']),
+                    #min_sell_price=float(data['min_sell_price']),
+                    #max_sell_price=float(data['max_sell_price']),
                     #status=status
-                )
+                )                
+                messages.success(request, 'Product Successfully updated.')
             else:
                 new_product = Products(
                     code=data['code'],
@@ -233,14 +230,14 @@ def save_product(request):
                     measurement_value=int(data['measurement_value']),
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),
-                    min_sell_price=float(data['min_sell_price']),
-                    max_sell_price=float(data['max_sell_price']),
+                    #min_sell_price=float(data['min_sell_price']),
+                    #max_sell_price=float(data['max_sell_price']),
                     #status=1
                 )
                 new_product.save()
-
+                messages.success(request, 'Product Successfully saved.')
             resp['status'] = 'success'
-            messages.success(request, 'Product Successfully saved.')
+            
         except Exception as e:
             logger.error(f"Error saving product: {e}")
             resp['status'] = 'failed'
