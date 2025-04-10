@@ -64,7 +64,7 @@ def home(request):
         ).all()
         total_sales = sum(today_sales.values_list('grand_total',flat=True))
         context = {
-            'page_title':'Home',
+            'page':'Home',
             'categories' : categories,
             'products' : products,
             'transaction' : transaction,
@@ -89,8 +89,9 @@ def category(request):
     category_list = Category.objects.all()
     # category_list = {}
     context = {
-        'page_title':'Category List',
         'category':category_list,
+        "page": "Category",
+        "page_group": "Inventory",
     }
     return render(request, 'posApp/inventory/category.html',context)
 
@@ -157,8 +158,9 @@ def delete_category(request):
 def products(request):
     product_list = Products.objects.all()
     context = {
-        'page_title':'Product List',
         'products':product_list,
+        'page':'Products',
+        "page_group": "Inventory"
     }
     return render(request, 'posApp/inventory/products.html',context)
 
@@ -265,7 +267,7 @@ def pos(request):
     
     products = Products.objects.filter(status=1)
     context = {
-        'page_title': "Point of Sale",
+        'page': "Point of Sale",
         'products': products,
     }
     return render(request, 'posApp/pos.html', context)
@@ -367,10 +369,20 @@ def save_pos(request):
 @login_required
 def salesList(request):
     payment_method = request.GET.get('payment_method', '')  # Get filter parameter
+    search_query = request.GET.get('search', '')  # Get search query parameter
     sales = Sales.objects.all()
 
-    if payment_method and payment_method in dict(Sales.PaymentMethod.choices):  # Validate filter
+    # Filter by payment method if provided
+    if payment_method and payment_method in dict(Sales.PaymentMethod.choices):
         sales = sales.filter(payment_method=payment_method)
+
+    # Filter by search query (e.g., code or date)
+    if search_query:
+        sales = sales.filter(
+            code__icontains=search_query
+        ) | sales.filter(
+            date_added__icontains=search_query
+        )
 
     sale_data = []
     for sale in sales:
@@ -382,10 +394,11 @@ def salesList(request):
         sale_data.append(data)
 
     context = {
-        'page_title': 'Sales Transactions',
+        'page': 'Sales',
         'sale_data': sale_data,
         'payment_methods': Sales.PaymentMethod.choices,  # Pass payment methods for dropdown
-        'selected_method': payment_method  # Keep track of selected method
+        'selected_method': payment_method,  # Keep track of selected method
+        'search_query': search_query  # Pass the search query back to the template
     }
     return render(request, 'posApp/sales.html', context)
 
@@ -435,7 +448,7 @@ def reports(request):
 @login_required
 def reports_view(request):
     context = {
-        "page_title": "Reports"
+        "page": "Reports"
     }
     return render(request, "posApp/report/reports.html", context)
 

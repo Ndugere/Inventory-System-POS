@@ -39,14 +39,14 @@
     <div class="body-wrapper">
         <!-- Aside -->
         {% block navigation %} {% include "posApp/navigation.html" %} {% endblock navigation %}
-        <!-- Aside -->
+
         <div class="main-wrapper mdc-drawer-app-content">
             <!-- Top Navigation -->
             {% block TopNavigation %} {% include "posApp/topNavigation.html" %} {% endblock TopNavigation %}
             <!-- Top Navigation -->
 
-            <div class="page-wrapper mdc-toolbar-fixed-adjust">
-                <main class="content-wrapper">
+            <div class="page-wrapper mdc-toolbar-fixed-adjust p-0">
+                <main class="content-wrapper p-3">
                     <!-- Message -->
                     {% if messages %}
                     <div class="mdc-layout-grid py-1">
@@ -67,8 +67,9 @@
                         </div>
                     </div>
                     {% endif %}
-                    <!-- Message -->
-                    <div class="mdc-layout-grid">
+
+                    <!-- Content -->
+                    <div class="mdc-layout-grid p-0">
                         <div class="mdc-layout-grid__inner">
                             {% block pageContent %} {% endblock pageContent %}
                         </div>

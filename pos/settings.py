@@ -29,7 +29,6 @@ DEBUG = config("DEBUG", default='False')
 ALLOWED_HOSTS = ['*']
 
 CORS_ALLOWED_ORIGINS = [
-    'https://simple-humane-kitten.ngrok-free.app',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'https://dev.10percent.shop',

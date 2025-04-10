@@ -14,7 +14,9 @@ from django.utils import timezone
 @login_required
 def home(request):
     if request.user.is_superuser:
-        context = {}        
+        context = {
+            "page": 'Home',
+        }        
         return render(request, "posApp/home-alt.html", context)
     else:
         return redirect("pos-page")
@@ -23,7 +25,9 @@ def home(request):
 def inventory(request):
     if request.user.is_superuser:
         context = {
-            "stocks": stocks
+            "stocks": stocks,
+            "page": "Overview",
+            "page_group": "Inventory",
         }
         return render(request, "posApp/inventory/overview.html", context)
     else:
@@ -39,7 +43,7 @@ def inventory_data(request):
     if data_type == 'expiring_soon':
         stocks = Stocks.objects.filter(expiry_date__lte=timezone.now().date() + timedelta(days=7), status=1)
         data = {
-            "products": [f"{stock.product_id.name} (Batch: {stock.batch_number})" for stock in stocks],
+            "products": [f"{stock.product_id.name}" for stock in stocks],
             "quantities": [stock.quantity for stock in stocks]
         }
     elif data_type == 'low_stock':
@@ -90,7 +94,8 @@ def suppliers(request):
         context = {
             "suppliers": suppliers,
             #"json": json.dumps(supplier_list),
-            "page": "Suppliers"
+            "page": "Suppliers",
+            "page-group": "Inventory",
         }
         return render(request, "posApp/inventory/suppliers.html", context)
     else:
@@ -115,6 +120,7 @@ def stocks(request):
             "products": products,
             "suppliers": suppliers,
             "page": "Stocks",
+            "page-group": "Inventory",
             #"json": json.dumps(stock_list),
         }
         return render(request, "posApp/inventory/stocks.html", context)

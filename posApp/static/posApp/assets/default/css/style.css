@@ -243,3 +243,6 @@ legend{
 .text-black{
     color: #000
 }
+.w-fit{
+    width:fit-content;
+}

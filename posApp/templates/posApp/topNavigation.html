@@ -4,15 +4,9 @@
     <div class="mdc-top-app-bar__row">
         <div class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
             <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button sidebar-toggler">menu</button>&nbsp; &nbsp;
-            <span class="user-name">
-                {% for value in request.user.groups.values_list  %} 
-                    {% if 'Inventory Manager' in value %} Inventory Manager
-                    {% elif 'Sales Manager' in value %} Sales Manager
-                    {% elif 'Sales Person' in value %} Sales Person
-                    {% elif 'Admin' in value %} System Admin
-                    {% endif %}
-                {% endfor %}
-            </span>
+            <h4 class="card-title">
+                {% if page_group %} {{page_group}} &middot; {% endif %}{{page}}
+            </h4>
         </div>
         <div class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end mdc-top-app-bar__section-right">
             <div class="menu-button-container menu-profile d-block">
