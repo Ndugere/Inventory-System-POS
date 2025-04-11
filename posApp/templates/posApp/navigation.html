@@ -42,6 +42,26 @@
                 {% for value in request.user.groups.values_list %}
                     {% if 'Inventory Manager' in value or 'Admin' in value %}    
                         <div class="mdc-list-item mdc-drawer-item">
+                            <a class="mdc-drawer-link" href="{% url 'supplier-page' %}" title="Suppliers">
+                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">local_shipping</i> 
+                                <span class="text-dark-alt">Suppliers</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Inventory Manager' in value or 'Admin' in value %}    
+                        <div class="mdc-list-item mdc-drawer-item">
+                            <a class="mdc-drawer-link" href="{% url 'stocks-page' %}" title="Stocks">
+                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">label</i> 
+                                <span class="text-dark-alt">Stocks</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Inventory Manager' in value or 'Admin' in value %}    
+                        <div class="mdc-list-item mdc-drawer-item">
                             <a class="mdc-drawer-link" href="{% url 'inventory' %}"title="Inventory">
                                 <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">label</i> 
                                 <span class="text-dark-alt">Inventory</span>
@@ -65,26 +85,6 @@
                             <a class="mdc-drawer-link" href="{% url 'sales-page' %}" title="Sales">
                                 <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">receipt</i>
                                 <span class="text-dark-alt">Sales</span>
-                            </a>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-                {% for value in request.user.groups.values_list %}
-                    {% if 'Inventory Manager' in value or 'Admin' in value %}    
-                        <div class="mdc-list-item mdc-drawer-item">
-                            <a class="mdc-drawer-link" href="{% url 'supplier-page' %}" title="Suppliers">
-                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">local_shipping</i> 
-                                <span class="text-dark-alt">Suppliers</span>
-                            </a>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-                {% for value in request.user.groups.values_list %}
-                    {% if 'Inventory Manager' in value or 'Admin' in value %}    
-                        <div class="mdc-list-item mdc-drawer-item">
-                            <a class="mdc-drawer-link" href="{% url 'stocks-page' %}" title="Stocks">
-                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">label</i> 
-                                <span class="text-dark-alt">Stocks</span>
                             </a>
                         </div>
                     {% endif %}

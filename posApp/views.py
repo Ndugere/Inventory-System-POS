@@ -1,5 +1,6 @@
 import logging, json
 from pickle import FALSE
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
@@ -260,9 +261,12 @@ def delete_product(request):
 
 @login_required
 def pos(request):
-    mpesa_client = MpesaClient()
-    mpesa_client.register_urls()
-    
+    # Ensure URLs are registered only once
+    if not hasattr(pos, "_urls_registered"):
+        mpesa_client = MpesaClient()
+        mpesa_client.register_urls()
+        pos._urls_registered = True
+
     products = Products.objects.filter(status=1)
     context = {
         'page_title': "Point of Sale",
@@ -528,7 +532,7 @@ def generate_report(request):
             sales = Sales.objects.filter(date_added__gte=start_date)
             
             # Apply payment method filter if needed
-            if payment_method in dict(Sales.PaymentMethod.choices):
+            if (payment_method in dict(Sales.PaymentMethod.choices)):
                 sales = sales.filter(payment_method=payment_method)
 
             total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
@@ -699,49 +703,60 @@ def initiate_payment(request):
 
 @csrf_exempt
 def payment_callback(request):
+    """
+    Handle M-Pesa STK push callback.
+    """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            
-            print(f"\nCallback Response: {data}\n")
-            # Extract information from the callback data
-            result_code = data['Body']['stkCallback']['ResultCode']
-            result_desc = data['Body']['stkCallback']['ResultDesc']
-            checkout_request_id = data['Body']['stkCallback']['CheckoutRequestID']
-            amount_received = data['Body']['stkCallback'].get('Amount', 0)  # Default to 0 if not found
-            transaction_time = data['Body']['stkCallback']['TransactionDate']
+            logger.info("Payment callback received: %s", data)
 
+            # Extract required fields
+            result_code = data['Body']['stkCallback'].get('ResultCode')
+            result_desc = data['Body']['stkCallback'].get('ResultDesc')
+            checkout_request_id = data['Body']['stkCallback'].get('CheckoutRequestID')
+            amount_received = data['Body']['stkCallback'].get('Amount', 0)
+            transaction_time = data['Body']['stkCallback'].get('TransactionDate')
+
+            # Validate required fields
+            if result_code is None or result_desc is None or not checkout_request_id:
+                logger.warning("Missing required fields in callback data")
+                return JsonResponse({'status': 'failed', 'error': 'Invalid callback data'}, status=400)
+
+            # Parse transaction time
             try:
-                # Find the transaction by CheckoutRequestID
-                transaction = MpesaPaymentTransaction.objects.get(transaction_id=checkout_request_id)
+                transaction_time = datetime.strptime(str(transaction_time), "%Y%m%d%H%M%S") if transaction_time else None
+            except ValueError:
+                logger.warning("Invalid transaction time format")
+                return JsonResponse({'status': 'failed', 'error': 'Invalid transaction time format'}, status=400)
 
-                # Update the transaction status based on the result code
-                if result_code == 0:
-                    transaction.status = "Success"
-                else:
-                    transaction.status = "Failed"
-
-                # Store additional details
-                transaction.result_code = result_code
-                transaction.result_desc = result_desc
-                transaction.amount_received = amount_received
-                transaction.transaction_time = datetime.strptime(str(transaction_time), "%Y%m%d%H%M%S")  # Convert string to datetime
-                transaction.save()
-                
-                # Respond with a success message
-                return JsonResponse({'status': 'success'})
-
-            except MpesaPaymentTransaction.DoesNotExist:
+            # Find the transaction
+            transaction = MpesaPaymentTransaction.objects.filter(transaction_id=checkout_request_id).first()
+            if not transaction:
+                logger.warning(f"Transaction with ID {checkout_request_id} not found")
                 return JsonResponse({'status': 'failed', 'error': 'Transaction not found'}, status=404)
-            
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON'}, status=400)
-        except KeyError as e:
-            return JsonResponse({'status': 'failed', 'error': f'Missing key: {str(e)}'}, status=400)
-        except Exception as e:
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
 
-    return JsonResponse({'status': 'invalid'}, status=400)
+            # Update transaction details
+            transaction.status = (
+                MpesaPaymentTransaction.StatusChoices.COMPLETED
+                if result_code == 0
+                else MpesaPaymentTransaction.StatusChoices.CANCELLED
+            )
+            transaction.result_code = result_code
+            transaction.result_desc = result_desc
+            transaction.amount_received = amount_received
+            transaction.transaction_time = transaction_time
+            transaction.save()
+
+            return JsonResponse({'status': 'success'})
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON received in payment_callback")
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            logger.error("Error in payment_callback: %s", str(e))
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'status': 'invalid'}, status=400)
 
 @csrf_exempt
 def payment_validation(request):
@@ -839,16 +854,6 @@ def payment_confirmation(request):
 def payment_result(request):
     """
     Handle M-Pesa result callback for B2C/B2B transactions.
-    The payload is expected to have a 'Result' block with keys such as:\n
-      {\n
-          "Result": {\n
-              "ResultCode": 0,\n
-              "ResultDesc": "The service request is processed successfully",\n
-              "TransactionID": "ABC123",\n
-              ...\n
-          }\n
-      }
-    We update the corresponding transaction record based on the result.
     """
     if request.method == "POST":
         try:
@@ -856,22 +861,30 @@ def payment_result(request):
             logger.info("Payment result callback received: %s", data)
             
             result = data.get("Result", {})
-            result_code = result.get("ResultCode")
-            result_desc = result.get("ResultDesc")
             transaction_id = result.get("TransactionID")
-            
-            # Find the corresponding transaction (if any)
+            if not transaction_id:
+                logger.warning("TransactionID missing in callback data")
+                return JsonResponse({"ResultCode": 1, "ResultDesc": "TransactionID missing"}, status=400)
+
+            # Find the corresponding transaction
             transaction = MpesaPaymentTransaction.objects.filter(transaction_id=transaction_id).first()
-            if transaction:
-                transaction.status = "Success" if result_code == 0 else "Failed"
-                transaction.result_code = result_code
-                transaction.result_desc = result_desc
-                transaction.mpesa_response = data
-                # Optionally update the method if provided
-                transaction.transaction_method = data.get("TransactionType", "B2C")
-                transaction.save()
+            if not transaction:
+                logger.warning(f"Transaction with ID {transaction_id} not found")
+                return JsonResponse({"ResultCode": 1, "ResultDesc": "Transaction not found"}, status=404)
+
+            # Update transaction details
+            transaction.status = "Success" if result.get("ResultCode") == 0 else "Failed"
+            transaction.result_code = result.get("ResultCode")
+            transaction.result_desc = result.get("ResultDesc")
+            transaction.mpesa_response = data
+            transaction.transaction_method = result.get("TransactionType", "B2C")
+            transaction.save()
+
             response = {"ResultCode": 0, "ResultDesc": "Result processed successfully"}
             return JsonResponse(response)
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON received in payment_result")
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid JSON"}, status=400)
         except Exception as e:
             logger.error("Error in payment_result: %s", str(e))
             return JsonResponse({"ResultCode": 1, "ResultDesc": "Result processing failed"}, status=500)
@@ -908,13 +921,9 @@ def check_payment(request):
     """
     Check if a payment has been received based on the provided POS number (account_reference)
     and the payable amount (grand_total).
-    """ 
+    """
     if request.method == "POST":
-        #return JsonResponse({"success": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
-        
         try:
-        
-            
             account_reference = request.POST.get("pos", "").strip()
             grand_total = request.POST.get("grand_total", "").strip()
 
@@ -922,23 +931,26 @@ def check_payment(request):
             if not account_reference or not grand_total:
                 return JsonResponse({"payment_confirmed": False, "error": "Missing required parameters"}, status=400)
 
+            # Convert grand_total to Decimal for precision
+            try:
+                grand_total = Decimal(grand_total)
+            except InvalidOperation:
+                return JsonResponse({"payment_confirmed": False, "error": "Invalid grand_total format"}, status=400)
+
             # Query the payment transaction
             payment = MpesaPaymentTransaction.objects.filter(
                 account_reference=account_reference,
-                amount=grand_total,
-                status="completed"
+                amount_received=grand_total,
+                status=MpesaPaymentTransaction.StatusChoices.COMPLETED
             ).first()
 
             if payment:
-                return JsonResponse({"success": True, "customer_name": payment.customer_name, "amount": payment.amount_received})
+                return JsonResponse({"success": True, "customer_name": payment.customer_name, "amount": float(payment.amount_received)})
             else:
                 return JsonResponse({"success": False})
-            
         except Exception as e:
-            logger.error("Error getting payment information: %s", str(e))
+            logger.error("Error checking payment: %s", str(e))
             return JsonResponse({"ResultCode": 1, "ResultDesc": "Error processing request"}, status=500)
-    
-        
     else:
         return JsonResponse({"success": False}, status=401)
 
