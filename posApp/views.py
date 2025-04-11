@@ -158,7 +158,7 @@ def delete_category(request):
 def products(request):
     product_list = Products.objects.all()
     context = {
-        'page_title':'Product List',
+        'page_title':'Medicine List',
         'products':product_list,
     }
     return render(request, 'posApp/products.html',context)
@@ -202,7 +202,7 @@ def save_product(request):
         check = Products.objects.filter(code=data['code']).all()
 
     if check.exists():
-        resp['msg'] = "Product Code Already Exists in the database"
+        resp['msg'] = "Medicine Code Already Exists in the database"
     else:
         category = Category.objects.filter(id=data['category_id']).first()
         try:
@@ -238,11 +238,11 @@ def save_product(request):
                 new_product.save()
 
             resp['status'] = 'success'
-            messages.success(request, 'Product Successfully saved.')
+            messages.success(request, 'Medicine Successfully saved.')
         except Exception as e:
-            logger.error(f"Error saving product: {e}")
+            logger.error(f"Error saving medicine: {e}")
             resp['status'] = 'failed'
-            resp['msg'] = 'An error occurred while saving the product.'
+            resp['msg'] = 'An error occurred while saving the medicine.'
 
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
@@ -253,10 +253,10 @@ def delete_product(request):
     try:
         Products.objects.filter(id=data['id']).delete()
         resp['status'] = 'success'
-        messages.success(request, 'Product Successfully deleted.')
+        messages.success(request, 'Medicine Successfully deleted.')
     except Exception as e:
         logger.error(f"Error deleting product: {e}")
-        resp['msg'] = 'An error occurred while deleting the product.'
+        resp['msg'] = 'An error occurred while deleting the medicine.'
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
 @login_required

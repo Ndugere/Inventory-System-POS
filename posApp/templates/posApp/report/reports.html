@@ -116,14 +116,14 @@
         <div class="container">            
             <!-- Top Selling Products -->
             <div class="bg-white p-4 shadow-lg rounded-lg">
-                <h4 class="text-lg font-semibold">Top Selling Products</h4>
+                <h4 class="text-lg font-semibold">Top Selling Medicine </h4>
                 <canvas id="topSellingChart"></canvas>
             </div>
         </div>
         <div class="container">
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <div class="col-12 text-end">
-                    <button class="btn btn-primary mdc-button" id="product-sales-detail" title="Full Product Sales" data-bs-toggle="modal" data-bs-target="#details-modal">Full Product Sales</button>
+                    <button class="btn btn-primary mdc-button" id="product-sales-detail" title="Full Product Sales" data-bs-toggle="modal" data-bs-target="#details-modal">Full Medicine Sales</button>
                 </div>
             </div>
         </div>
@@ -345,16 +345,16 @@
             modalBody.innerHTML = html;
         }
         else if(data.chart === 'top_selling'){
-            modalTitle.innerText = 'Top Selling Products Details';
+            modalTitle.innerText = 'Top Selling Medicine ';
             html += `
                 <div class="mb-4">
-                    <h5 class="border-bottom pb-2">Top Selling Products</h5>
+                    <h5 class="border-bottom pb-2">Top Selling Medicine</h5>
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered">
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-left">No.</th>
-                                    <th class="text-left">Product</th>
+                                    <th class="text-left">Medicine</th>
                                     <th>Units Sold</th>
                                 </tr>
                             </thead>
@@ -370,7 +370,7 @@
                     </tr>`;
                 }
             } else {
-                html += `<tr><td colspan="3" class="text-center">No top selling product data available.</td></tr>`;
+                html += `<tr><td colspan="3" class="text-center">No top selling medicine data available.</td></tr>`;
             }
             html += `
                             </tbody>
@@ -389,7 +389,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-left">No.</th>
-                                    <th class="text-left">Product</th>
+                                    <th class="text-left">Medicine</th>
                                     <th>Available Stock</th>
                                 </tr>
                             </thead>
@@ -545,7 +545,7 @@
                 }]
             },
             options: {
-                scales: { x: { title: { display: true, text: "Products" } } }
+                scales: { x: { title: { display: true, text: "Medicine" } } }
             }
         });
 
@@ -562,7 +562,7 @@
             },
             options: {
                 scales: { 
-                    x: { title: { display: true, text: "Products" } }, 
+                    x: { title: { display: true, text: "Medicine" } }, 
                     y: { title: { display: true, text: "No. Available" } }
                 }
             }
