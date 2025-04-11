@@ -789,7 +789,9 @@ def payment_confirmation(request):
     Handle M-Pesa confirmation callback (for C2B payments).
     Extracts payment details and updates or creates a transaction record.
     """
+    
     if request.method == "POST":
+        print(f"Confirmation Post {request.POST.get()}")
         try:
             data = json.loads(request.body)
             logger.info("Payment confirmation callback received: %s", data)
@@ -922,6 +924,7 @@ def check_payment(request):
     Check if a payment has been received based on the provided POS number (account_reference)
     and the payable amount (grand_total).
     """
+    print(f"Check Mpesa Payment")
     if request.method == "POST":
         try:
             account_reference = request.POST.get("pos", "").strip()
