@@ -125,9 +125,15 @@ class Sales(models.Model):
         choices=PaymentMethod.choices,
         default=PaymentMethod.CASH
     )
+    mpesa_transaction_code = models.CharField(max_length=20, blank=True)
     served_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="served_by")
     date_added = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
+
+    def save(self, *args, **kwargs):
+        if self.mpesa_transaction_code:
+            self.mpesa_transaction_code = self.mpesa_transaction_code.upper()
+        super(Sales, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.code} - {self.payment_method}"

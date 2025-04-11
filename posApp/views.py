@@ -294,10 +294,12 @@ def checkout_modal(request):
     }
     return render(request, 'posApp/checkout.html', context)
 
+@csrf_exempt
 @login_required
 def save_pos(request):
     resp = {'status': 'failed', 'msg': ''}
     data = request.POST
+
     def generate_sale_code():
         pref = datetime.now().year + datetime.now().year
         i = 1
@@ -308,7 +310,27 @@ def save_pos(request):
                 break
         code = str(pref) + str(code)
         return code
+
     try:
+        print(f"{data}")
+        
+        # Validate payment method
+        payment_method = data.get('payment_method')
+        mpesa_transaction_code = data.get('mpesa_transaction_code', '').strip()
+
+        if payment_method == 'mpesa':
+            if not mpesa_transaction_code:
+                resp['msg'] = "M-Pesa transaction code is required for M-Pesa payments."
+                return JsonResponse(resp)
+
+            # Ensure the transaction code is in uppercase
+            mpesa_transaction_code = mpesa_transaction_code.upper()
+
+            # Check for duplicate M-Pesa transaction code
+            if Sales.objects.filter(mpesa_transaction_code=mpesa_transaction_code).exists():
+                resp['msg'] = "The M-Pesa transaction code already exists. Please use a unique code."
+                return JsonResponse(resp)
+
         # Create a new Sales record
         sale = Sales(
             code=generate_sale_code(),
@@ -318,7 +340,8 @@ def save_pos(request):
             grand_total=data['grand_total'],
             tendered_amount=data['tendered_amount'],
             amount_change=data['amount_change'],
-            payment_method=data['payment_method'],
+            payment_method=payment_method,
+            mpesa_transaction_code=mpesa_transaction_code if payment_method == 'mpesa' else '',
             served_by=request.user
         )
         sale.save()
