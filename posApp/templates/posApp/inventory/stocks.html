@@ -73,7 +73,7 @@
                     <thead>
                         <tr>
                             <th class="text-center py-1">#</th>
-                            <th class="text-center py-1">Medicine</th>
+                            <th class="text-center py-1">Product</th>
                             <th class="text-center py-1">Supplier</th>
                             <th class="text-center py-1">Batch No.</th>
                             <th class="text-center py-1">Quantity</th>
@@ -153,9 +153,9 @@
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="form-group mb-3">
-                                <label for="product_id">Medicine</label>
+                                <label for="product_id">Product</label>
                                 <select class="form-control" id="product_id" name="product_id" required>
-                                    <option value="">Select Medicine</option>
+                                    <option value="">Select Product</option>
                                     {% for product in products %}
                                     <option value="{{ product.id }}">{{ product.name }} ({{ product.get_volume }})</option>
                                     {% endfor %}

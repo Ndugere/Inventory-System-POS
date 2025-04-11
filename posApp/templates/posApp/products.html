@@ -5,7 +5,7 @@
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Medicine</h4>
+            <h4 class="card-title mb-0">Product</h4>
             <!--ul class="nav flex-row">
                 <li class="nav-item">
                     <a class="nav-link active" href="{% url 'inventory' %}">
@@ -43,7 +43,7 @@
             <form id="search" action="" method="get">
                 <div class="form-group">
                     <div class="input-group">
-                        <input type="text" name="search" id="search" class="form-control w-80" placeholder="Search medicine" title="Search medicine" value="">
+                        <input type="text" name="search" id="search" class="form-control w-80" placeholder="Search Product" title="Search Product" value="">
                         <div class="input-group-prepend">
                             <button type="submit" class="input-group-text btn btn-primary mdc-button" id="submit">
                                 Search
@@ -82,10 +82,10 @@
                         <thead>
                             <tr>
                                 <th class="text-center py-1">#</th>
-                                <th class="text-center py-1">Medicine Code</th>
-                                <th class="text-center py-1">Medicine</th>
+                                <th class="text-center py-1">Product Code</th>
+                                <th class="text-center py-1">Product</th>
                                 <th class="text-center py-1">Category</th>
-                                <th class="text-center py-1">Volume/Weight</th>
+                                <th class="text-center py-1">Volume</th>
                                 <th class="text-center py-1">Quantity</th>                        
                                 <th class="text-center py-1">Buying Price</th>
                                 <th class="text-center py-1">Min Price</th>
@@ -183,12 +183,12 @@
 
         // Edit Product
         $('.edit-data').click(function () {
-            uni_modal("Edit Medicine", "{% url 'manage_products-page' %}?id=" + $(this).attr('data-id'));
+            uni_modal("Edit Product", "{% url 'manage_products-page' %}?id=" + $(this).attr('data-id'));
         });
 
         // Delete Product
         $('.delete-data').click(function () {
-            _conf("Are you sure to delete this Medicine?", "delete_product", [$(this).attr('data-id')]);
+            _conf("Are you sure to delete this Product?", "delete_product", [$(this).attr('data-id')]);
         });
 
         $('#uni_modal').on('shown.bs.modal', function () {
