@@ -16,7 +16,10 @@
                 <p><strong>Date:</strong> &nbsp; {{ transaction.date_added|date:"M d Y" }}</p> 
                 <p><strong>Transaction Code:</strong> &nbsp; {{ transaction.code }}</p>
                 <p><strong>Served By:</strong> &nbsp; {{ transaction.served_by }}</p> 
-                <p><strong>Paid Through:</strong> &nbsp; {{ transaction.payment_method }}</p> 
+                <p><strong>Paid Through:</strong> &nbsp; {{ transaction.payment_method }}</p>
+                {% if transaction.payment_method == "Mpesa" %}
+                <p><strong>M-Pesa Transaction Code:</strong> &nbsp; {{ transaction.mpesa_code }}</p>
+                {% endif %}
             </div>
         </div>
         <div class="clear-fix py-3"></div>

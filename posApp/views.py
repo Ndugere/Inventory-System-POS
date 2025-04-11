@@ -316,7 +316,7 @@ def save_pos(request):
         
         # Validate payment method
         payment_method = data.get('payment_method')
-        mpesa_transaction_code = data.get('mpesa_transaction_code', '').strip()
+        mpesa_transaction_code = data.get('mpesa_code', '').strip()
 
         if payment_method == 'mpesa':
             if not mpesa_transaction_code:
@@ -413,6 +413,7 @@ def receipt(request):
     transaction = {field.name: getattr(sales, field.name) for field in Sales._meta.get_fields() if field.related_model is None}
     transaction['served_by'] = str.capitalize(sales.served_by.username)
     transaction['payment_method'] = str.capitalize(sales.payment_method)
+    transaction['mpesa_code'] = str.upper(sales.mpesa_transaction_code)
     if 'tax_amount' in transaction:
         transaction['tax_amount'] = format(float(transaction['tax_amount']), '.2f')
     ItemList = salesItems.objects.filter(sale_id=sales).all()

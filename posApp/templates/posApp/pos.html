@@ -10,7 +10,7 @@
     <div class="mdc-card">
         <form action=""id="pos-form">
             <fieldset>
-                <legend>Add Medicine</legend>
+                <!--legend>Add Medicine</legend-->
                 <div class="row align-items-end selector">
                     <div class="col-lg-4 col-md-4 col-sm-12">
                         <div class="form-group mb-3">
@@ -46,20 +46,22 @@
             <fieldset>
                 <div class="row w-100" id="POS-field">
                     <div class="col-12 col-md-8 border h-100 p-0">
-                        <table class="table table-bordered">                            
-                             <thead>
-                                <tr class="bg-dark">
-                                    <th class="py-1 px-2 text-center text-light"></th>
-                                    <th class="py-1 px-2 text-center text-light">QTY</th>
-                                    <th class="py-1 px-2 text-center text-light">Medicine</th>
-                                    <th class="py-1 px-2 text-center text-light">Volume</th>
-                                    <th class="py-1 px-2 text-center text-light">Price</th>
-                                    <th class="py-1 px-2 text-center text-light">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive ">
+                            <table class="table table-bordered">                            
+                                <thead>
+                                    <tr class="bg-dark">
+                                        <th class="py-1 px-2 text-center text-light"></th>
+                                        <th class="py-1 px-2 text-center text-light">QTY</th>
+                                        <th class="py-1 px-2 text-center text-light">Medicine</th>
+                                        <th class="py-1 px-2 text-center text-light">Volume</th>
+                                        <th class="py-1 px-2 text-center text-light">Price</th>
+                                        <th class="py-1 px-2 text-center text-light">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="col-12 col-md-4 bg-gradient bg-dark-alt bg-opacity-50 border h-100">
                         <div class="col-12 py-4 px-2">
@@ -83,12 +85,12 @@
                                     <input type="hidden" name="grand_total" value="0">
                                     <input type="hidden" name="tendered_amount" value="0">
                                     <input type="hidden" name="amount_change" value="0">
-                                    <input type="hidden" name="grand_total" value="0">
-                                    <input type="hidden" name="grand_total" value="0">
                                     
                                     <!-- Hidden field for pos_number and payment method. Adjust this value as needed -->
                                     <input type="hidden" name="pos_number" id="pos_number" value="POS001">
                                     <input type="hidden" name="payment_method" id="payment_method">
+                                    <input type='hidden' name="mpesa_code" id="mpesa_code">
+
                                     <span class="h3 fw-bold text-black" id="grand_total">0.00</span>
                                 </dd>
                             </dl>
