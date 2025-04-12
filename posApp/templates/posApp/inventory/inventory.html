@@ -35,12 +35,13 @@
         </div>
     </div>
 </div>
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
         <div class="mt-4">
             <h5>Expiring Soon Stocks</h5>
             <canvas id="expiringSoonChart"></canvas>
-            <div id="expiringSoonLegend" class="row mt-3 "></div> <!-- Legend container -->
+            <div id="expiringSoonLegend" class="mt-3"></div> <!-- Legend container -->
         </div>
     </div>
 </div>
@@ -49,16 +50,16 @@
         <div class="mt-4">
             <h5>Low Stock Levels</h5>
             <canvas id="lowStockChart"></canvas>
-            <div id="lowStockLegend" class="row mt-3 "></div> <!-- Legend container -->
+            <div id="lowStockLegend" class="mt-3"></div> <!-- Legend container -->
         </div>
     </div>
 </div>
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
         <div class="mt-4">
-            <h5>Top-Selling Medicine</h5>
+            <h5>Top-Selling Products</h5>
             <canvas id="topSellingChart"></canvas>
-            <div id="topSellingLegend" class="row mt-3 "></div> <!-- Legend container -->
+            <div id="topSellingLegend" class="mt-3"></div> <!-- Legend container -->
         </div>
     </div>
 </div>
@@ -67,39 +68,28 @@
         <div class="mt-4">
             <h5>Stock Value by Category</h5>
             <canvas id="stockValueChart"></canvas>
-            <div id="stockValueLegend" class="row mt-3"></div> <!-- Legend container -->
+            <div id="stockValueLegend" class="mt-3"></div> <!-- Legend container -->
         </div>
     </div>
 </div>
-{% endblock pageContent %}
+
+{% endblock pageContent%}
 
 {% block ScriptBlock %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Helper function to generate custom legends
-    function generateLegend(containerId, labels, data, units, colors) {
+    function generateLegend(containerId, labels, data, colors) {
         const legendContainer = document.getElementById(containerId);
         legendContainer.innerHTML = ''; // Clear any existing legends
         labels.forEach((label, index) => {
-            const legendItem = document.createElement('div');
-            legendItem.className = 'col-md-6';
-
-            const legendContent = document.createElement('div');
-            legendContent.className = 'd-flex align-items-center mb-2';
-
-            const colorBox = document.createElement('div');
-            colorBox.style.width = '20px';
-            colorBox.style.height = '20px';
-            colorBox.style.backgroundColor = colors[index];
-            colorBox.style.marginRight = '10px';
-
-            const legendText = document.createElement('span');
-            legendText.textContent = `${label}: ${data[index].toLocaleString()} ${units}`;
-
-            legendContent.appendChild(colorBox);
-            legendContent.appendChild(legendText);
-            legendItem.appendChild(legendContent);
-            legendContainer.appendChild(legendItem);
+            const legendItem = `
+                <div class="d-flex align-items-center mb-2">
+                    <div style="width: 20px; height: 20px; background-color: ${colors[index % colors.length]}; margin-right: 10px;"></div>
+                    <span>${label}: ${data[index]}</span>
+                </div>
+            `;
+            legendContainer.innerHTML += legendItem;
         });
     }
 
@@ -130,7 +120,19 @@
             });
 
             // Generate custom legends
-            generateLegend('expiringSoonLegend', data.products, data.quantities,'units', ['#FF6666']);
+            let new_data = data.quantities.map((value, index) => {
+                return {
+                    label: data.products[index],
+                    value: `${value} units`, // Prepend 'units' for quantities
+                };
+            });
+
+            generateLegend(
+                'expiringSoonLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                ['#FF6666']
+            );
         });
 
     // Fetch data for Low Stocks
@@ -160,7 +162,19 @@
             });
 
             // Generate custom legends
-            generateLegend('lowStockLegend', data.products, data.quantities, 'units', ['#66FF66']);
+            let new_data = data.quantities.map((value, index) => {
+                return {
+                    label: data.products[index],
+                    value: `${value} units`, // Prepend 'units' for quantities
+                };
+            });
+
+            generateLegend(
+                'lowStockLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                ['#66FF66']
+            );
         });
 
     // Fetch data for Top-Selling Products
@@ -190,7 +204,19 @@
             });
 
             // Generate custom legends
-            generateLegend('topSellingLegend', data.products, data.quantities, 'units', ['#66FFFF']);
+            let new_data = data.quantities.map((value, index) => {
+                return {
+                    label: data.products[index],
+                    value: `${value} units`, // Prepend 'units' for quantities
+                };
+            });
+
+            generateLegend(
+                'topSellingLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                ['#66FFFF']
+            );
         });
 
     // Fetch data for Stock Value by Category
@@ -225,11 +251,23 @@
                 }
             });
 
+            let new_data = data.values.map((value, index) => {
+                return {
+                    label: data.categories[index],
+                    value: `Ksh. ${value.toLocaleString()}`, // Prepend 'Ksh.' to the value
+                };
+            });
+
             // Generate custom legends
-            generateLegend('stockValueLegend', data.categories, data.values, 'Ksh.', [
-                '#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF',
-                '#6699FF', '#CC66FF', '#FF99CC', '#CCCCCC', '#FF9966'
-            ]);
+            generateLegend(
+                'stockValueLegend',
+                new_data.map(item => item.label), // Extract labels
+                new_data.map(item => item.value), // Use the formatted value
+                [
+                    '#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF',
+                    '#6699FF', '#CC66FF', '#FF99CC', '#CCCCCC', '#FF9966'
+                ]
+            );
         });
 </script>
 {% endblock ScriptBlock %}
