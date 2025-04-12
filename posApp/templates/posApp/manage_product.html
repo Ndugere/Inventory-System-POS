@@ -41,14 +41,22 @@
                 </div>
             </div>
         </div>
-        <!--div class="form-group mb-3">
-            <label for="available_quantity" class="control-label">Available Quantity</label>
-            <input type="number" disabled name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.quantity %}{{product.quantity}} {% else %} 0 {% endif %}" min="0" step="any">
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group mb-3">
+                    <label for="available_quantity" class="control-label">Available Quantity</label>
+                    <input type="number" disabled name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.quantity %}{{product.quantity}} {% else %} 0 {% endif %}" min="0" step="any">
+                </div>
+        
+            </div>
+            <div class="col-6"> 
+                <div class="form-group mb-3">
+                    <label for="buy_price" class="control-label"> Buying Price</label>
+                    <input type="text" disabled name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2|intcomma}} {% else %} 0.00 {% endif %}" min="0.00" step="any">
+                </div>
+            </div>
         </div>
-        <div class="form-group mb-3">
-            <label for="buy_price" class="control-label"> Buying Price</label>
-            <input type="number" disabled name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2|intcomma}} {% else %} 0.00 {% endif %}" min="0.00" step="any">
-        </div>
+        
         <div class="form-group mb-3">
             <h6 for="sell_price" class="control-label">Selling Price Range</h6>
             <div class="row">
