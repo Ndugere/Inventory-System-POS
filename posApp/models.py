@@ -23,6 +23,8 @@ class Category(models.Model):
 
 class Products(models.Model):
     class VolumeType(models.TextChoices):
+        MILLIGRAMS = 'mg', _('Milligrams')
+        GRAMS = 'g', _('Grams')
         MILLILITERS = "ml", _("Milliliters")
         LITERS = "L", _("Liters")
         
