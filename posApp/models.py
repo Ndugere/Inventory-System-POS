@@ -71,8 +71,9 @@ class Stocks(models.Model):
     supplier_id = models.ForeignKey(Supplier, on_delete=models.RESTRICT)
     batch_number = models.CharField(max_length=100, blank=True, null=True, unique=True)
     expiry_date = models.DateField(blank=True, null=True)
-    quantity = models.FloatField(default=0)
-    cost_price = models.FloatField(default=0)
+    quantity = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    unit_price = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    cost_price = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     status = models.IntegerField(default=1)
     delivery_date = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
@@ -114,12 +115,12 @@ class Sales(models.Model):
         MPESA = "mpesa", _("M-Pesa")
 
     code = models.CharField(max_length=100)
-    sub_total = models.FloatField(default=0)
-    grand_total = models.FloatField(default=0)
-    tax_amount = models.FloatField(default=0)
-    tax = models.FloatField(default=0)
-    tendered_amount = models.FloatField(default=0)
-    amount_change = models.FloatField(default=0)
+    sub_total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    grand_total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    tax_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    tax = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    tendered_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    amount_change = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     payment_method = models.CharField(  # New field
         max_length=10,
         choices=PaymentMethod.choices,
@@ -147,9 +148,9 @@ class salesItems(models.Model):
     sale_id = models.ForeignKey(Sales, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
     stock_id = models.ForeignKey(Stocks, on_delete=models.CASCADE)
-    price = models.FloatField(default=0)
-    qty = models.FloatField(default=0)
-    total = models.FloatField(default=0)
+    price = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    qty = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     
     class Meta:
         verbose_name = "Sale Item"

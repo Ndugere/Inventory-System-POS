@@ -64,7 +64,7 @@ def inventory_data(request):
                 Stocks.objects.filter(product_id__category_id=category).aggregate(
                     total_value=Sum(
                         Case(
-                            When(quantity__gt=0, then=(F('cost_price') / F('quantity')) * F('quantity')),
+                            When(quantity__gt=0, then=(F('unit_price')* F('quantity'))),
                             default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )

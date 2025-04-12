@@ -158,7 +158,7 @@ def delete_category(request):
 def products(request):
     product_list = Products.objects.all()
     context = {
-        'page_title':'Medicine List',
+        'page_title':'Product List',
         'products':product_list,
     }
     return render(request, 'posApp/products.html',context)
@@ -202,7 +202,7 @@ def save_product(request):
         check = Products.objects.filter(code=data['code']).all()
 
     if check.exists():
-        resp['msg'] = "Medicine Code Already Exists in the database"
+        resp['msg'] = "Product Code Already Exists in the database"
     else:
         category = Category.objects.filter(id=data['category_id']).first()
         try:
@@ -238,11 +238,11 @@ def save_product(request):
                 new_product.save()
 
             resp['status'] = 'success'
-            messages.success(request, 'Medicine Successfully saved.')
+            messages.success(request, 'Product Successfully saved.')
         except Exception as e:
-            logger.error(f"Error saving medicine: {e}")
+            logger.error(f"Error saving Product: {e}")
             resp['status'] = 'failed'
-            resp['msg'] = 'An error occurred while saving the medicine.'
+            resp['msg'] = 'An error occurred while saving the Product.'
 
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
@@ -253,10 +253,10 @@ def delete_product(request):
     try:
         Products.objects.filter(id=data['id']).delete()
         resp['status'] = 'success'
-        messages.success(request, 'Medicine Successfully deleted.')
+        messages.success(request, 'Product Successfully deleted.')
     except Exception as e:
         logger.error(f"Error deleting product: {e}")
-        resp['msg'] = 'An error occurred while deleting the medicine.'
+        resp['msg'] = 'An error occurred while deleting the Product.'
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
 @login_required
@@ -311,9 +311,7 @@ def save_pos(request):
         code = str(pref) + str(code)
         return code
 
-    try:
-        print(f"{data}")
-        
+    try:        
         # Validate payment method
         payment_method = data.get('payment_method')
         mpesa_transaction_code = data.get('mpesa_code', '').strip()
@@ -1086,14 +1084,16 @@ def save_stock(request):
         if stock_id:
             # Update existing stock
             stock = Stocks.objects.get(id=stock_id)
+            unit_price = stock.unit_price
         else:
             # Create new stock
             stock = Stocks()
-        
+            unit_price = float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
         stock.product_id_id = request.POST.get('product_id')
         stock.supplier_id_id = request.POST.get('supplier_id')
         stock.batch_number = request.POST.get('batch_number')
         stock.quantity = float(request.POST.get('quantity'))
+        stock.unit_price =  unit_price
         stock.cost_price = float(request.POST.get('cost_price'))
         stock.expiry_date = request.POST.get('expiry_date')
         
