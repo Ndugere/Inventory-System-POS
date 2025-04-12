@@ -216,7 +216,7 @@ def save_product(request):
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
                     #quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
                     #status=status
@@ -230,7 +230,7 @@ def save_product(request):
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
                     #quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
                     #status=1
