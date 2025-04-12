@@ -51,7 +51,7 @@
             </div>
             <div class="col-6"> 
                 <div class="form-group mb-3">
-                    <label for="buy_price" class="control-label"> Buying Price</label>
+                    <label for="buy_price" class="control-label"> Average Unit Cost</label>
                     <input type="text" disabled name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2|intcomma}} {% else %} 0.00 {% endif %}" min="0.00" step="any">
                 </div>
             </div>
