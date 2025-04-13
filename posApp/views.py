@@ -207,13 +207,13 @@ def save_product(request):
         resp['msg'] = "Medicine Code Already Exists in the database"
     else:
         category = Category.objects.filter(id=data['category_id']).first()
-        try:
-            if id.isnumeric() and int(id) > 0:
-                if int(data['available_quantity']) > 0 and float(data['buy_price']) > 0:
-                    status = 1
-                else:
-                    status = 0
+        if int(data['available_quantity']) > 0 and float(data['buy_price']) > 0:
+            status = 1
+        else:
+            status = 0
                     
+        try:
+            if id.isnumeric() and int(id) > 0:                
                 Products.objects.filter(id=id).update(
                     code=data['code'],
                     category_id=category,
@@ -239,7 +239,7 @@ def save_product(request):
                     buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    status=1
+                    status=status
                 )
                 new_product.save()
 
