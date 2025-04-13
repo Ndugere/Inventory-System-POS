@@ -175,6 +175,8 @@ def manage_products(request):
             id= data['id']
         if id.isnumeric() and int(id) > 0:
             product = Products.objects.filter(id=id).first()
+            print(f"quantity: {product.quantity}")
+            product.quantity = int(product.quantity)
     
     context = {
         'product' : product,
@@ -207,7 +209,11 @@ def save_product(request):
         category = Category.objects.filter(id=data['category_id']).first()
         try:
             if id.isnumeric() and int(id) > 0:
-                
+                if int(data['available_quantity']) > 0 and float(data['buy_price']) > 0:
+                    status = 1
+                else:
+                    status = 0
+                    
                 Products.objects.filter(id=id).update(
                     code=data['code'],
                     category_id=category,
@@ -215,11 +221,11 @@ def save_product(request):
                     #description=data['description'],
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
-                    #quantity=data['available_quantity'],
-                    #buy_price=float(data['buy_price']),
+                    quantity=data['available_quantity'],
+                    buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    #status=status
+                    status=status
                 )
             else:
                 new_product = Products(
@@ -229,11 +235,11 @@ def save_product(request):
                     #description=data['description'],
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
-                    #quantity=data['available_quantity'],
-                    #buy_price=float(data['buy_price']),
+                    quantity=data['available_quantity'],
+                    buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    #status=1
+                    status=1
                 )
                 new_product.save()
 

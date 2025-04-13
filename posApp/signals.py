@@ -1,5 +1,5 @@
 import math  # Import the math module for rounding up
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.db.models import Sum, F, Min, Max
 from .models import Stocks, Products
@@ -19,15 +19,15 @@ def update_product_prices(sender, instance, **kwargs):
     )['total_cost'] or 0
 
     total_quantity = stocks.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
-
+    """
     if total_quantity > 0:
         product.buy_price = total_cost / total_quantity  # Weighted average
         product.status = 1  # Set status to active if there are stocks
     else:
         product.buy_price = 0  # No active stocks, set to 0
         product.status = 0
-
-    product.quantity = total_quantity  # Update total quantity
+    """
+    product.quantity = product.quantity + total_quantity  # Update total quantity
     product.save()
 
 """
@@ -59,30 +59,18 @@ def update_product_prices_based_on_stocks(sender, instance, **kwargs):
     product.save()
 """
   
-@receiver(post_delete, sender=Stocks)
+@receiver(pre_delete, sender=Stocks)
 def update_product_on_stock_delete(sender, instance, **kwargs):
     """
-    #Update the associated product's buy_price, quantity, and sell prices when a stock is deleted.
+    #Update the associated product's quantity when a stock is deleted.
     """
     product = instance.product_id
     # Fetch remaining active stocks for the product
     stocks = Stocks.objects.filter(product_id=product, status=1)
 
     # Update product's buy_price and quantity
-    total_cost = stocks.aggregate(
-        total_cost=Sum(F('unit_price') * F('quantity'))
-    )['total_cost'] or 0
-
-    total_quantity = stocks.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
-
-    if total_quantity > 0:
-        product.buy_price = total_cost / total_quantity  # Weighted average
-        product.status = 1  # Set status to active if there are stocks
-    else:
-        product.buy_price = 0  # No active stocks, set to 0
-        product.status = 0
-
-    product.quantity = total_quantity  # Update total quantity
+   
+    product.quantity = product.quantity - instance.quantity  # Update total quantity
 
     """
     # Update min_sell_price and max_sell_price
