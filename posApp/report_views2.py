@@ -43,10 +43,10 @@ def inventory_data(request):
             "quantities": [stock.quantity for stock in stocks]
         }
     elif data_type == 'low_stock':
-        products = Products.objects.filter(quantity__lte=10).order_by('quantity')
+        stocks = Stocks.objects.filter(quantity__lte=10).order_by('quantity')
         data = {
-            "products": [f"{product.name}({product.get_volume()})" for product in products],
-            "quantities": [product.quantity for product in products]
+            "products": [f"{stock.product_id.name}({stock.product_id.get_volume()})" for stock in stocks],
+            "quantities": [stock.product_id.quantity for stock in stocks]
         }
     elif data_type == 'top_selling':
         top_selling = salesItems.objects.values(
@@ -75,6 +75,64 @@ def inventory_data(request):
         }
     else:
         data = {"error": "Invalid data type requested."}
+
+    return JsonResponse(data, safe=False)
+
+@login_required
+def inventory_chart_detail(request):
+    """
+    Returns detailed data for a specific inventory chart.
+    Expected GET parameter:
+      - chart: The type of chart (e.g., 'expiring_soon', 'low_stock', 'top_selling', 'stock_value').
+    """
+    chart_type = request.GET.get('chart', '')
+
+    if chart_type == 'expiring_soon':
+        stocks = Stocks.objects.filter(expiry_date__lte=timezone.now().date() + timedelta(days=7), status=1)
+        data = {
+            "products": [f"{stock.product_id.name}" for stock in stocks],
+            "batch_numbers": [stock.batch_number for stock in stocks],
+            "quantities": [stock.quantity for stock in stocks],
+            "expiry_dates": [stock.expiry_date.strftime('%Y-%m-%d') for stock in stocks]
+        }
+
+    elif chart_type == 'low_stock':
+        stocks = Stocks.objects.filter(quantity__lte=10).order_by('quantity')
+        data = {
+            "products": [f"{stock.product_id.name} ({stock.product_id.get_volume()})" for stock in stocks],
+            "batch_numbers": [stock.batch_number for stock in stocks],
+            "quantities": [stock.quantity for stock in stocks],
+            "suppliers": [stock.supplier_id.name if stock.supplier_id else "Unknown" for stock in stocks]
+        }
+
+    elif chart_type == 'top_selling':
+        top_selling = salesItems.objects.values(
+            "product_id__name"
+        ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
+        data = {
+            "products": [item["product_id__name"] for item in top_selling],
+            "quantities": [item["total_sold"] for item in top_selling]
+        }
+
+    elif chart_type == 'stock_value':
+        categories = Category.objects.all()
+        data = {
+            "categories": [category.name for category in categories],
+            "values": [
+                Stocks.objects.filter(product_id__category_id=category).aggregate(
+                    total_value=Sum(
+                        Case(
+                            When(quantity__gt=0, then=(F('cost_price') / F('quantity')) * F('quantity')),
+                            default=Value(0.0, output_field=FloatField()),
+                            output_field=FloatField()
+                        )
+                    )
+                )['total_value'] or 0 for category in categories
+            ]
+        }
+
+    else:
+        data = {"error": "Invalid chart type requested."}
 
     return JsonResponse(data, safe=False)
 
@@ -121,9 +179,7 @@ def stocks(request):
     else:
         return redirect("pos-page")
 
-@login_required
-def manage_inventory(request):
-    pass
+
     
 @login_required
 def search(request):
