@@ -262,11 +262,12 @@ def delete_product(request):
 @login_required
 def pos(request):
     # Ensure URLs are registered only once
+    """
     if not hasattr(pos, "_urls_registered"):
         mpesa_client = MpesaClient()
         mpesa_client.register_urls()
         pos._urls_registered = True
-
+    """
     products = Products.objects.filter(status=1)
     context = {
         'page_title': "Point of Sale",
