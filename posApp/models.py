@@ -25,6 +25,7 @@ class Products(models.Model):
     class VolumeType(models.TextChoices):
         MILLILITERS = "ml", _("Milliliters")
         LITERS = "L", _("Liters")
+        PACKS = "packs", _("Packs")
         
     code = models.CharField("Product Code", max_length=100, unique=True, blank=False)
     category_id = models.ForeignKey(Category, on_delete=models.CASCADE)
