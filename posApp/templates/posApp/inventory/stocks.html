@@ -94,8 +94,12 @@
                         <tr>
                             <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
                             <td class="px-2 py-1 text-start">{{ stock.product_id.name }} {{stock.product_id.get_volume}}</td>
-                            <td class="px-2 py-1 text-start">{{ stock.supplier_id.name }}</td>
-                            <td class="px-2 py-1 text-start">{{ stock.batch_number }}</td>
+                            <td class="px-2 py-1 text-start">
+                                {% if stock.supplier_id == None %} {{''}} {% else %}{{ stock.supplier_id.name }} {% endif %}
+                            </td>
+                            <td class="px-2 py-1 text-start">
+                                {% if stock.batch_number == None %}{{''}} {% else %}{{ stock.batch_number }}{% endif %}
+                            </td>
                             <td class="px-2 py-1 text-end">{{ stock.quantity|floatformat:0 }}</td>
                             <td class="px-2 py-1 text-end">{{ stock.unit_price|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-end">{{ stock.cost_price|floatformat:2|intcomma }}</td>
@@ -169,6 +173,7 @@
                                 <label for="supplier_id">Supplier</label>
                                 <select class="form-control" id="supplier_id" name="supplier_id" required>
                                     <option value="">Select Supplier</option>
+                                    <option value=""> None </option>
                                     {% for supplier in suppliers %}
                                     <option value="{{ supplier.id }}">{{ supplier.name }}</option>
                                     {% endfor %}
@@ -178,8 +183,8 @@
 
                         <div class="col-12">                                
                             <div class="form-group mb-3">
-                                <label for="batch_number">Batch Number</label>
-                                <input type="text" class="form-control" id="batch_number" name="batch_number" required>
+                                <label for="batch_number">Batch Number (Optional)</label>
+                                <input type="text" class="form-control" id="batch_number" name="batch_number" value="">
                             </div>  
                         </div>
 

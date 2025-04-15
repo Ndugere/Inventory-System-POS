@@ -158,8 +158,10 @@ def stocks(request):
         stocks = Stocks.objects.all()
         stock_list = [{
             "id": stock.id, "batch_number": stock.batch_number, "product_id": stock.product_id.id,
-            "product_name": stock.product_id.name, "supplier_id": stock.supplier_id.id,
-            "supplier_name": stock.supplier_id.name, "expiry_date": stock.expiry_date,
+            "product_name": stock.product_id.name,
+            "supplier_id": stock.supplier_id.id if stock.supplier_id else None,  # Handle None
+            "supplier_name": stock.supplier_id.name if stock.supplier_id else "",  # Handle None
+            "expiry_date": stock.expiry_date,
             "quantity": stock.quantity, "cost_price": stock.cost_price, "status": stock.status,
             "delivery_date": stock.delivery_date, "date_updated": stock.date_updated
         } for stock in stocks]

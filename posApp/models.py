@@ -69,8 +69,8 @@ class Supplier(models.Model):
 
 class Stocks(models.Model):
     product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
-    supplier_id = models.ForeignKey(Supplier, on_delete=models.RESTRICT)
-    batch_number = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    supplier_id = models.ForeignKey(Supplier, on_delete=models.RESTRICT, null=True, blank=True)
+    batch_number = models.CharField(max_length=100, blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
     quantity = models.PositiveIntegerField(default=0)
     unit_price = models.FloatField(default=0)

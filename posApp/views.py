@@ -1059,12 +1059,16 @@ def stocks_page(request):
 
 @login_required
 def get_stock(request):
-    stock_id = request.GET.get('id')
+    stock_id = request.GET.get('id')    
     try:
         stock = Stocks.objects.get(id=stock_id)
+        if stock.supplier_id == None:
+            supplier_id = None
+        else:
+            supplier_id = stock.supplier_id.id
         data = {
             'product_id': stock.product_id.id,
-            'supplier_id': stock.supplier_id.id,
+            'supplier_id': supplier_id,
             'batch_number': stock.batch_number,
             'quantity': stock.quantity,
             'cost_price': stock.cost_price,
@@ -1085,14 +1089,22 @@ def save_stock(request):
         if stock_id:
             # Update existing stock
             stock = Stocks.objects.get(id=stock_id)
-            unit_price = stock.unit_price
+            if stock.unit_price == 0 and request.POST.get('cost_price') != 0 or request.POST.get('quantity') !=0:
+                unit_price =  float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
+            else:
+                unit_price = stock.unit_price
         else:
             # Create new stock
             stock = Stocks()
             unit_price = float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
-        stock.product_id_id = request.POST.get('product_id')
-        stock.supplier_id_id = request.POST.get('supplier_id')
-        stock.batch_number = request.POST.get('batch_number')
+        
+        if request.POST.get('supplier_id') == '':
+            stock.supplier_id = None
+        else:
+            stock.supplier_id.id = request.POST.get('supplier_id')
+            
+        stock.product_id_id = request.POST.get('product_id')       
+        stock.batch_number = request.POST.get('batch_number') or ''
         stock.quantity = float(request.POST.get('quantity'))
         stock.unit_price =  unit_price
         stock.cost_price = float(request.POST.get('cost_price'))
