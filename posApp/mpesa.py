@@ -2,6 +2,9 @@ import base64
 import requests
 from datetime import datetime
 from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MpesaClient:
     def __init__(self, environment='sandbox'):
@@ -36,22 +39,24 @@ class MpesaClient:
         }
         payload = {
             "ShortCode": short_code,
-            "ResponseType": "Completed", # For automatic validation. If you prefer manual validation, use 'Cancelled'
+            "ResponseType": "Completed",
             "ConfirmationURL": confirmation_url,
             "ValidationURL": validation_url
         }
 
         try:
-            response = requests.post(
-                'https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl',
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()  # Raises an error for HTTP error codes
+            response = requests.post(self.c2b_url, headers=headers, json=payload, timeout=30)
+            response.raise_for_status()
 
-            print(f"URL Registration successful: {response.json()}")
+            response_data = response.json()
+            if response_data.get("ResponseDescription") != "Success":
+                raise Exception(f"URL registration failed: {response_data}")
+
+            logger.info(f"URL Registration successful: {response_data}")
         except requests.exceptions.RequestException as e:
-            print(f"Error registering URL: {e}")
+            logger.error(f"Error registering URL: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error during URL registration: {e}")
 
         
     def generate_timestamp(self):
@@ -68,16 +73,20 @@ class MpesaClient:
             oauth_url = 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
         else:
             oauth_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
-        
+
         try:
             credentials = f"{self.consumer_key}:{self.consumer_secret}"
             encoded = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
-            response = requests.request('GET', oauth_url, headers = { 'Authorization': f'Basic {encoded}'})            
-            
-            response.raise_for_status()  # Raise an HTTPError for bad responses
+            response = requests.get(oauth_url, headers={'Authorization': f'Basic {encoded}'}, timeout=30)
+            response.raise_for_status()
+
             json_response = response.json()
             return json_response['access_token']
         except requests.exceptions.RequestException as e:
+            logger.error(f"Error retrieving access token: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error retrieving access token: {e}")
             return None
 
     def express(self, phone_number, amount):
@@ -135,6 +144,10 @@ class MpesaClient:
             if not self.access_token:
                 raise Exception("Access token not available")
 
+            # Validate required settings
+            if not all([settings.MPESA_C2B_SHORTCODE, settings.MPESA_CONFIRMATION_URL, settings.MPESA_VALIDATION_URL]):
+                raise ValueError("C2B configuration is incomplete. Please check your settings.")
+
             headers = {
                 'Authorization': 'Bearer ' + self.access_token,
                 'Content-Type': 'application/json'
@@ -147,10 +160,20 @@ class MpesaClient:
                 "ValidationURL": settings.MPESA_VALIDATION_URL
             }
 
-            response = requests.post(self.c2b_url, headers=headers, json=payload)
+            response = requests.post(self.c2b_url, headers=headers, json=payload, timeout=30)
             response.raise_for_status()
-            return response.json()
+
+            # Validate response
+            response_data = response.json()
+            if response_data.get("ResponseDescription") != "Success":
+                raise Exception(f"C2B registration failed: {response_data}")
+
+            return response_data
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error in C2B transaction: {e}")
+            return {"error": str(e)}
         except Exception as e:
+            logger.error(f"Unexpected error in C2B transaction: {e}")
             return {"error": str(e)}
 
     def b2c(self, amount, phone_number, remarks):
@@ -160,6 +183,14 @@ class MpesaClient:
         try:
             if not self.access_token:
                 raise Exception("Access token not available")
+
+            # Validate required settings
+            if not all([settings.MPESA_INITIATOR_NAME, settings.MPESA_SECURITY_CREDENTIALS, settings.MPESA_BUSINESS_SHORTCODE]):
+                raise ValueError("B2C configuration is incomplete. Please check your settings.")
+
+            # Validate phone number format
+            if not phone_number.startswith("254") or len(phone_number) != 12:
+                raise ValueError("Invalid phone number format. Use the format 2547XXXXXXXX.")
 
             headers = {
                 'Authorization': 'Bearer ' + self.access_token,
@@ -179,10 +210,19 @@ class MpesaClient:
                 "Occasion": "Payment"
             }
 
-            response = requests.post(self.b2c_url, headers=headers, json=payload)
+            response = requests.post(self.b2c_url, headers=headers, json=payload, timeout=30)
             response.raise_for_status()
-            return response.json()
+
+            # Validate response
+            response_data = response.json()
+            if response_data.get("ResponseDescription") != "Success":
+                raise Exception(f"B2C transaction failed: {response_data}")
+
+            return response_data
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error in B2C transaction: {e}")
+            return {"error": str(e)}
         except Exception as e:
+            logger.error(f"Unexpected error in B2C transaction: {e}")
             return {"error": str(e)}
 
-   

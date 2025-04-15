@@ -1,33 +1,76 @@
 {% extends "posApp/base.html" %} {% block pageContent %}
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Category List</h4>
-            <div class="text-start">
-                {% if request.user.is_staff %}
-                <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new" title="Add Category"><i class="mdi mdi-plus"></i><span> Add New</span></button>
-                {% endif %}
-            </div>
+            <h4 class="card-title mb-0">Category</h4>
+            <!--ul class="nav flex-row">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'inventory' %}">
+                        Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'stocks-page' %}">
+                        Stock
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product-page' %}">
+                        Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'category-page' %}">
+                        Categories
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier-page' %}">
+                        Suppliers
+                    </a>
+                </li>
+            </ul-->
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <form id="search" action="" method="get">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control w-80" placeholder="Search category" title="Search Category" value="">
+                        <div class="input-group-prepend">
+                            <button type="submit" class="input-group-text btn btn-primary mdc-button" id="submit">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div> 
+            </form>
         </div>
     </div>
 </div>
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-start">
+                    {% if request.user.is_staff %}
+                    <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new" title="Add Category"><i class="mdi mdi-plus"></i><span> Add New</span></button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-bordered">
-                <colgroup>
-                    <col width="5%">
-                    <col width="30%">
-                    <col width="30%">
-                    <col width="15%">
-                    <col width="20%">
-                </colgroup>
                 <thead>
                     <tr>
                         <th class="text-center py-1">#</th>
                         <th class="text-center py-1">Category Name</th>
-                        <th class="text-center py-1">Description</th>
-                        <th class="text-center py-1">Measurement</th>
+                        <!--th class="text-center py-1">Description</th-->
                         <th class="text-center py-1">Status</th>
                         {% for value in request.user.groups.values_list  %}
                             {% if 'Inventory Manager' in value or 'Admin' in value %}
@@ -41,9 +84,8 @@
                     {% for cat in category %}
                     <tr>
                         <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
-                        <td class="px-2 py-1 text-start">{{ cat.name }}</td>
-                        <td class="px-2 py-1 text-start">{{ cat.description }}</td>
-                        <td class="px-2 py-1 text-start">{{ cat.measurement_type }}</td>
+                        <td class="px-2 py-1 text-start">{{ cat.name|capfirst }}</td>
+                        <!--td class="px-2 py-1 text-start">{{ cat.description }}</td-->
                         <td class="px-2 py-1 text-center">
                             {% if cat.status == 1 %}
                             <span class="badge bg-primary-alt bg-green rounded-pill px-3">Active</span> {% else %}
@@ -70,17 +112,58 @@
 </div>
 {% endblock pageContent %} {% block ScriptBlock %}
 <script>
-    $(function() {
-        $('#create_new').click(function() {
-            uni_modal("Add New Category", "{% url 'manage_category-page' %}")
-        })
-        $('.edit-data').click(function() {
-            uni_modal("Edit Category", "{% url 'manage_category-page' %}?id=" + $(this).attr('data-id'))
-        })
-        $('.delete-data').click(function() {
-            _conf("Are you sure to delete this Category?", "delete_category", [$(this).attr('data-id')])
-        })
-    })
+    $(document).ready(function () {
+        const originalTableBody = $('table tbody').html();
+
+        // Search functionality
+        $("#search input[name='search']").on("keyup", function () {
+            const query = $(this).val().toLowerCase();
+            const tableBody = $("table tbody");
+
+            if (query.trim() === "") {
+                // Restore the original table if the search input is empty
+                tableBody.html(originalTableBody);
+                return;
+            }
+
+            // Filter rows based on the search query
+            let visibleRows = 0;
+            tableBody.find("tr").each(function () {
+                const rowText = $(this).text().toLowerCase();
+                const isVisible = rowText.indexOf(query) > -1;
+                $(this).toggle(isVisible);
+                if (isVisible) visibleRows++;
+            });
+
+            // Show "No results found" message if no rows are visible
+            if (visibleRows === 0) {
+                if (!tableBody.find(".no-results").length) {
+                    tableBody.append(`
+                        <tr class="no-results">
+                            <td class="text-center" colspan="4">No Categories Found</td>
+                        </tr>
+                    `);
+                }
+            } else {
+                tableBody.find(".no-results").remove();
+            }
+        });
+
+        // Add New Category
+        $('#create_new').click(function () {
+            uni_modal("Add New Category", "{% url 'manage_category-page' %}");
+        });
+
+        // Edit Category
+        $('.edit-data').click(function () {
+            uni_modal("Edit Category", "{% url 'manage_category-page' %}?id=" + $(this).attr('data-id'));
+        });
+
+        // Delete Category
+        $('.delete-data').click(function () {
+            _conf("Are you sure to delete this Category?", "delete_category", [$(this).attr('data-id')]);
+        });
+    });
 
     function delete_category($id) {
         start_loader();
@@ -95,19 +178,19 @@
             },
             dataType: "json",
             error: err => {
-                console.log(err)
-                alert_toast("An error occured.", 'error');
+                console.log(err);
+                alert_toast("An error occurred.", 'error');
                 end_loader();
             },
-            success: function(resp) {
+            success: function (resp) {
                 if (typeof resp == 'object' && resp.status == 'success') {
                     location.reload();
                 } else {
-                    alert_toast("An error occured.", 'error');
+                    alert_toast("An error occurred.", 'error');
                     end_loader();
                 }
             }
-        })
+        });
     }
 </script>
 {% endblock ScriptBlock %}

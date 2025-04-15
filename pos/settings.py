@@ -35,22 +35,23 @@ CORS_ALLOWED_ORIGINS = [
     'https://dev.10percent.shop',
 ]
 
-#Mpesa
-MPESA_CONSUMER_KEY = config('CONSUMER_KEY')
-MPESA_CONSUMER_SECRET = config('CONSUMER_SECRET')
-MPESA_PASSKEY = config("PASSKEY")
-MPESA_SECURITY_CREDENTIALS = config('SECURITY_CREDENTIALS')
+# Mpesa
+MPESA_CONSUMER_KEY = '4cYNLhGGfcQAEVE7eJcdCSWcCX6CRo3AwwNWNrWANjll0o18'
+MPESA_CONSUMER_SECRET = '6pn9ISa6n5oY5UwRBLgR1sUkk5Eol9F8GJGrrRApoRbjphZgtqsZ4NFjGVJpUF8l'
+MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
+MPESA_SECURITY_CREDENTIALS = 'RpHRcACACoyH8BYdFreuvll+MlNNP4dS1RuKP/vYFsX2Xoxw+oQ8YNMHVsZd2fqEEx8mlu+aTPIyZN2rqfIN1AHt7MZkG3kan4X9h/jP4OdM1dBbrD6yijy1tK513Yy4iGxFwEyMKNrImZW4QALrGCJpA5ROA/5KYSQfmviVdTohQam5VpgLO/Ts6PHoDZr7T61qwE1fYoiaSQyBM8m9DEE7c59DPpnDYRHHfXDenglmsGetCel3jIj0UyfRvHYqpDGwHq2REIemCzpogFEHW9XNaK7hyKDwUzh0Gce6VXmybRvgpHv2WWU8djx4KJblhKu37zBwMci6BYde1FgDqA=='
 
 # Mpesa API Urls
-API_URL = "https://dev.10percent.shop/payment/"
+API_URL = "https://simple-humane-kitten.ngrok-free.app/payment/"
 MPESA_CALLBACK_URL =  API_URL + 'callback/'
 MPESA_CONFIRMATION_URL =  API_URL + 'confirmation/'
 MPESA_VALIDATION_URL = API_URL + 'validation/'
 MPESA_RESULT_URL = API_URL + 'result/'
 MPESA_TIMEOUT_URL = API_URL + 'timeout/'
 
-MPESA_C2B_SHORTCODE = config("C2B_SHORTCODE")
-MPESA_BUSINESS_SHORTCODE = config("BUSINESS_SHORTCODE")
+MPESA_C2B_SHORTCODE = '174379'
+MPESA_BUSINESS_SHORTCODE = '600584'
+
 
 # Application definition
 
@@ -76,8 +77,18 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'posApp.middleware.AutoLogoutMiddleware',
+    'posApp.middleware.AutoLogoutMiddleware',  # Custom middleware for auto logout
 ]
+
+# Inactivity timeout: 15 minutes (900 seconds)
+SESSION_COOKIE_AGE = 900
+
+# Reset timer on every request
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Clear session when browser is closed
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 
 ROOT_URLCONF = 'pos.urls'
 

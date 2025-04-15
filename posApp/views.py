@@ -1,9 +1,10 @@
 import logging, json
 from pickle import FALSE
-from django.shortcuts import redirect, render
+from decimal import Decimal, InvalidOperation
+from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report, MpesaPaymentTransaction
+from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier, Stocks
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -50,13 +51,13 @@ def home(request):
         current_year = now.strftime("%Y")
         current_month = now.strftime("%m")
         current_day = now.strftime("%d")
-        categories = len(Category.objects.all())
-        products = len(Products.objects.all())
-        transaction = len(Sales.objects.filter(
+        categories = Category.objects.count()
+        products = Products.objects.count()
+        transaction = Sales.objects.filter(
             date_added__year=current_year,
             date_added__month = current_month,
             date_added__day = current_day
-        ))
+        ).count()
         today_sales = Sales.objects.filter(
             date_added__year=current_year,
             date_added__month = current_month,
@@ -69,6 +70,7 @@ def home(request):
             'products' : products,
             'transaction' : transaction,
             'total_sales' : total_sales,
+            "today": datetime.now().date(),
         }
         return render(request, 'posApp/home-alt.html',context)
 
@@ -96,7 +98,6 @@ def category(request):
 @login_required
 def manage_category(request):
     category = {}
-    measurements = MeasurementType.MEASUREMENT_CHOICES
     if request.method == 'GET':
         data =  request.GET
         id = ''
@@ -107,7 +108,6 @@ def manage_category(request):
     
     context = {
         'category' : category,
-        'measurement_types': measurements,
     }
     return render(request, 'posApp/manage_category.html',context)
 
@@ -119,16 +119,18 @@ def save_category(request):
     try:
         if data['id'].isnumeric() and int(data['id']) > 0:
             Category.objects.filter(id=data['id']).update(
-                name=data['name'],
-                description=data['description'],
-                measurement_type=data['measurement_type'],
+                name=str.capitalize(data['name']),
+                #description=data['description'],
                 status=data['status']
             )
         else:
+            if Category.objects.filter(name=str.capitalize(data['name'])).exists():
+                resp['msg'] = "Category Already Exists in the database"
+                return HttpResponse(json.dumps(resp), content_type="application/json")
+            
             new_category = Category(
-                name=data['name'],
-                description=data['description'],
-                measurement_type=data['measurement_type'],
+                name=str.capitalize(data['name']),
+                #description=data['description'],
                 status=data['status']
             )
             new_category.save()
@@ -165,6 +167,7 @@ def products(request):
 def manage_products(request):
     product = {}
     categories = Category.objects.filter(status = 1).all()
+    volume_type = Products.VolumeType
     if request.method == 'GET':
         data =  request.GET
         id = ''
@@ -175,6 +178,7 @@ def manage_products(request):
     
     context = {
         'product' : product,
+        'volume_type': volume_type,
         'categories' : categories
     }
     return render(request, 'posApp/manage_product.html',context)
@@ -201,46 +205,44 @@ def save_product(request):
         resp['msg'] = "Product Code Already Exists in the database"
     else:
         category = Category.objects.filter(id=data['category_id']).first()
-        measurement_value = MeasurementType.objects.filter(id=data['measurement_value']).first()
         try:
             if id.isnumeric() and int(id) > 0:
-                if  int(data['available_quantity']) > 0:
-                    status = 1 
-                else:
-                    status = 0
+                
                 Products.objects.filter(id=id).update(
                     code=data['code'],
                     category_id=category,
-                    name=data['name'],
-                    description=data['description'],
-                    measurement_value=measurement_value,
-                    available_quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    name=str.capitalize(data['name']),
+                    #description=data['description'],
+                    volume_type = data['volume_type'],
+                    measurement_value=int(data['measurement_value']),
+                    #quantity=data['available_quantity'],
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    status=status
+                    #status=status
                 )
             else:
                 new_product = Products(
                     code=data['code'],
                     category_id=category,
-                    name=data['name'],
-                    description=data['description'],
-                    measurement_value=measurement_value,
-                    available_quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    name=str.capitalize(data['name']),
+                    #description=data['description'],
+                    volume_type = data['volume_type'],
+                    measurement_value=int(data['measurement_value']),
+                    #quantity=data['available_quantity'],
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    status=1
+                    #status=1
                 )
                 new_product.save()
 
             resp['status'] = 'success'
             messages.success(request, 'Product Successfully saved.')
         except Exception as e:
-            logger.error(f"Error saving product: {e}")
+            logger.error(f"Error saving Product: {e}")
             resp['status'] = 'failed'
-            resp['msg'] = 'An error occurred while saving the product.'
+            resp['msg'] = 'An error occurred while saving the Product.'
 
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
@@ -254,14 +256,18 @@ def delete_product(request):
         messages.success(request, 'Product Successfully deleted.')
     except Exception as e:
         logger.error(f"Error deleting product: {e}")
-        resp['msg'] = 'An error occurred while deleting the product.'
+        resp['msg'] = 'An error occurred while deleting the Product.'
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
 @login_required
 def pos(request):
-    mpesa_client = MpesaClient()
-    mpesa_client.register_urls()
-    
+    # Ensure URLs are registered only once
+    """
+    if not hasattr(pos, "_urls_registered"):
+        mpesa_client = MpesaClient()
+        mpesa_client.register_urls()
+        pos._urls_registered = True
+    """
     products = Products.objects.filter(status=1)
     context = {
         'page_title': "Point of Sale",
@@ -273,7 +279,7 @@ def pos(request):
 def get_product_json(request):     
     try:
         products = Products.objects.filter(status=1)
-        product_json = [{'id': product.id, 'name': product.name, 'description': product.description, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
+        product_json = [{'id': product.id, 'name': product.name, 'volume': product.volume_type, 'value': product.measurement_value, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
         return JsonResponse(product_json, safe=False)
     
     except Exception as e:
@@ -289,79 +295,90 @@ def checkout_modal(request):
     }
     return render(request, 'posApp/checkout.html', context)
 
+@csrf_exempt
 @login_required
 def save_pos(request):
     resp = {'status': 'failed', 'msg': ''}
     data = request.POST
-    payment_method = data.get("payment_method").strip().lower()  # Default to cash
-    pos_number = data.get("pos_number", "").strip()  # Reference for M-Pesa payments
-    grand_total = float(data.get("grand_total", 0))
 
-    pref = datetime.now().year + datetime.now().year
-    i = 1
-    while True:
-        code = '{:0>5}'.format(i)
-        i += 1
-        if not Sales.objects.filter(code=str(pref) + str(code)).exists():
-            break
-    code = str(pref) + str(code)
+    def generate_sale_code():
+        pref = datetime.now().year + datetime.now().year
+        i = 1
+        while True:
+            code = '{:0>5}'.format(i)
+            i += 1
+            if not Sales.objects.filter(code=str(pref) + str(code)).exists():
+                break
+        code = str(pref) + str(code)
+        return code
 
-    # Validate M-Pesa payment if required
-    """
-    if payment_method == "mpesa":
-        payment = MpesaPaymentTransaction.objects.filter(
-            account_reference=pos_number,
-            amount_received=grand_total,
-            status=MpesaPaymentTransaction.StatusChoices.COMPLETED
-        ).first()
-        if not payment:
-            return JsonResponse({"status": "failed", "msg": "No matching M-Pesa payment found."}, status=400)
-    """
-    try:
+    try:        
+        # Validate payment method
+        payment_method = data.get('payment_method')
+        mpesa_transaction_code = data.get('mpesa_code', '').strip()
+
+        if payment_method == 'mpesa':
+            if not mpesa_transaction_code:
+                resp['msg'] = "M-Pesa transaction code is required for M-Pesa payments."
+                return JsonResponse(resp)
+
+            # Ensure the transaction code is in uppercase
+            mpesa_transaction_code = mpesa_transaction_code.upper()
+
+            # Check for duplicate M-Pesa transaction code
+            if Sales.objects.filter(mpesa_transaction_code=mpesa_transaction_code).exists():
+                resp['msg'] = "The M-Pesa transaction code already exists. Please use a unique code."
+                return JsonResponse(resp)
+
         # Create a new Sales record
         sale = Sales(
-            code=code, 
-            sub_total=data['sub_total'], 
-            tax=data['tax'], 
-            tax_amount=data['tax_amount'], 
-            grand_total=grand_total, 
-            tendered_amount=data['tendered_amount'], 
+            code=generate_sale_code(),
+            sub_total=data['sub_total'],
+            tax=data['tax'],
+            tax_amount=data['tax_amount'],
+            grand_total=data['grand_total'],
+            tendered_amount=data['tendered_amount'],
             amount_change=data['amount_change'],
-            payment_method=payment_method,  # Save payment method
+            payment_method=payment_method,
+            mpesa_transaction_code=mpesa_transaction_code if payment_method == 'mpesa' else '',
             served_by=request.user
         )
         sale.save()
-        sale_id = sale.pk
 
-        # Iterate over the list of products
-        for i, prod in enumerate(data.getlist('product_id[]')):
-            product = Products.objects.filter(id=prod).first()
-            qty = data.getlist('qty[]')[i]
-            price = float(data.getlist('price[]')[i])           
-            total = float(qty) * float(price)
+        # Process each product in the sale
+        for i, product_id in enumerate(data.getlist('product_id[]')):
+            qty = float(data.getlist('qty[]')[i])
+            price = float(data.getlist('price[]')[i])
+            product = Products.objects.get(id=product_id)
 
-            # Validate the price
-            if int(price) in range(int(product.min_sell_price), int(product.max_sell_price)):
-                # Create a new sales item
-                salesItems(sale_id=sale, product_id=product, qty=qty, price=price, total=total).save()
-            else:
-                raise Exception(f"Price should be in the within the range {product.min_sell_price} - {product.max_sell_price}")
+            # Find the stock batch with sufficient quantity
+            stock = Stocks.objects.filter(product_id=product, quantity__gte=qty).order_by('expiry_date').first()
+            if not stock:
+                raise Exception(f"Insufficient stock for product {product.name}")
 
-            # Update product quantity
-            product.available_quantity = product.available_quantity - int(qty)
-            if product.available_quantity == 0:
-                product.status = 0
-            product.save()
+            # Reduce stock quantity
+            stock.quantity -= qty
+            stock.save()
 
-        # Set response status to success
+            # Create a sales item linked to the stock batch
+            sales_item = salesItems(
+                sale_id=sale,
+                product_id=product,
+                stock_id=stock,
+                qty=qty,
+                price=price,
+                total=qty * price
+            )
+            sales_item.save()
+
         resp['status'] = 'success'
-        resp['sale_id'] = sale_id
-        messages.success(request, "Sale Record has been saved.")
+        resp['sale_id'] = sale.id
+        messages.success(request, "Sale record has been saved.")
     except Exception as e:
         logger.error(f"Error saving POS: {e}")
-        resp['msg'] = "An error occurred"
+        resp['msg'] = str(e)
 
-    return HttpResponse(json.dumps(resp), content_type="application/json")
+    return JsonResponse(resp)
 
 @login_required
 def salesList(request):
@@ -395,6 +412,7 @@ def receipt(request):
     transaction = {field.name: getattr(sales, field.name) for field in Sales._meta.get_fields() if field.related_model is None}
     transaction['served_by'] = str.capitalize(sales.served_by.username)
     transaction['payment_method'] = str.capitalize(sales.payment_method)
+    transaction['mpesa_code'] = str.upper(sales.mpesa_transaction_code)
     if 'tax_amount' in transaction:
         transaction['tax_amount'] = format(float(transaction['tax_amount']), '.2f')
     ItemList = salesItems.objects.filter(sale_id=sales).all()
@@ -416,17 +434,6 @@ def delete_sale(request):
         logger.error(f"Error deleting sale: {e}")
         resp['msg'] = 'An error occurred while deleting the sale.'
     return HttpResponse(json.dumps(resp), content_type="application/json")
-
-@login_required
-def get_measurements(request, category_id):
-    category = Category.objects.get(id=category_id)
-    measurement_type = category.measurement_type
-    measurements = MeasurementType.objects.filter(type=measurement_type)
-    data = {
-        'measurements': list(measurements.values('id', 'name', 'short_name'))
-    }
-    
-    return HttpResponse(json.dumps(data), content_type="application/json")
 
 @login_required
 def reports(request):
@@ -527,7 +534,7 @@ def generate_report(request):
                     "buy_price": product.buy_price,
                     "min_sell_price": product.min_sell_price,
                     "max_sell_price": product.max_sell_price,
-                    "available_quantity": product.available_quantity,
+                    "available_quantity": product.quantity,
                     "status": product.status,
                     "date_added": product.date_added.isoformat(),
                     "date_updated": product.date_updated.isoformat(),
@@ -548,7 +555,7 @@ def generate_report(request):
             sales = Sales.objects.filter(date_added__gte=start_date)
             
             # Apply payment method filter if needed
-            if payment_method in dict(Sales.PaymentMethod.choices):
+            if (payment_method in dict(Sales.PaymentMethod.choices)):
                 sales = sales.filter(payment_method=payment_method)
 
             total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
@@ -719,49 +726,60 @@ def initiate_payment(request):
 
 @csrf_exempt
 def payment_callback(request):
+    """
+    Handle M-Pesa STK push callback.
+    """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            
-            print(f"\nCallback Response: {data}\n")
-            # Extract information from the callback data
-            result_code = data['Body']['stkCallback']['ResultCode']
-            result_desc = data['Body']['stkCallback']['ResultDesc']
-            checkout_request_id = data['Body']['stkCallback']['CheckoutRequestID']
-            amount_received = data['Body']['stkCallback'].get('Amount', 0)  # Default to 0 if not found
-            transaction_time = data['Body']['stkCallback']['TransactionDate']
+            logger.info("Payment callback received: %s", data)
 
+            # Extract required fields
+            result_code = data['Body']['stkCallback'].get('ResultCode')
+            result_desc = data['Body']['stkCallback'].get('ResultDesc')
+            checkout_request_id = data['Body']['stkCallback'].get('CheckoutRequestID')
+            amount_received = data['Body']['stkCallback'].get('Amount', 0)
+            transaction_time = data['Body']['stkCallback'].get('TransactionDate')
+
+            # Validate required fields
+            if result_code is None or result_desc is None or not checkout_request_id:
+                logger.warning("Missing required fields in callback data")
+                return JsonResponse({'status': 'failed', 'error': 'Invalid callback data'}, status=400)
+
+            # Parse transaction time
             try:
-                # Find the transaction by CheckoutRequestID
-                transaction = MpesaPaymentTransaction.objects.get(transaction_id=checkout_request_id)
+                transaction_time = datetime.strptime(str(transaction_time), "%Y%m%d%H%M%S") if transaction_time else None
+            except ValueError:
+                logger.warning("Invalid transaction time format")
+                return JsonResponse({'status': 'failed', 'error': 'Invalid transaction time format'}, status=400)
 
-                # Update the transaction status based on the result code
-                if result_code == 0:
-                    transaction.status = "Success"
-                else:
-                    transaction.status = "Failed"
-
-                # Store additional details
-                transaction.result_code = result_code
-                transaction.result_desc = result_desc
-                transaction.amount_received = amount_received
-                transaction.transaction_time = datetime.strptime(str(transaction_time), "%Y%m%d%H%M%S")  # Convert string to datetime
-                transaction.save()
-                
-                # Respond with a success message
-                return JsonResponse({'status': 'success'})
-
-            except MpesaPaymentTransaction.DoesNotExist:
+            # Find the transaction
+            transaction = MpesaPaymentTransaction.objects.filter(transaction_id=checkout_request_id).first()
+            if not transaction:
+                logger.warning(f"Transaction with ID {checkout_request_id} not found")
                 return JsonResponse({'status': 'failed', 'error': 'Transaction not found'}, status=404)
-            
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON'}, status=400)
-        except KeyError as e:
-            return JsonResponse({'status': 'failed', 'error': f'Missing key: {str(e)}'}, status=400)
-        except Exception as e:
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
 
-    return JsonResponse({'status': 'invalid'}, status=400)
+            # Update transaction details
+            transaction.status = (
+                MpesaPaymentTransaction.StatusChoices.COMPLETED
+                if result_code == 0
+                else MpesaPaymentTransaction.StatusChoices.CANCELLED
+            )
+            transaction.result_code = result_code
+            transaction.result_desc = result_desc
+            transaction.amount_received = amount_received
+            transaction.transaction_time = transaction_time
+            transaction.save()
+
+            return JsonResponse({'status': 'success'})
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON received in payment_callback")
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            logger.error("Error in payment_callback: %s", str(e))
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'status': 'invalid'}, status=400)
 
 @csrf_exempt
 def payment_validation(request):
@@ -794,7 +812,9 @@ def payment_confirmation(request):
     Handle M-Pesa confirmation callback (for C2B payments).
     Extracts payment details and updates or creates a transaction record.
     """
+    
     if request.method == "POST":
+        print(f"Confirmation Post {request.POST.get()}")
         try:
             data = json.loads(request.body)
             logger.info("Payment confirmation callback received: %s", data)
@@ -859,16 +879,6 @@ def payment_confirmation(request):
 def payment_result(request):
     """
     Handle M-Pesa result callback for B2C/B2B transactions.
-    The payload is expected to have a 'Result' block with keys such as:\n
-      {\n
-          "Result": {\n
-              "ResultCode": 0,\n
-              "ResultDesc": "The service request is processed successfully",\n
-              "TransactionID": "ABC123",\n
-              ...\n
-          }\n
-      }
-    We update the corresponding transaction record based on the result.
     """
     if request.method == "POST":
         try:
@@ -876,22 +886,30 @@ def payment_result(request):
             logger.info("Payment result callback received: %s", data)
             
             result = data.get("Result", {})
-            result_code = result.get("ResultCode")
-            result_desc = result.get("ResultDesc")
             transaction_id = result.get("TransactionID")
-            
-            # Find the corresponding transaction (if any)
+            if not transaction_id:
+                logger.warning("TransactionID missing in callback data")
+                return JsonResponse({"ResultCode": 1, "ResultDesc": "TransactionID missing"}, status=400)
+
+            # Find the corresponding transaction
             transaction = MpesaPaymentTransaction.objects.filter(transaction_id=transaction_id).first()
-            if transaction:
-                transaction.status = "Success" if result_code == 0 else "Failed"
-                transaction.result_code = result_code
-                transaction.result_desc = result_desc
-                transaction.mpesa_response = data
-                # Optionally update the method if provided
-                transaction.transaction_method = data.get("TransactionType", "B2C")
-                transaction.save()
+            if not transaction:
+                logger.warning(f"Transaction with ID {transaction_id} not found")
+                return JsonResponse({"ResultCode": 1, "ResultDesc": "Transaction not found"}, status=404)
+
+            # Update transaction details
+            transaction.status = "Success" if result.get("ResultCode") == 0 else "Failed"
+            transaction.result_code = result.get("ResultCode")
+            transaction.result_desc = result.get("ResultDesc")
+            transaction.mpesa_response = data
+            transaction.transaction_method = result.get("TransactionType", "B2C")
+            transaction.save()
+
             response = {"ResultCode": 0, "ResultDesc": "Result processed successfully"}
             return JsonResponse(response)
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON received in payment_result")
+            return JsonResponse({"ResultCode": 1, "ResultDesc": "Invalid JSON"}, status=400)
         except Exception as e:
             logger.error("Error in payment_result: %s", str(e))
             return JsonResponse({"ResultCode": 1, "ResultDesc": "Result processing failed"}, status=500)
@@ -928,13 +946,10 @@ def check_payment(request):
     """
     Check if a payment has been received based on the provided POS number (account_reference)
     and the payable amount (grand_total).
-    """ 
+    """
+    print(f"Check Mpesa Payment")
     if request.method == "POST":
-        #return JsonResponse({"success": True, "customer_name": "Customer Name", "amount": "200"}, status=200)
-        
         try:
-        
-            
             account_reference = request.POST.get("pos", "").strip()
             grand_total = request.POST.get("grand_total", "").strip()
 
@@ -942,23 +957,173 @@ def check_payment(request):
             if not account_reference or not grand_total:
                 return JsonResponse({"payment_confirmed": False, "error": "Missing required parameters"}, status=400)
 
+            # Convert grand_total to Decimal for precision
+            try:
+                grand_total = Decimal(grand_total)
+            except InvalidOperation:
+                return JsonResponse({"payment_confirmed": False, "error": "Invalid grand_total format"}, status=400)
+
             # Query the payment transaction
             payment = MpesaPaymentTransaction.objects.filter(
                 account_reference=account_reference,
-                amount=grand_total,
-                status="completed"
+                amount_received=grand_total,
+                status=MpesaPaymentTransaction.StatusChoices.COMPLETED
             ).first()
 
             if payment:
-                return JsonResponse({"success": True, "customer_name": payment.customer_name, "amount": payment.amount_received})
+                return JsonResponse({"success": True, "customer_name": payment.customer_name, "amount": float(payment.amount_received)})
             else:
                 return JsonResponse({"success": False})
-            
         except Exception as e:
-            logger.error("Error getting payment information: %s", str(e))
+            logger.error("Error checking payment: %s", str(e))
             return JsonResponse({"ResultCode": 1, "ResultDesc": "Error processing request"}, status=500)
-    
-        
     else:
         return JsonResponse({"success": False}, status=401)
+
+@login_required
+def get_supplier(request):
+    """
+    Fetch a supplier's data by ID.
+    """
+    supplier_id = request.GET.get('id', '')
+    supplier = get_object_or_404(Supplier, id=supplier_id)
+    data = {
+        "id": supplier.id,
+        "name": supplier.name,
+        "phone_number": supplier.phone_number,
+        "email": supplier.email,
+        "address": supplier.address,
+        "status": supplier.status,
+    }
+    return JsonResponse(data)
+
+@csrf_exempt
+@login_required
+def save_supplier(request):
+    """
+    Save or update a supplier.
+    """
+    if request.method == "POST":
+        supplier_id = request.POST.get('supplierId')
+        name = request.POST.get('name')
+        phone_number = request.POST.get('phone_number')
+        email = request.POST.get('email')
+        address = request.POST.get('address')
+        status = request.POST.get('status')
     
+        if supplier_id:
+            supplier = get_object_or_404(Supplier, id=supplier_id)
+            supplier.name = name
+            supplier.phone_number = phone_number
+            supplier.email = email
+            supplier.address = address
+            supplier.status = status
+            supplier.save()
+        else:
+            Supplier.objects.create(
+                name=name,
+                phone_number=phone_number,
+                email=email,
+                address=address,
+                status=status,
+            )
+        messages.success(request, 'supplier created Successfully.')
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False}, status=400)
+
+@login_required
+def delete_supplier(request):
+    if request.method == "POST":
+        supplier_id = request.POST.get('id')
+        if supplier_id:
+            supplier = get_object_or_404(Supplier, id=supplier_id)
+            supplier.delete()
+            messages.success(request, 'Supplier deleted Successfully.')
+            return JsonResponse({"success": True})
+        else:
+            messages.error(request, 'Supplier ID not provided.')
+            return JsonResponse({"success": False, "error": "Supplier ID not provided"}, status=400)
+    
+        
+    return JsonResponse({"success": False}, status=400)
+
+@login_required
+def stocks_page(request):
+    context = {
+        'page_title': 'Stocks',
+        'stocks': Stocks.objects.select_related('product_id', 'supplier_id').all(),
+        'products': Products.objects.filter(status=1),
+        'suppliers': Supplier.objects.filter(status=1)
+    }
+    return render(request, 'posApp/inventory/stocks.html', context)
+
+@login_required
+def get_stock(request):
+    stock_id = request.GET.get('id')    
+    try:
+        stock = Stocks.objects.get(id=stock_id)
+        if stock.supplier_id == None:
+            supplier_id = None
+        else:
+            supplier_id = stock.supplier_id.id
+        data = {
+            'product_id': stock.product_id.id,
+            'supplier_id': supplier_id,
+            'batch_number': stock.batch_number,
+            'quantity': stock.quantity,
+            'cost_price': stock.cost_price,
+            'expiry_date': stock.expiry_date.strftime('%Y-%m-%d') if stock.expiry_date else '',
+        }
+        return JsonResponse(data)
+    except Stocks.DoesNotExist:
+        return JsonResponse({'error': 'Stock not found'}, status=404)
+
+@login_required
+def save_stock(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
+
+    stock_id = request.POST.get('id')
+    
+    try:
+        if stock_id:
+            # Update existing stock
+            stock = Stocks.objects.get(id=stock_id)
+            if stock.unit_price == 0 and request.POST.get('cost_price') != 0 or request.POST.get('quantity') !=0:
+                unit_price =  float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
+            else:
+                unit_price = stock.unit_price
+        else:
+            # Create new stock
+            stock = Stocks()
+            unit_price = float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
+        
+        if request.POST.get('supplier_id') == '':
+            stock.supplier_id = None
+        else:
+            stock.supplier_id.id = request.POST.get('supplier_id')
+            
+        stock.product_id_id = request.POST.get('product_id')       
+        stock.batch_number = request.POST.get('batch_number') or ''
+        stock.quantity = float(request.POST.get('quantity'))
+        stock.unit_price =  unit_price
+        stock.cost_price = float(request.POST.get('cost_price'))
+        stock.expiry_date = request.POST.get('expiry_date')
+        
+        stock.save()
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'msg': str(e)})
+
+@login_required
+def delete_stock(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
+        
+    try:
+        stock_id = request.POST.get('id')
+        Stocks.objects.filter(id=stock_id).delete()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'msg': str(e)})

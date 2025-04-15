@@ -5,6 +5,23 @@
             <label for="payable_amount" class="control-label">Payable Amount</label>
             <input type="text" id="payable_amount" class="form-control form-control-lg rounded-0 text-end" value="{{ grand_total|intcomma }}" required disabled>
         </div>
+        <div class="form-group mb-3 row">
+            <label for="" class="control-label">Payment Method</label>
+            <div class="col-6">
+                <input type="radio" name="payment_method" id="cash_method" value="cash" checked>
+                <label for="cash_method" class="control-label">Cash</label>
+            </div>
+            <div class="col-6">
+                <input type="radio" name="payment_method" id="mpesa_method" value="mpesa">
+                <label for="mpesa_method" class="control-label">Mpesa</label>
+            </div>
+            <div class="col-12">
+                <div class="form-group mb-3" id="mpesa_code_field" hidden>
+                    <label for="mpesa_code" class="control-label">Mpesa Transaction Code</label>
+                    <input type="text" id="mpesa_code" name="mpesa_code" class="form-control form-control-lg rounded-0 text-end">
+                </div>
+            </div>
+        </div>
         <div class="form-group mb-3">
             <label for="tendered_amount" class="control-label">Amount Tendered</label>
             <input type="number" step="any" id="tendered_amount" name="tendered_amount" class="form-control form-control-lg rounded-0 text-end" value="0" required>
@@ -20,6 +37,10 @@
 
 <script>
     $(function() {
+    
+        let grand_total = $('#payable_amount').val().replace(/,/g, '');
+        let pos_number = $('#pos_number').val();
+        /**
         let stopPolling = false;
     
         async function checkC2BPayment(grand_total, pos_number, timeout = 30000, interval = 1000) {
@@ -57,10 +78,6 @@
     
             return null;
         }
-    
-        let grand_total = $('#payable_amount').val().replace(/,/g, '');
-        let pos_number = $('#pos_number').val();
-        
         setTimeout(function(){
             let grand_total = $('#payable_amount').val().replace(/,/g, '');  
             let pos_number = $('#pos_number').val();
@@ -81,7 +98,52 @@
                 }
             });
         }, 5000);
-        
+        **/
+
+        $('#checkout-form input[name="payment_method"]').on('change', function() {
+            if ($(this).val() === 'mpesa') {
+                // Show Mpesa code field
+                $('#mpesa_code_field').prop('hidden', false);
+                $('#mpesa_code').prop('required', true);
+                
+                // Auto-fill tendered amount with payable amount for Mpesa
+                let payableAmount = $('#payable_amount').val().replace(/,/g, '');
+                $('#tendered_amount').val(payableAmount);
+                
+                // Calculate and update change (should be 0 since same amount)
+                $('#payment_change').val('0');
+                $('[name="amount_change"]').val('0');
+                
+                // Update pos-form hidden fields
+                $('#pos-form [name="payment_method"]').val('mpesa');
+                $('#pos-form [name="tendered_amount"]').val(payableAmount);
+                $('#pos-form [name="amount_change"]').val('0');
+            } else {
+                // Hide Mpesa code field for cash
+                $('#mpesa_code_field').prop('hidden', true);
+                $('#mpesa_code').prop('required', false);
+                $('#mpesa_code').val('');
+                
+                // Reset tendered amount for cash
+                $('#tendered_amount').val('0');
+                $('#payment_change').val('0');
+                $('[name="amount_change"]').val('0');
+                
+                // Update pos-form hidden fields
+                $('#pos-form [name="payment_method"]').val('cash');
+                $('#pos-form [name="tendered_amount"]').val('0');
+                $('#pos-form [name="amount_change"]').val('0');
+                $('#pos-form [name="mpesa_code"]').val('');
+            }
+        });
+
+        $('#checkout-form [name="mpesa_code"]').on('change', function(){
+            let mpesa_code = $(this).val();
+            console.log(mpesa_code);
+            // Update pos-form hidden field
+            $('#pos-form [name="mpesa_code"]').val(mpesa_code);
+        });
+
         $('#payment_confirmation_btn').on('click', function(e){
             e.preventDefault();
             $('#status-modal').modal('hide'); 
@@ -115,7 +177,7 @@
             $('#amount_received').text('');
         });
     
-        $('#tendered_amount').on('input keypress keyup keydown change', function() {
+        $('#tendered_amount').on('input keypress keyup keydown', function() {
             stopPolling = true;
             let tendered_amount = $('#tendered_amount').val().replace(/,/gi, '') || 0;
             let payable = $('#payable_amount').val().replace(/,/gi, '') || 0;
@@ -129,6 +191,10 @@
             if (parseFloat(tendered_amount) > 0) {
                 $('[name="payment_method"]').val("cash"); 
             }
+
+            // Update pos-form hidden fields
+            $('#pos-form [name="tendered_amount"]').val(tendered_amount);
+            $('#pos-form [name="amount_change"]').val(change);
         });
     
         $('#checkout-form').submit(function(e) {

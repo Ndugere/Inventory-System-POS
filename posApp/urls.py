@@ -20,13 +20,15 @@ urlpatterns = [
     path('test', views.test, name="test-page"),
     path('save_product', views.save_product, name="save-product-page"),
     path('delete_product', views.delete_product, name="delete-product"),
-    path('pos', views.pos, name="pos-page"),
+    
+    #path('pos', views.pos, name="pos-page"),
+    path('make-sales', views.pos, name="pos-page"),
+    
     path('checkout-modal', views.checkout_modal, name="checkout-modal"),
     path('save-pos', views.save_pos, name="save-pos"),
     path('sales', views.salesList, name="sales-page"),
     path('receipt', views.receipt, name="receipt-modal"),
     path('delete_sale', views.delete_sale, name="delete-sale"),
-    path('get_measurements/<int:category_id>/', views.get_measurements, name="get_measurements"),
     path('reports', views.reports, name="reports-page"),
     path('generate_report', views.generate_report, name="generate_report"),
     path('get_report/<int:id>/', views.get_report, name="get_report"),
@@ -46,7 +48,23 @@ urlpatterns = [
     path("payment/timeout", views.payment_timeout, name="payment_timeout"),
     path('payment/check', views.check_payment, name="check_payment"),
     
+    path('inventory', report_views2.inventory, name="inventory"),
+    path('suppliers', report_views2.suppliers, name="supplier-page"),
+    path('stocks', report_views2.stocks, name="stocks-page"),
+    path('inventory/data', report_views2.inventory_data, name="inventory_data"),
+    path('inventory/data/detail', report_views2.inventory_chart_detail, name="inventory_chart_detail"),
+    path('search', report_views2.search, name="search"),
+    
     path('reports_view', views.reports_view, name="reports_view"),
     path('reports_data', report_views2.reports_data, name="reports_data"),
     path('chart_detail', report_views2.chart_detail, name="chart_detail"),
+    
+    path('get-supplier/', views.get_supplier, name='get-supplier'),
+    path('save-supplier/', views.save_supplier, name='save-supplier'),
+    path('delete-supplier/', views.delete_supplier, name='delete-supplier'),
+    
+    # Add these to your urlpatterns
+    path('stocks/get/', views.get_stock, name='get-stock'),
+    path('stocks/save/', views.save_stock, name='save-stock'),
+    path('stocks/delete/', views.delete_stock, name='delete-stock'),
 ]
