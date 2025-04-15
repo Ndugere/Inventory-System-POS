@@ -13,21 +13,17 @@ from django.utils import timezone
 
 @login_required
 def home(request):
-    if request.user.is_superuser:
         context = {}        
         return render(request, "posApp/home-alt.html", context)
-    else:
         return redirect("pos-page")
 
 @login_required
 def inventory(request):
-    if request.user.is_superuser:
-        context = {
-            "stocks": stocks
-        }
-        return render(request, "posApp/inventory/inventory.html", context)
-    else:
-        return redirect("pos-page")
+    stocks = Stocks.objects.all()
+    context = {
+        "stocks": stocks
+    }
+    return render(request, "posApp/inventory/inventory.html", context)
 
 @login_required
 def inventory_data(request):
@@ -138,7 +134,7 @@ def inventory_chart_detail(request):
 
 @login_required
 def suppliers(request):
-    if request.user.is_superuser:
+    if request.user.is_authenticated:
         suppliers = Supplier.objects.all()
         
         supplier_list = [{
@@ -156,7 +152,7 @@ def suppliers(request):
 
 @login_required
 def stocks(request):
-    if request.user.is_superuser:
+    if request.user.is_authenticated:
         products = Products.objects.all()
         suppliers = Supplier.objects.all()
         stocks = Stocks.objects.all()
