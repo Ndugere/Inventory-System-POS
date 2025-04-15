@@ -50,7 +50,7 @@
                     {% endif %}
                 {% endfor %}
                 {% for value in request.user.groups.values_list %}
-                    {% if 'Sales Person' in value or 'Admin' in value %}    
+                    {% if 'Admin' in value %}    
                         <div class="mdc-list-item mdc-drawer-item">
                             <a class="mdc-drawer-link" href="{% url 'stocks-page' %}" title="Stocks">
                                 <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">label</i> 
