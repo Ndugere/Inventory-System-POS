@@ -263,6 +263,27 @@
 
         })
     </script>
+    <script>
+        let idleTime = 0;
+        const maxIdleTime = 5 * 60; // 5 minutes
+    
+        function resetIdleTime() {
+            idleTime = 0;
+        }
+    
+        document.onclick = resetIdleTime;
+        document.onmousemove = resetIdleTime;
+        document.onkeypress = resetIdleTime;
+    
+        setInterval(() => {
+            idleTime++;
+            if (idleTime >= maxIdleTime) {
+                // Redirect to logout view
+                window.location.href = '{% url 'logout'%}';
+            }
+        }, 150000); // Check every 900 seconds (15 minutes)
+    </script>
+    
     
     <script src="{% static 'posApp/assets/material-admin/vendors/js/vendor.bundle.base.js' %}"></script>
     <script src="{% static 'posApp/assets/material-admin/js/material.js' %}"></script>

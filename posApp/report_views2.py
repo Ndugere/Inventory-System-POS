@@ -13,21 +13,17 @@ from django.utils import timezone
 
 @login_required
 def home(request):
-    if request.user.is_superuser:
         context = {}        
         return render(request, "posApp/home-alt.html", context)
-    else:
         return redirect("pos-page")
 
 @login_required
 def inventory(request):
-    if request.user.is_superuser:
-        context = {
-            "stocks": stocks
-        }
-        return render(request, "posApp/inventory/inventory.html", context)
-    else:
-        return redirect("pos-page")
+    stocks = Stocks.objects.all()
+    context = {
+        "stocks": stocks
+    }
+    return render(request, "posApp/inventory/inventory.html", context)
 
 @login_required
 def inventory_data(request):
@@ -64,7 +60,7 @@ def inventory_data(request):
                 Stocks.objects.filter(product_id__category_id=category).aggregate(
                     total_value=Sum(
                         Case(
-                            When(quantity__gt=0, then=(F('cost_price') / F('quantity')) * F('quantity')),
+                            When(quantity__gt=0, then=(F('unit_price')* F('quantity'))),
                             default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )
@@ -138,7 +134,7 @@ def inventory_chart_detail(request):
 
 @login_required
 def suppliers(request):
-    if request.user.is_superuser:
+    if request.user.is_authenticated:
         suppliers = Supplier.objects.all()
         
         supplier_list = [{
@@ -156,14 +152,16 @@ def suppliers(request):
 
 @login_required
 def stocks(request):
-    if request.user.is_superuser:
+    if request.user.is_authenticated:
         products = Products.objects.all()
         suppliers = Supplier.objects.all()
         stocks = Stocks.objects.all()
         stock_list = [{
             "id": stock.id, "batch_number": stock.batch_number, "product_id": stock.product_id.id,
-            "product_name": stock.product_id.name, "supplier_id": stock.supplier_id.id,
-            "supplier_name": stock.supplier_id.name, "expiry_date": stock.expiry_date,
+            "product_name": stock.product_id.name,
+            "supplier_id": stock.supplier_id.id if stock.supplier_id else None,  # Handle None
+            "supplier_name": stock.supplier_id.name if stock.supplier_id else "",  # Handle None
+            "expiry_date": stock.expiry_date,
             "quantity": stock.quantity, "cost_price": stock.cost_price, "status": stock.status,
             "delivery_date": stock.delivery_date, "date_updated": stock.date_updated
         } for stock in stocks]

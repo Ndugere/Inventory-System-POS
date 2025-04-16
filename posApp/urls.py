@@ -21,8 +21,8 @@ urlpatterns = [
     path('save_medicine', views.save_product, name="save-product-page"),
     path('delete_medicine', views.delete_product, name="delete-product"),
     
-    path('pos', views.pos, name="pos-page"),
-    path('pos/', views.pos, name="pos-page"),
+    #path('pos', views.pos, name="pos-page"),
+    path('make-sales', views.pos, name="pos-page"),
     
     path('checkout-modal', views.checkout_modal, name="checkout-modal"),
     path('save-pos', views.save_pos, name="save-pos"),
@@ -52,7 +52,7 @@ urlpatterns = [
     path('suppliers', report_views2.suppliers, name="supplier-page"),
     path('stocks', report_views2.stocks, name="stocks-page"),
     path('inventory/data', report_views2.inventory_data, name="inventory_data"),
-    path('inventory/data/details', report_views2.inventory_chart_detail, name="inventory_chart_detail"),
+    path('inventory/data/detail', report_views2.inventory_chart_detail, name="inventory_chart_detail"),
     path('search', report_views2.search, name="search"),
     
     path('reports_view', views.reports_view, name="reports_view"),

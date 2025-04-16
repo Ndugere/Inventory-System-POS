@@ -90,15 +90,18 @@
         </div>
     </div>
 </div>
-<!-- Modal Body -->
-<div class="modal" id="details-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-fullscreen-md-down modal-lg" role="document">
+
+<!-- Modal for chart details -->
+<div class="modal fade" id="details-modal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modal-title">Modal title</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close" id="close-modal"></button>
+                <h5 class="modal-title" id="modal-title">Chart Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body bg-light" id="modal-body"></div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be dynamically loaded -->
+            </div>
         </div>
     </div>
 </div>
@@ -108,64 +111,6 @@
 {% block ScriptBlock %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    function loadChartDetail(chartType) {
-        // Update modal title and body to indicate loading
-        const modalTitle = document.getElementById('modal-title');
-        const modalBody = document.getElementById('modal-body');
-        modalTitle.textContent = 'Loading...';
-        modalBody.innerHTML = '<p>Loading details...</p>';
-
-        // Fetch chart details from the backend
-        fetch(`{% url 'inventory_chart_detail' %}?chart=${chartType}`)
-            .then(response => response.json())
-            .then(data => {
-                // Update modal title
-                modalTitle.textContent = chartType.replace('_', ' ').toUpperCase();
-
-                // Generate table content based on chart type
-                let tableContent = '<table class="table table-striped">';
-                tableContent += '<thead><tr><th style="width: 10%; text-align: center;">No.</th>'; // Add "No." column with 10% width and center alignment
-
-                if (chartType === 'expiring_soon') {
-                    tableContent += '<th style="text-align: center;">Batch Number</th><th style="text-align: center;">Product</th><th style="text-align: center;">Quantity</th><th style="text-align: center;">Expiry Date</th>';
-                    tableContent += '</tr></thead><tbody>';
-                    data.products.forEach((product, index) => {
-                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${data.batch_numbers[index]}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">${data.quantities[index]} units</td><td style="text-align: left;">${data.expiry_dates[index]}</td></tr>`;
-                    });
-                } else if (chartType === 'low_stock') {
-                    tableContent += '<th style="text-align: center;">Batch Number</th><th style="text-align: center;">Product</th><th style="text-align: center;">Quantity</th><th style="text-align: center;">Supplier</th>';
-                    tableContent += '</tr></thead><tbody>';
-                    data.products.forEach((product, index) => {
-                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${data.batch_numbers[index]}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">${data.quantities[index]} units</td><td style="text-align: left;">${data.suppliers[index]}</td></tr>`;
-                    });
-                } else if (chartType === 'top_selling') {
-                    tableContent += '<th style="text-align: center;">Product</th><th style="text-align: center;">Units Sold</th>';
-                    tableContent += '</tr></thead><tbody>';
-                    data.products.forEach((product, index) => {
-                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">${data.quantities[index]} units</td></tr>`;
-                    });
-                } else if (chartType === 'stock_value') {
-                    tableContent += '<th style="text-align: center;">Category</th><th style="text-align: center;">Stock Value</th>';
-                    tableContent += '</tr></thead><tbody>';
-                    data.categories.forEach((category, index) => {
-                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${category}</td><td style="text-align: left;">Ksh. ${data.values[index].toLocaleString()}</td></tr>`;
-                    });
-                } else {
-                    tableContent += '<th style="text-align: center;">No Data Available</th>';
-                    tableContent += '</tr></thead><tbody>';
-                    tableContent += '<tr><td colspan="5" style="text-align: left;">No details available for this chart.</td></tr>';
-                }
-
-                tableContent += '</tbody></table>';
-                modalBody.innerHTML = tableContent;
-            })
-            .catch(error => {
-                modalTitle.textContent = 'Error';
-                modalBody.innerHTML = `<p>Failed to load details. Please try again later.</p>`;
-                console.error('Error fetching chart details:', error);
-            });
-    }
-
     // Fetch data for Expiring Soon Stocks
     fetch("{% url 'inventory_data' %}?type=expiring_soon")
         .then(response => response.json())
@@ -186,18 +131,20 @@
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: false }, // Disable default legend
+                        legend: { display: true }, // Disable default legend
                         title: { display: true, text: 'Expiring Soon Stocks' }
                     }
                 }
             });
 
+            // Generate custom legends
             let new_data = data.quantities.map((value, index) => {
                 return {
                     label: data.products[index],
                     value: `${value} units`, // Prepend 'units' for quantities
                 };
             });
+
         });
 
     // Fetch data for Low Stocks
@@ -220,18 +167,20 @@
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: false }, // Disable default legend
+                        legend: { display: true }, // Disable default legend
                         title: { display: true, text: 'Low Stock Levels' }
                     }
                 }
             });
 
+            // Generate custom legends
             let new_data = data.quantities.map((value, index) => {
                 return {
                     label: data.products[index],
                     value: `${value} units`, // Prepend 'units' for quantities
                 };
             });
+
         });
 
     // Fetch data for Top-Selling Products
@@ -254,18 +203,20 @@
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: false }, // Disable default legend
+                        legend: { display: true }, // Disable default legend
                         title: { display: true, text: 'Top-Selling Medicine' }
                     }
                 }
             });
 
+            // Generate custom legends
             let new_data = data.quantities.map((value, index) => {
                 return {
                     label: data.products[index],
                     value: `${value} units`, // Prepend 'units' for quantities
                 };
             });
+
         });
 
     // Fetch data for Stock Value by Category
@@ -294,19 +245,71 @@
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: false }, // Disable default legend
+                        legend: { display: true }, // Disable default legend
                         title: { display: true, text: 'Stock Value by Category' }
                     }
                 }
             });
 
-            let new_data = data.values.map((value, index) => {
-                return {
-                    label: data.categories[index],
-                    value: `Ksh. ${value.toLocaleString()}`, // Prepend 'Ksh.' to the value
-                };
-            });
         });
+
+    function loadChartDetail(chartType) {
+        // Update modal title and body to indicate loading
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        modalTitle.textContent = 'Loading...';
+        modalBody.innerHTML = '<p>Loading details...</p>';
+
+        // Fetch chart details from the backend
+        fetch(`{% url 'inventory_chart_detail' %}?chart=${chartType}`)
+            .then(response => response.json())
+            .then(data => {
+                // Update modal title
+                modalTitle.textContent = chartType.replace('_', ' ').toUpperCase();
+
+                // Generate table content based on chart type
+                let tableContent = '<table class="table table-striped">';
+                tableContent += '<thead><tr><th style="width: 10%; text-align: left;">No.</th>'; // Add "No." column with 10% width and center alignment
+
+                if (chartType === 'expiring_soon') {
+                    tableContent += '<th style="text-align: left;">Batch Number</th><th style="text-align: left;">Product</th><th style="text-align: left;">Quantity</th><th style="text-align: left;">Expiry Date</th>';
+                    tableContent += '</tr></thead><tbody>';
+                    data.products.forEach((product, index) => {
+                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${data.batch_numbers[index]}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">${data.quantities[index]} units</td><td style="text-align: left;">${data.expiry_dates[index]}</td></tr>`;
+                    });
+                } else if (chartType === 'low_stock') {
+                    tableContent += '<th style="text-align: left;">Batch Number</th><th style="text-align: left;">Product</th><th style="text-align: left;">Quantity</th><th style="text-align: left;">Supplier</th>';
+                    tableContent += '</tr></thead><tbody>';
+                    data.products.forEach((product, index) => {
+                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${data.batch_numbers[index]}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">${data.quantities[index]} units</td><td style="text-align: left;">${data.suppliers[index]}</td></tr>`;
+                    });
+                } else if (chartType === 'top_selling') {
+                    tableContent += `<th style="text-align: left;">Product</th><th style="text-align: left;">Units Sold</th>`;
+                    tableContent += '</tr></thead><tbody>';
+                    data.products.forEach((product, index) => {
+                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">${data.quantities[index]} units</td></tr>`;
+                    });
+                } else if (chartType === 'stock_value') {
+                    tableContent += '<th style="text-align: left;">Category</th><th style="text-align: left;">Stock Value</th>';
+                    tableContent += '</tr></thead><tbody>';
+                    data.categories.forEach((category, index) => {
+                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${category}</td><td style="text-align: left;">Ksh. ${data.values[index].toLocaleString()}</td></tr>`;
+                    });
+                } else {
+                    tableContent += '<th style="text-align: left;">No Data Available</th>';
+                    tableContent += '</tr></thead><tbody>';
+                    tableContent += '<tr><td colspan="5" style="text-align: left;">No details available for this chart.</td></tr>';
+                }
+
+                tableContent += '</tbody></table>';
+                modalBody.innerHTML = tableContent;
+            })
+            .catch(error => {
+                modalTitle.textContent = 'Error';
+                modalBody.innerHTML = `<p>Failed to load details. Please try again later.</p>`;
+                console.error('Error fetching chart details:', error);
+            });
+    }
 
     // Attach event listeners to buttons
     document.getElementById('expiring-stock-detail').addEventListener('click', () => loadChartDetail('expiring_soon'));

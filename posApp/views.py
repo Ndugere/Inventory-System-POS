@@ -158,7 +158,7 @@ def delete_category(request):
 def products(request):
     product_list = Products.objects.all()
     context = {
-        'page_title':'Medicine List',
+        'page_title':'Product List',
         'products':product_list,
     }
     return render(request, 'posApp/products.html',context)
@@ -204,7 +204,7 @@ def save_product(request):
         check = Products.objects.filter(code=data['code']).all()
 
     if check.exists():
-        resp['msg'] = "Medicine Code Already Exists in the database"
+        resp['msg'] = "Product Code Already Exists in the database"
     else:
         category = Category.objects.filter(id=data['category_id']).first()
         if int(data['available_quantity']) > 0 and float(data['buy_price']) > 0:
@@ -221,11 +221,11 @@ def save_product(request):
                     #description=data['description'],
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
-                    quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    #quantity=data['available_quantity'],
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    status=status
+                    #status=status
                 )
             else:
                 new_product = Products(
@@ -235,20 +235,20 @@ def save_product(request):
                     #description=data['description'],
                     volume_type = data['volume_type'],
                     measurement_value=int(data['measurement_value']),
-                    quantity=data['available_quantity'],
-                    buy_price=float(data['buy_price']),
+                    #quantity=data['available_quantity'],
+                    #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
                     max_sell_price=float(data['max_sell_price']),
-                    status=status
+                    #status=1
                 )
                 new_product.save()
 
             resp['status'] = 'success'
-            messages.success(request, 'Medicine Successfully saved.')
+            messages.success(request, 'Product Successfully saved.')
         except Exception as e:
-            logger.error(f"Error saving medicine: {e}")
+            logger.error(f"Error saving Product: {e}")
             resp['status'] = 'failed'
-            resp['msg'] = 'An error occurred while saving the medicine.'
+            resp['msg'] = 'An error occurred while saving the Product.'
 
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
@@ -259,20 +259,21 @@ def delete_product(request):
     try:
         Products.objects.filter(id=data['id']).delete()
         resp['status'] = 'success'
-        messages.success(request, 'Medicine Successfully deleted.')
+        messages.success(request, 'Product Successfully deleted.')
     except Exception as e:
         logger.error(f"Error deleting product: {e}")
-        resp['msg'] = 'An error occurred while deleting the medicine.'
+        resp['msg'] = 'An error occurred while deleting the Product.'
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
 @login_required
 def pos(request):
     # Ensure URLs are registered only once
+    """
     if not hasattr(pos, "_urls_registered"):
         mpesa_client = MpesaClient()
         mpesa_client.register_urls()
         pos._urls_registered = True
-
+    """
     products = Products.objects.filter(status=1)
     context = {
         'page_title': "Point of Sale",
@@ -317,9 +318,7 @@ def save_pos(request):
         code = str(pref) + str(code)
         return code
 
-    try:
-        print(f"{data}")
-        
+    try:        
         # Validate payment method
         payment_method = data.get('payment_method')
         mpesa_transaction_code = data.get('mpesa_code', '').strip()
@@ -1066,12 +1065,16 @@ def stocks_page(request):
 
 @login_required
 def get_stock(request):
-    stock_id = request.GET.get('id')
+    stock_id = request.GET.get('id')    
     try:
         stock = Stocks.objects.get(id=stock_id)
+        if stock.supplier_id == None:
+            supplier_id = None
+        else:
+            supplier_id = stock.supplier_id.id
         data = {
             'product_id': stock.product_id.id,
-            'supplier_id': stock.supplier_id.id,
+            'supplier_id': supplier_id,
             'batch_number': stock.batch_number,
             'quantity': stock.quantity,
             'cost_price': stock.cost_price,
@@ -1092,14 +1095,24 @@ def save_stock(request):
         if stock_id:
             # Update existing stock
             stock = Stocks.objects.get(id=stock_id)
+            if stock.unit_price == 0 and request.POST.get('cost_price') != 0 or request.POST.get('quantity') !=0:
+                unit_price =  float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
+            else:
+                unit_price = stock.unit_price
         else:
             # Create new stock
             stock = Stocks()
+            unit_price = float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
         
-        stock.product_id_id = request.POST.get('product_id')
-        stock.supplier_id_id = request.POST.get('supplier_id')
-        stock.batch_number = request.POST.get('batch_number')
+        if request.POST.get('supplier_id') == '':
+            stock.supplier_id = None
+        else:
+            stock.supplier_id.id = request.POST.get('supplier_id')
+            
+        stock.product_id_id = request.POST.get('product_id')       
+        stock.batch_number = request.POST.get('batch_number') or ''
         stock.quantity = float(request.POST.get('quantity'))
+        stock.unit_price =  unit_price
         stock.cost_price = float(request.POST.get('cost_price'))
         stock.expiry_date = request.POST.get('expiry_date')
         
