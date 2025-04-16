@@ -278,9 +278,9 @@
             idleTime++;
             if (idleTime >= maxIdleTime) {
                 // Redirect to logout view
-                window.location.href = '/logout/';
+                window.location.href = '{% url 'logout'%}';
             }
-        }, 300000); // Check every 300 seconds (5 minutes)
+        }, 1500000); // Check every 900 seconds (15 minutes)
     </script>
     
     
