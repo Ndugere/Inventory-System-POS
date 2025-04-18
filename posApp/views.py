@@ -207,10 +207,10 @@ def save_product(request):
         resp['msg'] = "Product Code Already Exists in the database"
     else:
         category = Category.objects.filter(id=data['category_id']).first()
-        if int(data['available_quantity']) > 0 and float(data['buy_price']) > 0:
-            status = 1
-        else:
-            status = 0
+        #if int(data['available_quantity']) > 0 and float(data['buy_price']) > 0:
+        #    status = 1
+        #else:
+        #    status = 0
                     
         try:
             if id.isnumeric() and int(id) > 0:                
@@ -1107,7 +1107,7 @@ def save_stock(request):
         if request.POST.get('supplier_id') == '':
             stock.supplier_id = None
         else:
-            stock.supplier_id.id = request.POST.get('supplier_id')
+            stock.supplier_id_id = request.POST.get('supplier_id')
             
         stock.product_id_id = request.POST.get('product_id')       
         stock.batch_number = request.POST.get('batch_number') or ''
@@ -1122,6 +1122,38 @@ def save_stock(request):
     except Exception as e:
         return JsonResponse({'status': 'failed', 'msg': str(e)})
 
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+@login_required
+def save_unregistered_stock(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
+
+    stock_id = request.POST.get('id')
+
+    try:
+        if stock_id:
+            # Update existing unregistered stock
+            stock = Stocks.objects.get(id=stock_id)
+        else:
+            # Create new unregistered stock
+            stock = Stocks()
+
+        stock.product_id_id = request.POST.get('product_id')
+        stock.supplier_id_id = request.POST.get('supplier_id') if request.POST.get('supplier_id') else None
+        stock.batch_number = request.POST.get('batch_number') or ''
+        stock.quantity = float(request.POST.get('quantity'))
+        stock.unit_price = float(request.POST.get('unit_price'))
+        stock.cost_price = stock.unit_price * stock.quantity  # Calculate cost price
+        stock.expiry_date = request.POST.get('expiry_date')
+
+        stock.save()
+
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'msg': str(e)})
+    
 @login_required
 def delete_stock(request):
     if request.method != 'POST':
