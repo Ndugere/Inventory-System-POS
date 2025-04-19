@@ -603,10 +603,10 @@ def chart_detail(request):
             top_counter = Counter()
             for date_str, sales_qs in date_sales.items():
                 daily_top = salesItems.objects.filter(sale_id__in=sales_qs).values(
-                    "measurement_value", "volume_type", "product_id__name"
+                    "product_id_id__measurement_value", "product_id_id__volume_type", "product_id__name"
                 ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField()))
                 for item in daily_top:
-                    product_key = f"{item['product_id__name']} ({item['measurement_value']}{item['volume_type']})"
+                    product_key = f"{item['product_id__name']} ({item['product_id_id__measurement_value']}{item['product_id_id__volume_type']})"
                     top_counter[product_key] += item["total_sold"]
             sorted_top = top_counter.most_common(10)
             data["chart"] = chart
