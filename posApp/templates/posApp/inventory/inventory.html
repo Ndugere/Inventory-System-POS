@@ -55,6 +55,7 @@
         </div>
     </div>
 </div>
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
         <div class="mt-4">
@@ -67,6 +68,7 @@
         </div>
     </div>
 </div>
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
         <div class="mt-4">
@@ -79,6 +81,7 @@
         </div>
     </div>
 </div>
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
         <div class="mt-4">
@@ -255,6 +258,7 @@
 
         });
 
+    
     function loadChartDetail(chartType) {
         // Update modal title and body to indicate loading
         const modalTitle = document.getElementById('modal-title');
@@ -270,7 +274,7 @@
                 modalTitle.textContent = chartType.replace('_', ' ').toUpperCase();
 
                 // Generate table content based on chart type
-                let tableContent = '<table class="table table-striped">';
+                let tableContent = '<div class="table-responsive"><table class="table table-striped">';
                 tableContent += '<thead><tr><th style="width: 10%; text-align: left;">No.</th>'; // Add "No." column with 10% width and center alignment
 
                 if (chartType === 'expiring_soon') {
@@ -303,7 +307,7 @@
                     tableContent += '<tr><td colspan="5" style="text-align: left;">No details available for this chart.</td></tr>';
                 }
 
-                tableContent += '</tbody></table>';
+                tableContent += '</tbody></table></div>'; // Close the table and wrapper div
                 modalBody.innerHTML = tableContent;
             })
             .catch(error => {
