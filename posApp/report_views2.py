@@ -69,6 +69,28 @@ def inventory_data(request):
                 )['total_value'] or 0 for category in categories
             ]
         }
+    elif data_type == 'most_profitable':
+        products = Products.objects.annotate(
+            max_profit=(F('max_sell_price') - F('buy_price')),
+            min_profit=(F('min_sell_price') - F('buy_price'))
+        ).order_by('-max_profit')[:3]
+        data = {
+            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "cost_prices": [product.buy_price for product in products],
+            "max_profits": [product.max_profit for product in products],
+            "min_profits": [product.min_profit for product in products]
+        }
+    elif data_type == 'least_profitable':
+        products = Products.objects.annotate(
+            max_profit=(F('max_sell_price') - F('buy_price')),
+            min_profit=(F('min_sell_price') - F('buy_price'))
+        ).order_by('max_profit')[:3]
+        data = {
+            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "cost_prices": [product.buy_price for product in products],
+            "max_profits": [product.max_profit for product in products],
+            "min_profits": [product.min_profit for product in products]
+        }
     else:
         data = {"error": "Invalid data type requested."}
 
@@ -79,7 +101,7 @@ def inventory_chart_detail(request):
     """
     Returns detailed data for a specific inventory chart.
     Expected GET parameter:
-      - chart: The type of chart (e.g., 'expiring_soon', 'low_stock', 'top_selling', 'stock_value').
+      - chart: The type of chart (e.g., 'expiring_soon', 'low_stock', 'top_selling', 'stock_value', 'most_profitable', 'least_profitable').
     """
     chart_type = request.GET.get('chart', '')
 
@@ -125,6 +147,30 @@ def inventory_chart_detail(request):
                     )
                 )['total_value'] or 0 for category in categories
             ]
+        }
+
+    elif chart_type == 'most_profitable':
+        products = Products.objects.annotate(
+            max_profit=(F('max_sell_price') - F('buy_price')),
+            min_profit=(F('min_sell_price') - F('buy_price'))
+        ).order_by('-max_profit')
+        data = {
+            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "cost_prices": [product.buy_price for product in products],
+            "max_profits": [product.max_profit for product in products],
+            "min_profits": [product.min_profit for product in products]
+        }
+
+    elif chart_type == 'least_profitable':
+        products = Products.objects.annotate(
+            max_profit=(F('max_sell_price') - F('buy_price')),
+            min_profit=(F('min_sell_price') - F('buy_price'))
+        ).order_by('max_profit')
+        data = {
+            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "cost_prices": [product.buy_price for product in products],
+            "max_profits": [product.max_profit for product in products],
+            "min_profits": [product.min_profit for product in products]
         }
 
     else:
