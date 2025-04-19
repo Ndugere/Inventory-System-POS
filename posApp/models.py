@@ -194,7 +194,7 @@ class StockMovement(models.Model):
         ADDITION = 'addition', _('Addition')
         SUBTRACTION = 'subtraction', _('Subtraction')
 
-    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    stock = models.ForeignKey(Stocks, on_delete=models.CASCADE)
     movement_type = models.CharField(max_length=20, choices=MovementType.choices)
     quantity = models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)

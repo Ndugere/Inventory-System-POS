@@ -114,7 +114,6 @@ def manage_category(request):
 @login_required
 def save_category(request):
     data = request.POST
-    print(f"\n{data}\n")
     resp = {'status': 'failed'}
     try:
         if data['id'].isnumeric() and int(data['id']) > 0:
@@ -137,7 +136,6 @@ def save_category(request):
         resp['status'] = 'success'
         messages.success(request, 'Category Successfully saved.')
     except Exception as e:
-        print(f"Error: {e}")
         resp['status'] = 'failed'
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
@@ -708,7 +706,6 @@ def initiate_payment(request):
 
         try:
             response = mpesa_client.express(phone_number, amount)
-            print(f"\nLipa Request Response: {response}\n")
             
             payment_transaction.transaction_id = response['CheckoutRequestID']
             payment_transaction.status = "Pending"  # Set initial status as pending
@@ -716,7 +713,6 @@ def initiate_payment(request):
             
             payment_transaction.save()
             
-            print(f"\nTransaction Record : {payment_transaction}\n")
         except Exception as e:
             payment_transaction.status = "Failed"
             payment_transaction.save()
@@ -814,11 +810,9 @@ def payment_confirmation(request):
     """
     
     if request.method == "POST":
-        print(f"Confirmation Post {request.POST.get()}")
         try:
             data = json.loads(request.body)
             logger.info("Payment confirmation callback received: %s", data)
-            print(f"\nCallback:{data}\n")
 
             # Extract fields from the callback payload.
             transaction_type = data.get("TransactionType", "C2B")
@@ -947,7 +941,6 @@ def check_payment(request):
     Check if a payment has been received based on the provided POS number (account_reference)
     and the payable amount (grand_total).
     """
-    print(f"Check Mpesa Payment")
     if request.method == "POST":
         try:
             account_reference = request.POST.get("pos", "").strip()
@@ -1101,7 +1094,7 @@ def save_stock(request):
         if request.POST.get('supplier_id') == '':
             stock.supplier_id = None
         else:
-            stock.supplier_id.id = request.POST.get('supplier_id')
+            stock.supplier_id_id = request.POST.get('supplier_id')
             
         stock.product_id_id = request.POST.get('product_id')       
         stock.batch_number = request.POST.get('batch_number') or ''
@@ -1113,6 +1106,59 @@ def save_stock(request):
         stock.save()
         
         return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'msg': str(e)})
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+@login_required
+def save_unregistered_stock(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
+
+    stock_id = request.POST.get('id')
+
+    try:
+        # Validate required fields
+        product_id = request.POST.get('product_id')
+        quantity = request.POST.get('quantity')
+        unit_price = request.POST.get('unit_price')
+
+        if not product_id or not quantity or not unit_price:
+            return JsonResponse({'status': 'failed', 'msg': 'Missing required fields'})
+
+        try:
+            quantity = float(quantity)
+            unit_price = float(unit_price)
+        except ValueError:
+            return JsonResponse({'status': 'failed', 'msg': 'Invalid quantity or unit price'})
+
+        # Check if updating an existing stock
+        if stock_id:
+            stock = Stocks.objects.get(id=stock_id)
+        else:
+            stock = Stocks()
+            
+        if request.POST.get('supplier_id') == '':
+            stock.supplier_id = None
+        else:
+            stock.supplier_id_id = request.POST.get('supplier_id')
+            
+        # Set stock fields
+        stock.product_id_id = product_id
+        stock.batch_number = request.POST.get('batch_number') or ''
+        stock.quantity = quantity
+        stock.unit_price = unit_price
+        stock.cost_price = unit_price * quantity  # Calculate cost price
+        stock.expiry_date = request.POST.get('expiry_date')
+
+        # Save stock
+        stock.save()
+
+        return JsonResponse({'status': 'success'})
+    except Stocks.DoesNotExist:
+        return JsonResponse({'status': 'failed', 'msg': 'Stock not found'})
     except Exception as e:
         return JsonResponse({'status': 'failed', 'msg': str(e)})
 

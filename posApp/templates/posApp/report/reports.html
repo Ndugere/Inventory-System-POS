@@ -292,9 +292,9 @@
                     html += `<tr>
                         <td class="text-left">${++count}</td>
                         <td class="text-left">${formatHour(item.hour)}</td>
-                        <td class="text-left">Ksh. ${item.sales_revenue}</td>
-                        <td class="text-left">Ksh. ${item.cost}</td>
-                        <td>Ksh. ${item.profit}</td>
+                        <td class="text-left">Ksh. ${parseFloat(item.sales_revenue).toFixed(2)}</td>
+                        <td class="text-left">Ksh. ${parseFloat(item.cost).toFixed(2)}</td>
+                        <td>Ksh. ${parseFloat(item.profit).toFixed(2)}</td>
                     </tr>`;
                 });
             }
@@ -321,9 +321,9 @@
                         html += `<tr>
                                     <td class="text-left">${++count}</td>
                                     <td class="text-left">${formatHour(item.hour)}</td>
-                                    <td class="text-left">Ksh. ${item.sales_revenue}</td>
-                                    <td class="text-left">Ksh. ${item.cost}</td>
-                                    <td>Ksh. ${item.profit}</td>
+                                    <td class="text-left">Ksh. ${parseFloat(item.sales_revenue).toFixed(2)}</td>
+                                    <td class="text-left">Ksh. ${parseFloat(item.cost).toFixed(2)}</td>
+                                    <td>Ksh. ${parseFloat(item.profit).toFixed(2)}</td>
                                 </tr>`;
                     });
                     html += `
@@ -472,6 +472,10 @@
             trendLabels = data.sales_trend.dates;
         }
 
+        // Format cost and profit values to 2 decimal places
+        const formattedProfits = data.sales_trend.profits.map(value => parseFloat(value).toFixed(2));
+        const formattedAmounts = data.sales_trend.amounts.map(value => parseFloat(value).toFixed(2));
+
         // Sales Trend Chart
         salesTrendChart = new Chart(document.getElementById("salesTrendChart"), {
             type: "line",
@@ -479,12 +483,12 @@
                 labels: trendLabels,
                 datasets: [{
                     label: "Sales Revenue",
-                    data: data.sales_trend.amounts,
+                    data: formattedAmounts,
                     borderColor: "#0c8959",
                     fill: true
-                },{
+                }, {
                     label: "Profit",
-                    data: data.sales_trend.profits,
+                    data: formattedProfits,
                     borderColor: "#FF9800",
                     fill: true
                 }]
@@ -528,8 +532,8 @@
         document.getElementById("total_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.cash + data.revenue_breakdown.mpesa)}`;
 
         // Calculate and display total revenue and profit from sales trend data
-        const totalRevenueTrend = data.sales_trend.amounts.reduce((sum, val) => sum + val, 0);
-        const totalProfitTrend = data.sales_trend.profits.reduce((sum, val) => sum + val, 0);
+        const totalRevenueTrend = data.sales_trend.amounts.reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2);
+        const totalProfitTrend = data.sales_trend.profits.reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2);
         document.getElementById("total_revenue_trend").textContent = `Ksh. ${formatRevenue(totalRevenueTrend)}`;
         document.getElementById("total_profit_trend").textContent = `Ksh. ${formatRevenue(totalProfitTrend)}`;
 
@@ -644,6 +648,23 @@
             loadChartDetail('stock');
         });
     
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("details-modal");
+        const modalTitle = document.getElementById("modal-title");
+        const modalBody = document.getElementById("modal-body");
+
+        // Store the original title and body content
+        const originalTitle = modalTitle.innerText;
+        const originalBody = modalBody.innerHTML;
+
+        // Reset the modal title and body when the modal is closed
+        modal.addEventListener("hidden.bs.modal", function () {
+            modalTitle.innerText = originalTitle;
+            modalBody.innerHTML = originalBody;
+        });
     });
 </script>
 {% endblock %}

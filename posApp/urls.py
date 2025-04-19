@@ -66,5 +66,6 @@ urlpatterns = [
     # Add these to your urlpatterns
     path('stocks/get/', views.get_stock, name='get-stock'),
     path('stocks/save/', views.save_stock, name='save-stock'),
+    path('stocks/save/unregistered', views.save_unregistered_stock, name='save-unregistered-stock'),
     path('stocks/delete/', views.delete_stock, name='delete-stock'),
 ]
