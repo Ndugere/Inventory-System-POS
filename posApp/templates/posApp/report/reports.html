@@ -172,8 +172,8 @@
         const modalTitle = document.getElementById('modal-title');
         const modalBody = document.getElementById('modal-body');
         let html = '';
-        
-        if(data.chart === 'revenue'){
+
+        if (data.chart === 'revenue') {
             modalTitle.innerText = 'Revenue Breakdown';
             html += `
                 <div class="mb-4">
@@ -197,75 +197,30 @@
                         </table>
                     </div>
                 </div>
-            `;
-            
-            // If details for a single day report exist.
-            if(data.detail && data.detail.sales){
-                html += `
                 <div class="mb-4">
-                    <h5 class="border-bottom pb-2">Sales Details</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-left">No.</th>
-                                    <th class="text-left">Sale Code</th>
-                                    <th class="text-left">Payment Method</th>
-                                    <th>Grand Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-                let count = 0;
-                data.detail.sales.forEach(sale => {
-                    html += `<tr>
-                        <td class="text-left">${++count}</td>
-                        <td class="text-left">${sale.code}</td>
-                        <td class="text-left">${sale.payment_method}</td>
-                        <td>Ksh. ${sale.grand_total}</td>
-                    </tr>`;
-                });
-                html += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>`;
-            }
-            // For a date-range report with details grouped by date.
-            else if(data.detail && typeof data.detail === 'object'){
-                html += `<div class="mb-4"><h5 class="border-bottom pb-2">Sales Details by Date</h5>`;
-                for(const date in data.detail){
-                    html += `
-                        <div class="mb-3">
-                            <h6 class="text-primary">${date}</h6>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th class="text-left">No.</th>
-                                            <th class="text-left">Sale Code</th>
-                                            <th class="text-left">Payment Method</th>
-                                            <th>Grand Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                    let count = 0;
-                    data.detail[date].forEach(sale => {
-                        html += `<tr>
-                            <td class="text-left">${++count}</td>
-                            <td class="text-left">${sale.code}</td>
-                            <td class="text-left">${sale.payment_method}</td>
-                            <td>Ksh. ${sale.grand_total}</td>
-                        </tr>`;
-                    });
-                    html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>`;
-                }
-                html += `</div>`;
-            }
+                    <canvas id="revenueDetailChart"></canvas>
+                </div>
+            `;
+
             modalBody.innerHTML = html;
+
+            // Render the chart in the modal
+            const ctx = document.getElementById('revenueDetailChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Cash', 'Mpesa'],
+                    datasets: [{
+                        data: [data.revenue.cash, data.revenue.mpesa],
+                        backgroundColor: ['#2196F3', '#FF9800']
+                    }]
+                },
+                options: {
+                    responsive: true, // Make the chart responsive
+                    maintainAspectRatio: false, // Allow dynamic resizing
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
         }
         else if(data.chart === 'sales_trend'){
             modalTitle.innerText = 'Sales Trend Details';
