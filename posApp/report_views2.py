@@ -656,4 +656,12 @@ def chart_detail(request):
     else:
         data["detail"] = {"message": "No valid date parameters provided."}
 
+        # ── strip out any date‐keys whose detail list is empty ──
+    if isinstance(data.get('detail'), dict):
+        data['detail'] = {
+            date: items
+            for date, items in data['detail'].items()
+            if items  # only keep dates with a non-empty list
+        }
+
     return JsonResponse(data, safe=False)
