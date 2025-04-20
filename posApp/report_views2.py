@@ -319,6 +319,7 @@ def reports_data(request):
             cash=Sum(
                 Case(
                     When(payment_method='cash', then=F('grand_total')),
+                    When(payment_method='both', then=F('cash_amount')),
                     default=Value(0.0, output_field=FloatField()),
                     output_field=FloatField()
                 )
@@ -326,14 +327,16 @@ def reports_data(request):
             mpesa=Sum(
                 Case(
                     When(payment_method='mpesa', then=F('grand_total')),
+                    When(payment_method='both', then=F('mpesa_amount')),
                     default=Value(0.0, output_field=FloatField()),
                     output_field=FloatField()
                 )
             ),
-            revenue=Sum('grand_total'), 
+            total=Sum('grand_total')
         )
         revenue = {k: v or 0 for k, v in revenue.items()}  # Handle None in aggregation results
-
+        print(f"Revenue: {revenue}")
+        
         # Top selling products for the day.
         top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
             "product_id__measurement_value", "product_id__volume_type", "product_id__name"
@@ -452,6 +455,14 @@ def chart_detail(request):
                 cash=Coalesce(Sum(
                     Case(
                         When(payment_method='cash', then=F('grand_total')),
+                        When(payment_method='both', then=F('cash_amount')),
+                        default=Value(0.0, output_field=FloatField()),
+                        output_field=FloatField()
+                    )
+                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                cash_amount=Coalesce(Sum(
+                    Case(
+                        When(payment_method='both', then=F('cash_amount')),
                         default=Value(0.0, output_field=FloatField()),
                         output_field=FloatField()
                     )
@@ -459,6 +470,14 @@ def chart_detail(request):
                 mpesa=Coalesce(Sum(
                     Case(
                         When(payment_method='mpesa', then=F('grand_total')),
+                        When(payment_method='both', then=F('mpesa_amount')),
+                        default=Value(0.0, output_field=FloatField()),
+                        output_field=FloatField()
+                    )
+                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                mpesa_amount=Coalesce(Sum(
+                    Case(
+                        When(payment_method='both', then=F('mpesa_amount')),
                         default=Value(0.0, output_field=FloatField()),
                         output_field=FloatField()
                     )
@@ -547,6 +566,7 @@ def chart_detail(request):
                     cash=Sum(
                         Case(
                             When(payment_method='cash', then=F('grand_total')),
+                            When(payment_method='both', then=F('cash_amount')),
                             default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )
@@ -554,6 +574,7 @@ def chart_detail(request):
                     mpesa=Sum(
                         Case(
                             When(payment_method='mpesa', then=F('grand_total')),
+                            When(payment_method='both', then=F('mpesa_amount')),
                             default=Value(0.0, output_field=FloatField()),
                             output_field=FloatField()
                         )

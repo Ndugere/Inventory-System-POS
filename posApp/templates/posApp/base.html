@@ -104,7 +104,7 @@
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-6">
-                                <button type="button" class="btn btn-sm btn-flat btn-primary modal-btn btn-new rounded-0" id='submit' onclick="$('#uni_modal form').submit()" title="Save">Save</button>
+                                <button type="button" class="btn btn-sm btn-flat btn-primary modal-btn btn-new rounded-0 mdc-button" id='submit' onclick="$('#uni_modal form').submit()" title="Save">Save</button>
                             </div>
                             <div class="col-6 text-right">
                                 <button type="button" class="btn btn-sm btn-flat btn-secondary modal-btn rounded-0" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
@@ -150,8 +150,16 @@
                     <div id="delete_content"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-flat btn-primary rounded-0" id='confirm' onclick="">Continue</button>
-                    <button type="button" class="btn btn-sm btn-flat btn-secondary rounded-0" data-bs-dismiss="modal">Close</button>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-6">                            
+                                <button type="button" class="btn btn-sm btn-flat btn-primary rounded-0 mdc-button" id='confirm' onclick="">Continue</button>
+                            </div>
+                            <div class="col-6 text-right">                            
+                                <button type="button" class="btn btn-sm btn-flat btn-secondary rounded-0" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -171,7 +179,7 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-6 text-left pt-4">
-                            <button id="payment_confirmation_btn" class="btn btn-primary" title="Continue">Continue</button>
+                            <button id="payment_confirmation_btn" class="btn btn-primary mdc-button" title="Continue">Continue</button>
                         </div>
                         <div class="col-6 text-right pt-4">
                             <button id="payment_confirmation_cancel_btn" class="btn btn-danger" title="Cancel" data-bs-dismiss="modal">cancel</button>

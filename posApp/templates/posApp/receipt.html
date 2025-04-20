@@ -16,8 +16,14 @@
                 <p><strong>Date:</strong> &nbsp; {{ transaction.date_added|date:"M d Y" }}</p> 
                 <p><strong>Transaction Code:</strong> &nbsp; {{ transaction.code }}</p>
                 <p><strong>Served By:</strong> &nbsp; {{ transaction.served_by }}</p> 
-                <p><strong>Paid Through:</strong> &nbsp; {{ transaction.payment_method }}</p>
-                {% if transaction.payment_method == "Mpesa" %}
+                <p><strong>Paid Through:</strong> &nbsp; 
+                {% if transaction.payment_method == "Both"%}
+                    Cash and Mpesa
+                {% else %}
+                    {{ transaction.payment_method }}
+                {% endif %}
+                </p>
+                {% if transaction.payment_method == "Mpesa" or transaction.payment_method == "Both" %}
                 <p><strong>M-Pesa Transaction Code:</strong> &nbsp; {{ transaction.mpesa_code }}</p>
                 {% endif %}
             </div>
