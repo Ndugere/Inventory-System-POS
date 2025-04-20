@@ -293,72 +293,84 @@ def checkout_modal(request):
     }
     return render(request, 'posApp/checkout.html', context)
 
+def generate_sale_code():
+    pref = datetime.now().year + datetime.now().year
+    i = 1
+    while True:
+        code = '{:0>5}'.format(i)
+        i += 1
+        if not Sales.objects.filter(code=str(pref) + str(code)).exists():
+            break
+    code = str(pref) + str(code)
+    return code
+
 @csrf_exempt
 @login_required
 def save_pos(request):
     resp = {'status': 'failed', 'msg': ''}
     data = request.POST
+    
+    # Helper function to safely convert input to Decimal
+    def safe_decimal(value, default=0):
+        try:
+            return Decimal(value)
+        except (InvalidOperation, TypeError, ValueError):
+            return Decimal(default)
 
-    def generate_sale_code():
-        pref = datetime.now().year + datetime.now().year
-        i = 1
-        while True:
-            code = '{:0>5}'.format(i)
-            i += 1
-            if not Sales.objects.filter(code=str(pref) + str(code)).exists():
-                break
-        code = str(pref) + str(code)
-        return code
-
-    try:        
-        # Validate payment method
+    try:
+        # Convert and validate numeric fields
         payment_method = data.get('payment_method')
+        sub_total = safe_decimal(data.get('sub_total', '0'))
+        tax = safe_decimal(data.get('tax', '0'))
+        tax_amount = safe_decimal(data.get('tax_amount', '0'))
+        grand_total = safe_decimal(data.get('grand_total', '0'))
+        tendered_amount = safe_decimal(data.get('tendered_amount', '0'))
+        amount_change = safe_decimal(data.get('amount_change', '0'))
+        cash_amount = safe_decimal(data.get('cash_amount', '0'))
+        mpesa_amount = safe_decimal(data.get('mpesa_amount', '0'))
         mpesa_transaction_code = data.get('mpesa_code', '').strip()
 
-        if payment_method == 'mpesa':
-            if not mpesa_transaction_code:
-                resp['msg'] = "M-Pesa transaction code is required for M-Pesa payments."
+        # Validate payment method-specific logic
+        if payment_method == 'both':
+            if cash_amount <= 0 or mpesa_amount <= 0:
+                resp['msg'] = "Both cash and M-Pesa amounts must be greater than zero."
+                return JsonResponse(resp)
+            if cash_amount + mpesa_amount != grand_total:
+                resp['msg'] = "The sum of cash and M-Pesa amounts must equal the grand total."
                 return JsonResponse(resp)
 
-            # Ensure the transaction code is in uppercase
-            mpesa_transaction_code = mpesa_transaction_code.upper()
+        if payment_method == 'mpesa' and not mpesa_transaction_code:
+            resp['msg'] = "M-Pesa transaction code is required for M-Pesa payments."
+            return JsonResponse(resp)
 
-            # Check for duplicate M-Pesa transaction code
-            if Sales.objects.filter(mpesa_transaction_code=mpesa_transaction_code).exists():
-                resp['msg'] = "The M-Pesa transaction code already exists. Please use a unique code."
-                return JsonResponse(resp)
-
-        # Create a new Sales record
+        # Save the sale record
         sale = Sales(
             code=generate_sale_code(),
-            sub_total=data['sub_total'],
-            tax=data['tax'],
-            tax_amount=data['tax_amount'],
-            grand_total=data['grand_total'],
-            tendered_amount=data['tendered_amount'],
-            amount_change=data['amount_change'],
+            sub_total=sub_total,
+            tax=tax,
+            tax_amount=tax_amount,
+            grand_total=grand_total,
+            tendered_amount=tendered_amount,
+            amount_change=amount_change,
             payment_method=payment_method,
-            mpesa_transaction_code=mpesa_transaction_code if payment_method == 'mpesa' else '',
+            mpesa_transaction_code=mpesa_transaction_code if payment_method in ['mpesa', 'both'] else '',
             served_by=request.user
         )
         sale.save()
 
-        # Process each product in the sale
+        # Save sales items
         for i, product_id in enumerate(data.getlist('product_id[]')):
-            qty = float(data.getlist('qty[]')[i])
-            price = float(data.getlist('price[]')[i])
+            qty = safe_decimal(data.getlist('qty[]')[i])
+            price = safe_decimal(data.getlist('price[]')[i])
             product = Products.objects.get(id=product_id)
 
-            # Find the stock batch with sufficient quantity
             stock = Stocks.objects.filter(product_id=product, quantity__gte=qty).order_by('expiry_date').first()
             if not stock:
                 raise Exception(f"Insufficient stock for product {product.name}")
 
-            # Reduce stock quantity
             stock.quantity -= qty
             stock.save()
 
-            # Create a sales item linked to the stock batch
             sales_item = salesItems(
                 sale_id=sale,
                 product_id=product,
