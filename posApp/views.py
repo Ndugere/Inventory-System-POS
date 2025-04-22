@@ -396,10 +396,7 @@ def save_pos(request):
 def salesList(request):
     payment_method = request.GET.get('payment_method', '')  # Get filter parameter
     sales = Sales.objects.all()
-
-    for sale in sales:
-        print(f"Cash amount: {sale.cash_amount}")
-
+    
     if payment_method and payment_method in dict(Sales.PaymentMethod.choices):  # Validate filter
         sales = sales.filter(payment_method=payment_method)
 

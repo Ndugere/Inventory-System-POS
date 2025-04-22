@@ -335,7 +335,6 @@ def reports_data(request):
             total=Sum('grand_total')
         )
         revenue = {k: v or 0 for k, v in revenue.items()}  # Handle None in aggregation results
-        print(f"Revenue: {revenue}")
         
         # Top selling products for the day.
         top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
