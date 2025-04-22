@@ -1,34 +1,60 @@
 from django.contrib import admin
-from posApp.models import Category, Products, Sales, salesItems, MeasurementType, Report
+from posApp.models import Category, Products, Sales, salesItems, Report, Supplier, Stocks
 
 # Register your models here.
-
-@admin.register(MeasurementType)
-class MeasurementTypeAdmin(admin.ModelAdmin):
-    model = MeasurementType
-    fieldsets=[
-        ("Measurement Info:", {"fields": ['name', 'short_name', 'type']})
-    ]
-    list_display = ['name', 'short_name', 'type']
-    list_filter = ['type']
-    
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     model = Category
     fieldsets = [
-        ("Category Info: ", {"fields": ['name', 'description', 'measurement_type']})
+        ("Category Info: ", {"fields": ['name']})
     ]
-    list_display = ['name', 'measurement_type']
-    list_filter = ['name', 'measurement_type']
+    list_display = ['name']
+    list_filter = ['name']
     
 @admin.register(Products)
 class ProductAdmin(admin.ModelAdmin):
     model = Products
     fieldsets =[
-        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "measurement_value",'description', 'available_quantity', 'buy_price', 'min_sell_price', 'max_sell_price', 'status']})
+        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "volume_type", "measurement_value"]})
     ]
-    list_display = ['name', 'category_id', 'buy_price', 'min_sell_price', "max_sell_price",]
-    list_filter = ['category_id', 'name', 'buy_price',  'min_sell_price', "max_sell_price",]
+    list_display = ['name', 'category_id', "volume_type", ]
+    list_filter = ['category_id', 'name', "volume_type", ]
+    search_fields = ['name', 'category_id__name']
+    ordering = ['name']
+    list_per_page = 10
+    list_select_related = True
+
+@admin.register(Supplier)
+class Supplieradmin(admin.ModelAdmin):
+    model = Supplier
+    fieldsets = (
+        ("Supplier Info", {
+            "fields": (
+                ('name', 'phone_number'),
+                ('email', 'address'),
+            ),
+        }),
+    )
+    list_display = ['name', 'phone_number', 'email']
+    list_filter = ['name', 'phone_number', 'email']
+    search_fields = ['name', 'phone_number', 'email']
+    ordering = ['name']
+    list_per_page = 10
+    list_select_related = True
+
+@admin.register(Stocks)
+class StocksAdmin(admin.ModelAdmin):
+    model = Stocks
+    fieldsets = [
+        ("Stocks Info: ", {"fields": ['product_id__name', 'batch_number','quantity', 'cost_price']})
+    ]
+    list_display = ['product_id', 'batch_number', 'quantity']
+    list_filter = ['product_id']
+    search_fields = ['product_id__name']
+    ordering = ['product_id']
+    list_per_page = 10
+    list_select_related = True
+    
 
 class SaleItemsAdmin(admin.TabularInline):
     model = salesItems

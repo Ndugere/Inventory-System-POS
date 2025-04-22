@@ -1,109 +1,204 @@
 {% extends "posApp/base.html" %}
 {% load humanize %}
 {% block pageContent %}
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card py-2">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Product List</h4>
-            <div class="text-start">
-                {% for value in request.user.groups.values_list %}
-                    {% if 'Inventory Manager' in value or 'Admin' in value %}
-                    <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new"><i class="mdi mdi-plus"></i><span> Add New</span></button>
-                    {% endif %}
-                {% endfor %}
-            </div>
+            <h4 class="card-title mb-0">Product</h4>
+            <!--ul class="nav flex-row">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'inventory' %}">
+                        Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'stocks-page' %}">
+                        Stock
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product-page' %}">
+                        Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'category-page' %}">
+                        Categories
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier-page' %}">
+                        Suppliers
+                    </a>
+                </li>
+            </ul-->
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-1">
+        <div class="d-flex justify-content-between align-items-center">
+            <form id="search" action="" method="get">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control w-80" placeholder="Search Product" title="Search Product" value="">
+                        <div class="input-group-prepend">
+                            <button type="submit" class="input-group-text btn btn-primary mdc-button" id="submit">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div> 
+            </form>
         </div>
     </div>
 </div>
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <!--colgroup>
-                    <col width="5%">
-                    <col width="20%">
-                    <col width="20%">
-                    <col width="25%">
-                    <col width="15%">
-                    <col width="15%">
-                </colgroup-->
-                <thead>
-                    <tr>
-                        <th class="text-center py-1">#</th>
-                        <th class="text-center py-1">Category</th>
-                        <th class="text-center py-1">Product Code</th>
-                        <th class="text-center py-1">Product</th>
-                        <th class="text-center py-1">Description</th>
-                        <th class="text-center py-1">Available QTY</th>                        
-                        <th class="text-center py-1">Buying Price</th>
-                        <th class="text-center py-1">Min Price</th>
-                        <th class="text-center py-1">Max Price</th>
-                        <th class="text-center py-1">Status</th>
-                        {% for value in request.user.groups.values_list%}
-                            {% if 'Inventory Manager' in  value or 'Admin' in value%}
-                            <th class="text-center py-1">Action</th>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr>
-                        <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.category_id }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.code }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.name }}</td>
-                        <td class="px-2 py-1 text-start">{{ product.description }}</td>     
-                        <td class="px-2 py-1 text-center">{{ product.available_quantity }}</td>                           
-                        <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
-                        <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
-                        <td class="px-2 py-1 text-end">{{ product.max_sell_price|floatformat:2|intcomma }}</td>
-                        <td class="px-2 py-1 text-center">
-                            {% if product.status == 1 %}
-                            <span class="badge bg-primary-alt rounded-pill px-3">Available</span> {% else %}
-                            <span class="badge bg-secondary rounded-pill px-3">Soldout</span> {% endif %}
-                        </td>
-                        {% for value in request.user.groups.values_list%}
-                            {% if 'Inventory Manager' in value or 'Admin' in value %}
-                            <td class="px-2 py-1 text-center">
-                                
-                                <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ product.pk }}" title="Edit">
-                                    <i class="material-icons mdc-button__icon">edit</i>
-                                </button>
-                                <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ product.pk }}" title="Delete">
-                                    <i class="material-icons mdc-button__icon">deleteoutline</i>
-                                </button>
-                            </td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
+        <div class="row">
+            <div class="col-12">
+                <div class="text-start">
+                    {% for value in request.user.groups.values_list %}
+                        {% if 'Inventory Manager' in value or 'Admin' in value %}
+                        <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new"><i class="mdi mdi-plus"></i><span> Add New</span></button>
+                        {% endif %}
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            </div>
+            <div class="col-12">
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <!--colgroup>
+                            <col width="5%">
+                            <col width="20%">
+                            <col width="20%">
+                            <col width="25%">
+                            <col width="15%">
+                            <col width="15%">
+                        </colgroup-->
+                        <thead>
+                            <tr>
+                                <th class="text-center py-1">#</th>
+                                <th class="text-center py-1">Product Code</th>
+                                <th class="text-center py-1">Product</th>
+                                <th class="text-center py-1">Category</th>
+                                <th class="text-center py-1">Volume</th>
+                                <th class="text-center py-1">Quantity</th>                        
+                                <th class="text-center py-1">Avg Unit Cost</th>
+                                <th class="text-center py-1">Min Price</th>
+                                <th class="text-center py-1">Max Price</th>
+                                <th class="text-center py-1">Status</th>
+                                {% for value in request.user.groups.values_list%}
+                                    {% if 'Inventory Manager' in  value or 'Admin' in value%}
+                                    <th class="text-center py-1">Action</th>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                                <td class="px-2 py-1 text-start">{{ product.code }}</td>
+                                <td class="px-2 py-1 text-start">{{ product.name|capfirst }}</td>
+                                <td class="px-2 py-1 text-start">{{ product.category_id|capfirst }}</td>                        
+                                <td class="px-2 py-1 text-start">{{ product.measurement_value }}{{product.volume_type}}</td>   
+                                <td class="px-2 py-1 text-center">{{ product.quantity }}</td>                           
+                                <td class="px-2 py-1 text-end">{{ product.buy_price|floatformat:2|intcomma }}</td>
+                                <td class="px-2 py-1 text-end">{{ product.min_sell_price|floatformat:2|intcomma }}</td>
+                                <td class="px-2 py-1 text-end">{{ product.max_sell_price|floatformat:2|intcomma }}</td>
+                                <td class="px-2 py-1 text-center">
+                                    {% if product.status == 1 %}
+                                    <span class="badge bg-primary-alt rounded-pill px-3">Available</span> {% else %}
+                                    <span class="badge bg-secondary rounded-pill px-3">Soldout</span> {% endif %}
+                                </td>
+                                {% for value in request.user.groups.values_list%}
+                                    {% if 'Inventory Manager' in value or 'Admin' in value %}
+                                    <td class="px-2 py-1 text-center">
+                                        
+                                        <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ product.pk }}" title="Edit">
+                                            <i class="material-icons mdc-button__icon">edit</i>
+                                        </button>
+                                        <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ product.pk }}" title="Delete">
+                                            <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                        </button>
+                                    </td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 {% endblock pageContent %} {% block ScriptBlock %}
 <script>
-    $(function() {
-        $('#create_new').click(function() {
-            uni_modal("Add New Product", "{% url 'manage_products-page' %}")
-        })
-        $('.edit-data').click(function() {
-            uni_modal("Edit Product", "{% url 'manage_products-page' %}?id=" + $(this).attr('data-id'))
-        })
-        $('.delete-data').click(function() {
-            _conf("Are you sure to delete this Product?", "delete_product", [$(this).attr('data-id')])
-        })
+    $(document).ready(function () {
+        const originalTableBody = $('table tbody').html();
 
-        $('#uni_modal').on('shown.bs.modal', function() {
+        // Search functionality
+        $("#search input[name='search']").on("keyup", function () {
+            const query = $(this).val().toLowerCase();
+            const tableBody = $("table tbody");
+
+            if (query.trim() === "") {
+                // Restore the original table if the search input is empty
+                tableBody.html(originalTableBody);
+                return;
+            }
+
+            // Filter rows based on the search query
+            let visibleRows = 0;
+            tableBody.find("tr").each(function () {
+                const rowText = $(this).text().toLowerCase();
+                const isVisible = rowText.indexOf(query) > -1;
+                $(this).toggle(isVisible);
+                if (isVisible) visibleRows++;
+            });
+
+            // Show "No results found" message if no rows are visible
+            if (visibleRows === 0) {
+                if (!tableBody.find(".no-results").length) {
+                    tableBody.append(`
+                        <tr class="no-results">
+                            <td class="text-center" colspan="11">No Products Found</td>
+                        </tr>
+                    `);
+                }
+            } else {
+                tableBody.find(".no-results").remove();
+            }
+        });
+
+        // Add New Product
+        $('#create_new').click(function () {
+            uni_modal("Add New Product", "{% url 'manage_products-page' %}");
+        });
+
+        // Edit Product
+        $('.edit-data').click(function () {
+            uni_modal("Edit Product", "{% url 'manage_products-page' %}?id=" + $(this).attr('data-id'));
+        });
+
+        // Delete Product
+        $('.delete-data').click(function () {
+            _conf("Are you sure to delete this Product?", "delete_product", [$(this).attr('data-id')]);
+        });
+
+        $('#uni_modal').on('shown.bs.modal', function () {
             $('#category_id').select2({
                 placeholder: "Please Select Category Here",
                 width: '100%',
                 dropdownParent: $('#uni_modal')
-            })
-        })
-    })
+            });
+        });
+    });
 
     function delete_product($id) {
         start_loader();
@@ -118,19 +213,19 @@
             },
             dataType: "json",
             error: err => {
-                console.log(err)
-                alert_toast("An error occured.", 'error');
+                console.log(err);
+                alert_toast("An error occurred.", 'error');
                 end_loader();
             },
-            success: function(resp) {
+            success: function (resp) {
                 if (typeof resp == 'object' && resp.status == 'success') {
                     location.reload();
                 } else {
-                    alert_toast("An error occured.", 'error');
+                    alert_toast("An error occurred.", 'error');
                     end_loader();
                 }
             }
-        })
+        });
     }
 </script>
 {% endblock ScriptBlock %}

@@ -5,28 +5,11 @@
             <label for="name" class="control-label">Category Name</label>
             <input type="text" name="name" id="name" class="form-control form-control-sm rounded-0" value="{% if category.name %}{{category.name}}{% endif %}" required>
         </div>
-        <div class="form-group mb-3">
+        <!--div class="form-group mb-3">
             <label for="description" class="control-label">Description</label>
             <textarea rows="5" name="description" id="description" class="form-control form-control-sm rounded-0" required>{% if category.description %}{{category.description}}{% endif %}</textarea>
-        </div>
-        <div class="form-group mb-3">
-            <label for="measurement" class="control-label">Measurement</label>
-            <select name="measurement_type" id="measurement" class="form-control form-control-sm rounded-0" required>
-                {% if category.measurement_type %}
-                    <option value="{{category.measurement_type}}">{{category.measurement_type|capfirst}}</option>
-                    {% for measurement in measurement_types %}
-                        {% if not category.measurement_type == measurement  %}
-                            <option value="{{measurement}}">{{measurement|capfirst}}</option>                        
-                        {% endif %}
-                    {% endfor %}
-                {% else %}
-                    <option>Select measurement</option>
-                    {% for measurement in measurement_types %}
-                        <option value="{{measurement}}">{{measurement|capfirst}}</option>
-                    {% endfor %}
-                {% endif %}
-            </select>
-        </div>    
+        </div-->
+        
         <div class="form-group mb-3">
             <label for="status" class="control-label">Status</label>
             <select name="status" id="status" class="form-select form-select-sm rounded-0" required>
