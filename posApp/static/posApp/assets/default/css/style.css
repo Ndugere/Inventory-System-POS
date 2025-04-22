@@ -239,3 +239,7 @@ legend{
     font-weight: 600;
     font-size:16px;
 }
+.form-control,
+.text-black{
+    color: #000
+}

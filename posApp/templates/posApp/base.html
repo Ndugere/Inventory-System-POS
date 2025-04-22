@@ -26,14 +26,15 @@
     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"> -->
     <link rel="stylesheet" href="{% static 'posApp/assets/default/css/style.css' %}">
     <!-- End layout styles -->
-    <link rel="shortcut icon" href="{% static 'posApp/assets/material-admin/images/favicon.png' %}" />
-    <script src="{% static 'posApp/assets/default/js/jquery-3.6.0.min.js' %}">
-    </script>
+     
+    <link rel="shortcut icon" href="{% static 'icons/favicon.ico' %}" />
+    <link rel="manifest" href="{% static "manifest.json" %}">
+
+    <script src="{% static 'posApp/assets/default/js/jquery-3.6.0.min.js' %}"></script>
     <script src="{% static 'posApp/assets/bootstrap/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'posApp/assets/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'posApp/assets/bootstrap/js/popper.min.js' %}"></script>
-    <script src="{% static 'main.js' %}"></script>
-    <script src="{% static 'manifest.json' %}"></script>
+
 </head>
 
 <body>
@@ -106,7 +107,7 @@
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-6">
-                                <button type="button" class="btn btn-sm btn-flat btn-primary modal-btn btn-new rounded-0" id='submit' onclick="$('#uni_modal form').submit()" title="Save">Save</button>
+                                <button type="button" class="btn btn-sm btn-flat btn-primary modal-btn btn-new rounded-0 mdc-button" id='submit' onclick="$('#uni_modal form').submit()" title="Save">Save</button>
                             </div>
                             <div class="col-6 text-right">
                                 <button type="button" class="btn btn-sm btn-flat btn-secondary modal-btn rounded-0" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
@@ -134,7 +135,7 @@
                                 <button type="button" class="btn btn-sm btn-flat btn-primary modal-btn btn-new rounded-0" id='submit' onclick="$('#pos_modal form').submit()" title="Save">Save</button>
                             </div>
                             <div class="col-6 text-right">
-                                <button type="button" class="btn btn-sm btn-flat btn-secondary modal-btn rounded-0 w-100" id='submit-print' onclick="$('#pos_modal form').submit()" title="Save and Print Receipt">Save and Print Receipt</button>
+                                <button type="button" class="btn btn-sm btn-flat w-100 btn-secondary modal-btn rounded-0" id='submit-print' onclick="$('#pos_modal form').submit()" title="Save and Print Receipt">Save and Print Receipt</button>
                             </div>
                         </div>
                     </div>
@@ -152,8 +153,16 @@
                     <div id="delete_content"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-flat btn-primary rounded-0" id='confirm' onclick="">Continue</button>
-                    <button type="button" class="btn btn-sm btn-flat btn-secondary rounded-0" data-bs-dismiss="modal">Close</button>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-6">                            
+                                <button type="button" class="btn btn-sm btn-flat btn-primary rounded-0 mdc-button" id='confirm' onclick="">Continue</button>
+                            </div>
+                            <div class="col-6 text-right">                            
+                                <button type="button" class="btn btn-sm btn-flat btn-secondary rounded-0" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -173,7 +182,7 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-6 text-left pt-4">
-                            <button id="payment_confirmation_btn" class="btn btn-primary" title="Continue">Continue</button>
+                            <button id="payment_confirmation_btn" class="btn btn-primary mdc-button" title="Continue">Continue</button>
                         </div>
                         <div class="col-6 text-right pt-4">
                             <button id="payment_confirmation_cancel_btn" class="btn btn-danger" title="Cancel" data-bs-dismiss="modal">cancel</button>
@@ -264,7 +273,7 @@
 
         })
     </script>
-
+    
     <script src="{% static 'posApp/assets/material-admin/vendors/js/vendor.bundle.base.js' %}"></script>
     <script src="{% static 'posApp/assets/material-admin/js/material.js' %}"></script>
     <script src="{% static 'posApp/assets/material-admin/js/misc.js' %}"></script>

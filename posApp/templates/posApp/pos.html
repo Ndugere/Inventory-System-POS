@@ -10,7 +10,7 @@
     <div class="mdc-card">
         <form action=""id="pos-form">
             <fieldset>
-                <legend>Add Products</legend>
+                <!--legend>Add Product</legend-->
                 <div class="row align-items-end selector">
                     <div class="col-lg-4 col-md-4 col-sm-12">
                         <div class="form-group mb-3">
@@ -18,7 +18,7 @@
                             <select id="product-id" class="form-select form-select-sm">
                                 <option value="" disabled selected></option>
                                 {% for product in products %}
-                                    <option value="{{ product.pk }}" data-available-qty="{{ product.available_quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
+                                    <option value="{{ product.pk }}" data-volume="{{product.measurement_value}}{{product.volume_type}}" data-available-qty="{{ product.quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -26,7 +26,7 @@
                     <div class="col-lg-2 col-md-2 col-sm-12">
                         <div class="form-group mb-3">
                             <label for="product-qty">Qty <small>(<span id="qty-available">0</span> Available)</small></label>
-                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" min="1" max="{{product.available_quantity}}" value="1">
+                            <input type="number" class="form-control form-control-sm text-center" step="any" id="product-qty" min="1" max="{{product.quantity}}" value="1">
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-4 col-sm-12">
@@ -46,20 +46,22 @@
             <fieldset>
                 <div class="row w-100" id="POS-field">
                     <div class="col-12 col-md-8 border h-100 p-0">
-                        <table class="table table-bordered">                            
-                             <thead>
-                                <tr class="bg-dark">
-                                    <th class="py-1 px-2 text-center text-light"></th>
-                                    <th class="py-1 px-2 text-center text-light">QTY</th>
-                                    <th class="py-1 px-2 text-center text-light">Product</th>
-                                    <th class="py-1 px-2 text-center text-light">Description</th>
-                                    <th class="py-1 px-2 text-center text-light">Price</th>
-                                    <th class="py-1 px-2 text-center text-light">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive ">
+                            <table class="table table-bordered">                            
+                                <thead>
+                                    <tr class="bg-dark-alt">
+                                        <th class="py-1 px-2 text-center text-light" style="width: 10%"></th>
+                                        <th class="py-1 px-2 text-center text-light" style="width: 20%">QTY</th>
+                                        <th class="py-1 px-2 text-center text-light">Product</th>
+                                        <th class="py-1 px-2 text-center text-light">Volume</th>
+                                        <th class="py-1 px-2 text-center text-light">Price</th>
+                                        <th class="py-1 px-2 text-center text-light">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="col-12 col-md-4 bg-gradient bg-dark-alt bg-opacity-50 border h-100">
                         <div class="col-12 py-4 px-2">
@@ -67,7 +69,7 @@
                                 <dt class="h4 fw-bold text-dark-alt">Sub Total</dt>
                                 <dd class="text-end py-1 px-2 rounded-0 bg-light">
                                     <input type="hidden" name="sub_total" value="0">
-                                    <span class="h3 fw-bold" id="sub_total">0.00</span>
+                                    <span class="h3 fw-bold text-black" id="sub_total">0.00</span>
                                 </dd>
                                 <dt class="h4 fw-bold text-dark-alt">Tax Inclusive (%)</dt>
                                 <dd>
@@ -76,20 +78,23 @@
                                 <dt class="h4 fw-bold text-dark-alt">Tax Amount</dt>
                                 <dd class="text-end py-1 px-2 rounded-0 bg-light">
                                     <input type="hidden" name="tax_amount" value="0.00">
-                                    <span class="h3 fw-bold" id="tax_amount">0.00</span>
+                                    <span class="h3 fw-bold text-black" id="tax_amount">0.00</span>
                                 </dd>
                                 <dt class="h4 fw-bold text-dark-alt">Grand Total</dt>
                                 <dd class="text-end py-1 px-2 rounded-0 bg-light">
                                     <input type="hidden" name="grand_total" value="0">
                                     <input type="hidden" name="tendered_amount" value="0">
                                     <input type="hidden" name="amount_change" value="0">
-                                    <input type="hidden" name="grand_total" value="0">
-                                    <input type="hidden" name="grand_total" value="0">
                                     
                                     <!-- Hidden field for pos_number and payment method. Adjust this value as needed -->
                                     <input type="hidden" name="pos_number" id="pos_number" value="POS001">
                                     <input type="hidden" name="payment_method" id="payment_method">
-                                    <span class="h3 fw-bold" id="grand_total">0.00</span>
+                                    <input type='hidden' name="mpesa_code" id="mpesa_code">
+                                    <input type="hidden" name="cash_amount" id="cash_amount">
+                                    <input type="hidden" name="mpesa_amount" id="mpesa_amount">               
+               
+
+                                    <span class="h3 fw-bold text-black" id="grand_total">0.00</span>
                                 </dd>
                             </dl>
                         </div>
@@ -98,7 +103,7 @@
             </fieldset>
             <div class="row">
                 <div class="col-12 text-end">
-                    <button class="btn btn-primary btn-sm w-80 rounded-0 mdc-button" type="button" id="check_out" title="Check out"><i class="mdi mdi-save"></i> Checkout</button>
+                    <button class="btn btn-primary mdc-button btn-sm w-80 rounded-0" type="button" id="check_out" title="Check out"><i class="mdi mdi-save"></i> Checkout</button>
                 </div>
             </div>
         </form>
@@ -115,7 +120,7 @@
             <input type="number" name="qty[]" min="1" step="1" class="form-control form-control-sm rounded-0 text-center">
         </td>
         <td class="px-2 py-1 text-start product-name"></td>
-        <td class="px-2 py-1 text-start product-description"></td>
+        <td class="px-2 py-1 text-start product-volume"></td>
         <td class="px-2 py-1 text-end product-price"></td>
         <td class="px-2 py-1 text-end product-total"></td>
     </tr>
@@ -171,7 +176,7 @@
             $('[name="sub_total"]').val(parseFloat(sub_total));
         }
     
-        function addItemToPOS(id, qty, price) {
+        function addItemToPOS(id,qty, price) {
             if ($('#POS-field table tbody input[name="product_id[]"][value="' + id + '"]').length > 0) {
                 alert('Item Already in the List.');
                 return false;
@@ -183,7 +188,7 @@
             tr.find('[name="product_id[]"]').val(id);
             tr.find('[name="price[]"]').val(parseFloat(price));
             tr.find('.product-name').text(data.name);
-            tr.find('.product-description').text(data.description);
+            tr.find('.product-volume').text(data.value+data.volume);
             tr.find('.product-price').text(parseFloat(price).toLocaleString('en-US'));
             tr.find('.product-total').text(parseFloat(price * qty).toLocaleString('en-US'));
     
@@ -213,7 +218,7 @@
             });
     
             tr.find('.rem-item').click(function() {
-                if (confirm(`Are you sure to remove ${data.name} (${data.description}) product from list?`) == true) {
+                if (confirm(`Are you sure to remove ${data.name} (${data.measurement_type}${data.volume_type}) product from list?`) == true) {
                     tr.remove();
                     calc();
                 }
@@ -304,6 +309,16 @@
         $('#pos-form').submit(function(e) {
             e.preventDefault();
 
+            // Format numeric fields before submission
+            $('[name="sub_total"]').val(formatNumber($('[name="sub_total"]').val()));
+            $('[name="tax"]').val(formatNumber($('[name="tax"]').val()));
+            $('[name="tax_amount"]').val(formatNumber($('[name="tax_amount"]').val()));
+            $('[name="grand_total"]').val(formatNumber($('[name="grand_total"]').val()));
+            $('[name="tendered_amount"]').val(formatNumber($('[name="tendered_amount"]').val()));
+            $('[name="amount_change"]').val(formatNumber($('[name="amount_change"]').val()));
+            $('[name="cash_amount"]').val(formatNumber($('[name="cash_amount"]').val()));
+            $('[name="mpesa_amount"]').val(formatNumber($('[name="mpesa_amount"]').val()));
+
             if (isSubmitting) return;
             isSubmitting = true;
 
@@ -357,6 +372,10 @@
         });
 
     });
+
+    function formatNumber(value) {
+        return parseFloat(value) || 0; // Convert to float or default to 0
+    }
     
 </script>
 {% endblock ScriptBlock %}

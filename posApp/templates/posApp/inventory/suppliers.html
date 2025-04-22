@@ -1,0 +1,337 @@
+{% extends "posApp/base.html" %}
+{% load humanize %}
+{% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">Suppliers</h4>
+            <!--ul class="nav flex-row">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'inventory' %}">
+                        Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'stocks-page' %}">
+                        Stock
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product-page' %}">
+                        Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'category-page' %}">
+                        Categories
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier-page' %}">
+                        Suppliers
+                    </a>
+                </li>
+            </ul-->
+        </div>
+    </div>
+</div>
+<!-- Search Form -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-1">
+        <div class="d-flex align-items-center">
+            <form id="search" action="" method="get">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control w-80" placeholder="Search supplier" title="Search supplier" value="">
+                        <div class="input-group-prepend">
+                            <button type="submit" class="input-group-text btn btn-primary mdc-button py-2" id="submit">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div> 
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Supplier Table -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-1">
+        <div class="row"> 
+            <div class="col-12"> 
+                <div class="ms-auto">
+                    {% for value in request.user.groups.values_list %}
+                        {% if 'Inventory Manager' in value or 'Admin' in value %}
+                        <button class="ms-auto btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new">
+                            <i class="mdi mdi-plus"></i><span> Add New Supplier</span>
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+            </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="search-result-table" class="table table-striped table-bordered" hidden>
+                <thead>
+                    <tr>
+                        <th class="text-center">No.</th>
+                        <th class="text-center">Name</th>
+                        <th class="text-center">Phone Number</th>
+                        <th class="text-center">Email</th>
+                        <th class="text-center">Address</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <table id="supplier-table" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th class="text-center">No.</th>
+                        <th class="text-center">Name</th>
+                        <th class="text-center">Phone Number</th>
+                        <th class="text-center">Email</th>
+                        <th class="text-center">Address</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if suppliers|length == 0 %}
+                        <tr>
+                            <td class="text-left" colspan="7">No Suppliers Available</td>
+                        </tr>
+                    {% else %}
+                        {% for supplier in suppliers %}
+                        <tr>
+                            <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                            <td class="px-2 py-1 text-start">{{ supplier.name }}</td>
+                            <td class="px-2 py-1 text-start">{{ supplier.phone_number }}</td>
+                            <td class="px-2 py-1 text-start">{{ supplier.email }}</td>
+                            <td class="px-2 py-1 text-start">{{ supplier.address }}</td>
+                            <td class="px-2 py-1 text-center">
+                                {% if supplier.status == 1 %}
+                                Active
+                                {% else %}
+                                Inactive
+                                {% endif %}
+                            </td>
+                            {% for value in request.user.groups.values_list %}
+                                {% if 'Inventory Manager' in value or 'Admin' in value %}
+                                <td class="px-2 py-1 text-center">                                
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" type="button" data-id="{{ supplier.pk }}" title="Edit">
+                                        <i class="material-icons mdc-button__icon">edit</i>
+                                    </button>
+                                    <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ supplier.pk }}" title="Delete">
+                                        <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                    </button>
+                                </td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Supplier Modal -->
+<div class="modal fade" id="addEditSupplierModal" tabindex="-1" role="dialog" aria-labelledby="addEditSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEditSupplierModalLabel">Add/Edit Supplier</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="supplierForm">
+                <div class="modal-body">
+                    <input type="hidden" id="supplierId" name="supplierId">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <label for="supplierName">Name</label>
+                                <input type="text" class="form-control" id="supplierName" name="name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label for="supplierPhone">Phone Number</label>
+                                <input type="text" class="form-control" id="supplierPhone" name="phone_number">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label for="supplierEmail">Email</label>
+                                <input type="email" class="form-control" id="supplierEmail" name="email">
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="form-group">
+                                <label for="supplierAddress">Address</label>
+                                <textarea class="form-control" id="supplierAddress" name="address" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="form-group">
+                                <label for="supplierStatus">Status</label>
+                                <select class="form-control" id="supplierStatus" name="status">
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary me-auto mdc-button">Save</button>
+                    <button type="button ms-auto" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock pageContent %} 
+{% block ScriptBlock %}
+<script>
+    $(document).ready(function () {
+        const originalTableBody = $('#supplier-table tbody').html();
+
+        // Search functionality
+        $("#search input[name='search']").on("keyup", function () {
+            const query = $(this).val().toLowerCase();
+            const tableBody = $("#supplier-table tbody");
+
+            if (query.trim() === "") {
+                // Restore the original table if the search input is empty
+                tableBody.html(originalTableBody);
+                $('#search-message').attr("hidden", true);
+                $('#search-term').empty();
+                return;
+            }
+
+            // Filter rows based on the search query
+            let visibleRows = 0;
+            tableBody.find("tr").each(function () {
+                const rowText = $(this).text().toLowerCase();
+                const isVisible = rowText.indexOf(query) > -1;
+                $(this).toggle(isVisible);
+                if (isVisible) visibleRows++;
+            });
+
+            // Show or hide the "No results found" message
+            if (visibleRows === 0) {
+                if (!tableBody.find(".no-results").length) {
+                    tableBody.append(`
+                        <tr class="no-results">
+                            <td class="text-center" colspan="7">No Suppliers Found</td>
+                        </tr>
+                    `);
+                }
+            } else {
+                tableBody.find(".no-results").remove();
+            }
+
+            // Update the search message
+            $('#search-message').removeAttr("hidden");
+            $('#search-term').text(`"${query}"`);
+        });
+
+        // Clear search results
+        $('#clear-search').click(function (e) {
+            e.preventDefault();
+            $('#search input[name="search"]').val(''); // Clear the search input
+            $('#supplier-table tbody').html(originalTableBody); // Restore the original table body
+            $('#search-message').attr("hidden", true); // Hide the search message
+            $('#search-term').empty(); // Clear the search term
+        });
+
+        // Open the modal for adding a new supplier
+        $('#create_new').click(function () {
+            $('#supplierForm')[0].reset();
+            $('#supplierId').val('');
+            $('#addEditSupplierModalLabel').text('Add New Supplier');
+            $('#addEditSupplierModal').modal('show');
+        });
+
+        // Open the modal for editing a supplier
+        $('.edit-data').click(function () {
+            const supplierId = $(this).data('id');
+            $.ajax({
+                url: "{% url 'get-supplier' %}",
+                type: "GET",
+                data: { id: supplierId },
+                success: function (data) {
+                    $('#supplierId').val(data.id);
+                    $('#supplierName').val(data.name);
+                    $('#supplierPhone').val(data.phone_number);
+                    $('#supplierEmail').val(data.email);
+                    $('#supplierAddress').val(data.address);
+                    $('#supplierStatus').val(data.status);
+                    $('#addEditSupplierModalLabel').text('Edit Supplier');
+                    $('#addEditSupplierModal').modal('show');
+                },
+                error: function (xhr, status, error) {
+                    console.error(`Error: ${error}`);
+                }
+            });
+        });
+
+        // Handle delete confirmation
+        $('.delete-data').click(function () {
+            const supplierId = $(this).data('id');
+            const confirmed = confirm("Are you sure you want to delete this supplier?");
+            if (confirmed) {
+                $.ajax({
+                    url: "{% url 'delete-supplier' %}",
+                    type: "POST",
+                    data: { id: supplierId },
+                    headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                    success: function (data) {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('An error occurred while deleting the supplier.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(`Error: ${error}`);
+                    }
+                });
+            }
+        });
+
+        // Handle form submission
+        $('#supplierForm').submit(function (e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+            $.ajax({
+                url: "{% url 'save-supplier' %}",
+                type: "POST",
+                data: formData,
+                headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('An error occurred while saving the supplier.');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error(`Error: ${error}`);
+                }
+            });
+        });
+    });
+</script>
+{% endblock ScriptBlock %}
