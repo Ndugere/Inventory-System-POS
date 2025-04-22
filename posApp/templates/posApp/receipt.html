@@ -48,7 +48,7 @@
                         <small>{{ item.price|floatformat:2|intcomma }}</small><br>
                     </div>
                 </div>
-                <div class="col-2 text-center fw-bold pt-2">{{ item.qty|intcomma}}</div>
+                <div class="col-2 text-center fw-bold pt-2">{{ item.qty|floatformat:0}}</div>
                 <div class="col-2 text-end fw-bold pt-2">{{ item.total|floatformat:2|intcomma }}</div>
             </div>
             {% endfor %}

@@ -14,7 +14,7 @@
                 <div class="row align-items-end selector">
                     <div class="col-lg-4 col-md-4 col-sm-12">
                         <div class="form-group mb-3">
-                            <label for="product-id">Select Product</label>
+                            <label for="product-id">Select Medicine</label>
                             <select id="product-id" class="form-select form-select-sm">
                                 <option value="" disabled selected></option>
                                 {% for product in products %}
@@ -52,8 +52,8 @@
                                     <tr class="bg-dark-alt">
                                         <th class="py-1 px-2 text-center text-light" style="width: 10%"></th>
                                         <th class="py-1 px-2 text-center text-light" style="width: 20%">QTY</th>
-                                        <th class="py-1 px-2 text-center text-light">Product</th>
-                                        <th class="py-1 px-2 text-center text-light">Volume</th>
+                                        <th class="py-1 px-2 text-center text-light">Medicine</th>
+                                        <th class="py-1 px-2 text-center text-light">V/W</th>
                                         <th class="py-1 px-2 text-center text-light">Price</th>
                                         <th class="py-1 px-2 text-center text-light">Total</th>
                                     </tr>
@@ -90,6 +90,9 @@
                                     <input type="hidden" name="pos_number" id="pos_number" value="POS001">
                                     <input type="hidden" name="payment_method" id="payment_method">
                                     <input type='hidden' name="mpesa_code" id="mpesa_code">
+                                    <input type="hidden" name="cash_amount" id="cash_amount">
+                                    <input type="hidden" name="mpesa_amount" id="mpesa_amount">               
+               
 
                                     <span class="h3 fw-bold text-black" id="grand_total">0.00</span>
                                 </dd>
@@ -134,7 +137,7 @@
             throw new Error('Network response was not ok.');
         })
         .then(data => {            
-            console.log("Parsed product_json:", data);
+            //console.log("Parsed product_json:", data);
     
             var prod_arr = {};
             if (data.length > 0) {
@@ -223,7 +226,7 @@
         }
     
         $('#product-id').select2({
-            placeholder: "Please Select Product here",
+            placeholder: "Please Select Medicine here",
             width: '100%'
         });
     
@@ -306,6 +309,16 @@
         $('#pos-form').submit(function(e) {
             e.preventDefault();
 
+            // Format numeric fields before submission
+            $('[name="sub_total"]').val(formatNumber($('[name="sub_total"]').val()));
+            $('[name="tax"]').val(formatNumber($('[name="tax"]').val()));
+            $('[name="tax_amount"]').val(formatNumber($('[name="tax_amount"]').val()));
+            $('[name="grand_total"]').val(formatNumber($('[name="grand_total"]').val()));
+            $('[name="tendered_amount"]').val(formatNumber($('[name="tendered_amount"]').val()));
+            $('[name="amount_change"]').val(formatNumber($('[name="amount_change"]').val()));
+            $('[name="cash_amount"]').val(formatNumber($('[name="cash_amount"]').val()));
+            $('[name="mpesa_amount"]').val(formatNumber($('[name="mpesa_amount"]').val()));
+
             if (isSubmitting) return;
             isSubmitting = true;
 
@@ -359,6 +372,10 @@
         });
 
     });
+
+    function formatNumber(value) {
+        return parseFloat(value) || 0; // Convert to float or default to 0
+    }
     
 </script>
 {% endblock ScriptBlock %}

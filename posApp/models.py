@@ -23,8 +23,6 @@ class Category(models.Model):
 
 class Products(models.Model):
     class VolumeType(models.TextChoices):
-        MILLIGRAMS = 'mg', _('Milligrams')
-        GRAMS = 'g', _('Grams')
         MILLILITERS = "ml", _("Milliliters")
         LITERS = "L", _("Liters")
         PACKS = "packs", _("Packs")
@@ -116,6 +114,7 @@ class Sales(models.Model):
     class PaymentMethod(models.TextChoices):
         CASH = "cash", _("Cash")
         MPESA = "mpesa", _("M-Pesa")
+        BOTH = "both", _("Both")
 
     code = models.CharField(max_length=100)
     sub_total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
@@ -124,12 +123,14 @@ class Sales(models.Model):
     tax = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     tendered_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     amount_change = models.DecimalField(default=0, max_digits=10, decimal_places=2)
-    payment_method = models.CharField(  # New field
+    payment_method = models.CharField(
         max_length=10,
         choices=PaymentMethod.choices,
         default=PaymentMethod.CASH
     )
     mpesa_transaction_code = models.CharField(max_length=20, blank=True)
+    cash_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    mpesa_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     served_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="served_by")
     date_added = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
@@ -196,7 +197,7 @@ class StockMovement(models.Model):
         ADDITION = 'addition', _('Addition')
         SUBTRACTION = 'subtraction', _('Subtraction')
 
-    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    stock = models.ForeignKey(Stocks, on_delete=models.CASCADE)
     movement_type = models.CharField(max_length=20, choices=MovementType.choices)
     quantity = models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -227,5 +228,5 @@ class MpesaPaymentTransaction(models.Model):
     result_desc = models.CharField(max_length=255, null=True, blank=True)  # Description of the result
     transaction_time = models.DateTimeField(null=True, blank=True)  # The time the transaction was processed
     status = models.CharField(max_length=50, choices=StatusChoices.choices, default=StatusChoices.PENDING)  # "Pending", "Success", "Failed"
-    mpesa_response = models.JSONField(null=True, blank=True)  # Store the full response from M-Pesa\n    \n    # New field to distinguish payment types\n    transaction_method = models.CharField(\n        max_length=10, \n        choices=(\n            ('STK', 'STK'),\n            ('C2B', 'C2B'),\n            ('B2C', 'B2C'),\n            ('B2B', 'B2B')\n        ),\n        default='STK'\n    )\n    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)  # Link to a user if applicable\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\n    def __str__(self):\n        return f\"Transaction {self.account_reference} - {self.status}\"\n        \n    class Meta:\n        verbose_name = \"Mpesa Payment\"\n        verbose_name_plural = \"Mpesa Payments\"\n        ordering = ['-transaction_time']\n```
+    mpesa_response = models.JSONField(null=True, blank=True)  # Store the full response from M-Pesa\n    \n    # New field to distinguish payment types\n    transaction_method = models.CharField(\n        max_length=10, \n        choices=(\n            ('STK', 'STK'),\n            ('C2B', 'C2B'),\n            ('B2C', 'B2C'),\n            ('B2B', 'B2B')\n        ),\n        default='STK'\n    )\n    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)  # Link to a user if applicable\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\n    def __str__(self):\n        return f\"Transaction {self.account_reference} - {self.status}\"\n        \n    class Meta:\n        verbose_name = \"Mpesa Payment\"\n        verbose_name_plural = \"Mpesa Payments\"\n        ordering = ['-transaction_time']\n
 

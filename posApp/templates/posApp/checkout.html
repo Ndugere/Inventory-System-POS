@@ -7,23 +7,35 @@
         </div>
         <div class="form-group mb-3 row">
             <label for="" class="control-label">Payment Method</label>
-            <div class="col-6">
+            <div class="col-4">
                 <input type="radio" name="payment_method" id="cash_method" value="cash" checked>
                 <label for="cash_method" class="control-label">Cash</label>
             </div>
-            <div class="col-6">
+            <div class="col-4">
                 <input type="radio" name="payment_method" id="mpesa_method" value="mpesa">
                 <label for="mpesa_method" class="control-label">Mpesa</label>
             </div>
+            <div class="col-4">
+                <input type="radio" name="payment_method" id="both_method" value="both">
+                <label for="both_method" class="control-label">Both</label>
+            </div>
             <div class="col-12">
+                <div class="form-group mb-3" id="cash_amount_field" hidden>
+                    <label for="cash_amount" class="control-label">Cash Amount</label>
+                    <input type="number" step="any" id="cash_amount" name="cash_amount" class="form-control form-control-lg rounded-0 text-end" value="0">
+                </div>
                 <div class="form-group mb-3" id="mpesa_code_field" hidden>
                     <label for="mpesa_code" class="control-label">Mpesa Transaction Code</label>
                     <input type="text" id="mpesa_code" name="mpesa_code" class="form-control form-control-lg rounded-0 text-end">
+                </div>                
+                <div class="form-group mb-3" id="mpesa_amount_field" hidden>
+                    <label for="mpesa_amount" class="control-label">Mpesa Amount</label>
+                    <input type="number" step="any" id="mpesa_amount" name="mpesa_amount" class="form-control form-control-lg rounded-0 text-end" value="0">
                 </div>
             </div>
         </div>
         <div class="form-group mb-3">
-            <label for="tendered_amount" class="control-label">Amount Tendered</label>
+            <label for="tendered_amount" class="control-label">Tendered Amount</label>
             <input type="number" step="any" id="tendered_amount" name="tendered_amount" class="form-control form-control-lg rounded-0 text-end" value="0" required>
         </div>
         <div class="form-group mb-3">
@@ -105,30 +117,54 @@
                 // Show Mpesa code field
                 $('#mpesa_code_field').prop('hidden', false);
                 $('#mpesa_code').prop('required', true);
-                
+                $('#cash_amount_field').prop('hidden', true);
+                $('#cash_amount').prop('required', false).val('');
+                $('#tendered_amount').prop('disabled', false);
+
                 // Auto-fill tendered amount with payable amount for Mpesa
                 let payableAmount = $('#payable_amount').val().replace(/,/g, '');
                 $('#tendered_amount').val(payableAmount);
-                
-                // Calculate and update change (should be 0 since same amount)
                 $('#payment_change').val('0');
                 $('[name="amount_change"]').val('0');
-                
+
                 // Update pos-form hidden fields
                 $('#pos-form [name="payment_method"]').val('mpesa');
                 $('#pos-form [name="tendered_amount"]').val(payableAmount);
                 $('#pos-form [name="amount_change"]').val('0');
+            } else if ($(this).val() === 'both') {
+                // Show both Mpesa code and cash amount fields
+                $('#mpesa_code_field').prop('hidden', false);
+                $('#mpesa_code').prop('required', true);
+                $('#cash_amount_field').prop('hidden', false);
+                $('#cash_amount').prop('required', true);
+                $('#mpesa_amount_field').prop('hidden', false);
+                $('#mpesa_amount').prop('required', true);
+                $('#tendered_amount').prop('disabled', true);
+
+                // Reset tendered amount and change
+                $('#tendered_amount').val('0');
+                $('#payment_change').val('0');
+                $('[name="amount_change"]').val('0');
+
+                // Update pos-form hidden fields
+                $('#pos-form [name="payment_method"]').val('both');
+                $('#pos-form [name="tendered_amount"]').val('0');
+                $('#pos-form [name="amount_change"]').val('0');
             } else {
-                // Hide Mpesa code field for cash
+                // Hide Mpesa code and cash amount fields for cash
                 $('#mpesa_code_field').prop('hidden', true);
-                $('#mpesa_code').prop('required', false);
-                $('#mpesa_code').val('');
-                
+                $('#mpesa_code').prop('required', false).val('');
+                $('#cash_amount_field').prop('hidden', true);
+                $('#cash_amount').prop('required', false).val('');
+                $('#mpesa_amount_field').prop('hidden', true);
+                $('#mpesa_amount').prop('required', false).val('');
+                $('#tendered_amount').prop('disabled', false);
+
                 // Reset tendered amount for cash
                 $('#tendered_amount').val('0');
                 $('#payment_change').val('0');
                 $('[name="amount_change"]').val('0');
-                
+
                 // Update pos-form hidden fields
                 $('#pos-form [name="payment_method"]').val('cash');
                 $('#pos-form [name="tendered_amount"]').val('0');
@@ -136,10 +172,30 @@
                 $('#pos-form [name="mpesa_code"]').val('');
             }
         });
+        $('#checkout-form [name="mpesa_code"]').on('keyup', function(){
+            let uppercaseValue = $(this).val().toUpperCase();
+            $(this).val(uppercaseValue);
+        });
+        $('#checkout-form [name="cash_amount"]').on('keyup', function() {
+            let cashAmount = parseFloat($(this).val()) || 0;
+            let payableAmount = parseFloat($('#payable_amount').val().replace(/,/g, '')) || 0;
+            let mpesaAmount = payableAmount - cashAmount;
+            console.log(`Cash Amount:${cashAmount}\nPayable Amount:${payableAmount}`);
+
+            // Update tendered amount and change
+            $('#checkout-form [name="mpesa_amount"]').val(mpesaAmount);
+            $('#checkout-form [name="tendered_amount"]').val(payableAmount);
+            $('#checkout-form [name="payment_change"]').val('0');
+            $('#checkout-form [name="amount_change"]').val('0');
+
+            
+            // Update pos-form hidden fields
+            $('#pos-form [name="cash_amount"]').val(cashAmount);
+            $('#pos-form [name="mpesa_amount"]').val(mpesaAmount);
+        });
 
         $('#checkout-form [name="mpesa_code"]').on('change', function(){
             let mpesa_code = $(this).val();
-            console.log(mpesa_code);
             // Update pos-form hidden field
             $('#pos-form [name="mpesa_code"]').val(mpesa_code);
         });
