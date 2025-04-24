@@ -153,7 +153,7 @@ class salesItems(models.Model):
     product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
     stock_id = models.ForeignKey(Stocks, on_delete=models.CASCADE)
     price = models.DecimalField(default=0, max_digits=10, decimal_places=2)
-    qty = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    qty = models.PositiveIntegerField(default=0)
     total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     
     class Meta:

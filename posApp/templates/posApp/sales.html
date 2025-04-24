@@ -59,7 +59,7 @@
                             </button>
                             {% for value in request.user.groups.values_list %}
                     {% if 'Admin' in value %}    
-                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ sale.id }}" data-code="{{ sale.code }}" title="Delete">
+                    <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ sale.id }}" data-code="{{ sale.code }}" title="Delete">
                         <i class="material-icons mdc-button__icon">deleteoutline</i>
                     </button>
                     {% endif %}
