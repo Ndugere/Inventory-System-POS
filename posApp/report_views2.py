@@ -786,3 +786,12 @@ def chart_detail(request):
         }
 
     return JsonResponse(data, safe=False)
+
+
+@login_required
+def wholesale_products(request):
+    products = Products.objects.exclude(min_sell_price=F('max_sell_price'))
+    context ={  
+        "products": products
+    }
+    return render(request,'posApp/report/snippets/wholesale_products.html', context)

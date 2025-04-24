@@ -1,0 +1,90 @@
+{% load humanize %}
+<style>
+    #uni_modal .modal-footer {
+        display: none
+    }
+</style>
+<div class="container-fluid">
+    <div id="outprint"class="p-2 py-3" style="background-color: #fff;">
+        <div class="lh-1">
+            <center><span class="fw-bold"> Quench Valley Wholesales</span></center>
+            <div class="py-3">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <div class="py-3"></div>
+                    <small><strong>Contact </strong></small>
+                    <small>Vincent Mrefu 0711222692 or Eric 0769862891</small>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="lh-1">
+            <div class="table-responsive">
+               <div
+                class="table-responsive"
+               >
+                <table
+                    class="table table-striped"
+                >
+                    <thead>
+                        <tr>
+                            <th class="text-left fw-bold">No.</th>
+                            <th class="text-left fw-bold">Product</th>
+                            <th class="text-left fw-bold"> Volume/Weight</th>
+                            <th class="text-left fw-bold">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td class="text-left">{{forloop.counter}}</td>
+                            <td class="text-left"> {{product.name}}</td>
+                            <td class="text-left"> {{product.measurement_value}}{{product.volume_type}}</td>
+                            <td class="text-left"> {{product.min_sell_price}}</td>
+                        </tr>
+                        {% endfor %}
+                       
+                    </tbody>
+                </table>
+               </div>
+               
+            </div>
+        </div>
+        <div class="clear-fix py-3"></div>
+    </div>
+    <hr>
+    <div class="clear-fix py-3"></div>
+    <div class="d-flex w-100 justify-content-end">
+        <button class="btn btn-light bg-gradient border rounded-0 btn-sm me-1" type="button" id="print"><i class="mdi mdi-printer"></i> Print</button>
+    </div>
+</div>
+<script>
+    $(function() {
+        $('#print').click(function(e) {
+            var head = $('head').clone();
+            var p = $('#outprint').clone();
+            var el = $("<div>");
+
+            head.append('<style>body{background-color:unset !important}</style>');
+
+            el.append(head.html());
+            el.find('title').text("Quench Valley");
+            el.append(p.html());
+
+            start_loader();
+            
+            var nw = window.open('', '_blank', "width=800,height=800,left=300,top=200");
+            nw.document.write(el.html());
+            nw.document.close();
+            setTimeout(() => {
+                console.log("Printing...");
+                nw.print();
+                setTimeout(() => {
+                    nw.close();
+                }, 1000);
+            
+                end_loader();
+            }, 1000);
+        });
+    });
+</script>
