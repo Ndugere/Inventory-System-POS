@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Case, When, F, Value, FloatField
+from django.db.models import Sum, Case, When, F, Value, FloatField, OuterRef, Subquery
 from django.db.models.functions import ExtractHour, Coalesce
-from django.db.models import ExpressionWrapper
+from django.db.models import ExpressionWrapper, Value
 from datetime import datetime, timedelta
 from posApp.models import Sales, salesItems, Products, Supplier, Stocks, Category
 from collections import Counter
@@ -297,21 +297,48 @@ def reports_data(request):
 
     def day_report(date_value):
         # Sales trend: group sales by hour.
-        sales = Sales.objects.filter(date_added__date=date_value)
-        hourly_sales = sales.annotate(
+        sales = Sales.objects.filter(date_added__date=date_value).annotate(
             hour=ExtractHour('date_added')
-        ).values('hour').annotate(
-            hourly_total=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-            hourly_cost=Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-            hourly_profit=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()) - 
-                          Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField())
         ).order_by('hour')
 
+        sales_data = sales.annotate(
+            total=Coalesce(Sum('grand_total'), Value(0, output_field=FloatField()), output_field=FloatField())
+        ).values('hour', 'total', 'id')
+
+        costs = []
+        for sale in sales:
+            item_costs = sum(item.product_id.buy_price * item.qty for item in sale.salesitems_set.all())
+            costs.append({'hour': sale.hour, 'sale_id': sale.id, 'cost': item_costs})
+
+        # Combine data into a single structure
+        combined_data = []
+        for sale_data in sales_data:
+            sale_hour = sale_data['hour']
+            sale_total = sale_data['total']
+            sale_cost = next((c['cost'] for c in costs if c['hour'] == sale_hour and c['sale_id'] == sale_data['id']), 0)
+            sale_profit = sale_total - sale_cost
+
+            combined_data.append({'hour': sale_hour, 'total': sale_total, 'cost': sale_cost, 'profit': sale_profit})
+
+        # Aggregate by hour
+        aggregated_data = {}
+        for data in combined_data:
+            hour = data['hour']
+            if hour not in aggregated_data:
+                aggregated_data[hour] = {'total': 0, 'cost': 0, 'profit': 0}
+            aggregated_data[hour]['total'] += data['total']
+            aggregated_data[hour]['cost'] += data['cost']
+            aggregated_data[hour]['profit'] += data['profit']
+
+        # Convert aggregated data back to a list
+        distinct_combined_data = [{'hour': hour, **values} for hour, values in aggregated_data.items()]
+
+        # Now use `distinct_combined_data` to populate sales_trend
         sales_trend = {
-            "hours": [record['hour'] for record in hourly_sales],
-            "amounts": [record['hourly_total'] or 0 for record in hourly_sales],  # Handle None
-            "costs": [record['hourly_cost'] or 0 for record in hourly_sales],    # Handle None
-            "profits": [record['hourly_profit'] or 0 for record in hourly_sales] # Handle None
+            'hours': [data['hour'] for data in distinct_combined_data],
+            'amounts': [data['total'] for data in distinct_combined_data],
+            'costs': [data['cost'] for data in distinct_combined_data],
+            'profits': [data['profit'] for data in distinct_combined_data],
         }
 
         # Revenue breakdown by payment method.
