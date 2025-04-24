@@ -342,6 +342,11 @@ def save_pos(request):
         if payment_method == 'mpesa' and not mpesa_transaction_code:
             resp['msg'] = "M-Pesa transaction code is required for M-Pesa payments."
             return JsonResponse(resp)
+        
+        if payment_method == 'cash':
+            if tendered_amount != grand_total + amount_change or tendered_amount <= 0:
+                resp['msg'] = "Tendered amount must be equal to the grand total and greater than zero."
+                return JsonResponse(resp)
 
         # Save the sale record
         sale = Sales(

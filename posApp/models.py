@@ -25,7 +25,7 @@ class Products(models.Model):
     class VolumeType(models.TextChoices):
         MILLILITERS = "ml", _("Milliliters")
         LITERS = "L", _("Liters")
-        PACKS = "packs", _("Packs")
+        PACKS = "pack(s)", _("Pack(s)")
         
     code = models.CharField("Product Code", max_length=100, unique=True, blank=False)
     category_id = models.ForeignKey(Category, on_delete=models.CASCADE)
@@ -48,7 +48,7 @@ class Products(models.Model):
         verbose_name = "Product"
         verbose_name_plural = "Products"
         unique_together = (("name", "measurement_value", "volume_type"))
-        ordering = ["code", "name"]
+        ordering = ["name"]
 
 class Supplier(models.Model):
     name = models.CharField("Supplier Name", max_length=100, blank=False)
