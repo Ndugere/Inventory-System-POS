@@ -7,7 +7,7 @@
 <div class="container-fluid">
     <div id="outprint"class="p-2">
         <div class="lh-1">
-            <center><small class="fw-bold"> Sales Receipt</small></center>
+            <center><small class="fw-bold"> Quench Valley Sales Receipt</small></center>
         </div>
         <hr>
         <div class="lh-1">
@@ -27,7 +27,7 @@
                 {% endif %}
             </div>
         </div>
-        <div class="clear-fix py-3"></div>
+        <div class="clear-fix py-2"></div>
         <div class="lh-1">
             <div class="d-flex w-100 align-items-end border-bottom pt-2">
                 <div class="col-5 text-left fw-bold">Product</div>               
@@ -37,18 +37,18 @@
             </div>
             {% for item in salesItems %}
             <div class="d-flex w-100 align-items-end">
-                <div class="col-5 fw-semibold">
+                <div class="col-5 ">
                     <div class="lh-1 pt-2">
                         <small>{{ item.product_id.name }} {{ item.product_id.measurement_value }}{{item.product_id.volume_type}}</small><br>
                     </div>
                 </div>
-                <div class="col-3 fw-semibold text-center">
+                <div class="col-3  text-center">
                     <div class="lh-1 pt-2">
                         <small>{{ item.price|floatformat:2|intcomma }}</small><br>
                     </div>
                 </div>
-                <div class="col-2 text-center fw-semibold pt-2">{{ item.qty}}</div>
-                <div class="col-2 text-end fw-semibold pt-2">{{ item.total|floatformat:2|intcomma }}</div>
+                <div class="col-2 text-center  pt-2">{{ item.qty}}</div>
+                <div class="col-2 text-end  pt-2">{{ item.total|floatformat:2|intcomma }}</div>
             </div>
             {% endfor %}
             <hr>
@@ -69,6 +69,7 @@
                 <div class="col-6 text-end fw-semibold pt-2">{{ transaction.amount_change|intcomma }}</div>
             </div>
         </div>
+        <div class="clear-fix py-3"></div>
     </div>
     <hr>
     <div class="clear-fix py-3"></div>

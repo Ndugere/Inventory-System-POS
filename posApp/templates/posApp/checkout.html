@@ -34,7 +34,7 @@
                 </div>
             </div>
         </div>
-        <div class="form-group mb-3">
+        <div class="form-group mb-3" hidden>
             <label for="tendered_amount" class="control-label">Tendered Amount</label>
             <input type="number" step="any" id="tendered_amount" name="tendered_amount" class="form-control form-control-lg rounded-0 text-end" value="0" required>
         </div>
@@ -51,6 +51,8 @@
     $(function() {
     
         let grand_total = $('#payable_amount').val().replace(/,/g, '');
+        $('#tendered_amount').val(grand_total);
+        $('#tendered_amount').prop('hidden', true);
         let pos_number = $('#pos_number').val();
         /**
         let stopPolling = false;
@@ -119,7 +121,7 @@
                 $('#mpesa_code').prop('required', true);
                 $('#cash_amount_field').prop('hidden', true);
                 $('#cash_amount').prop('required', false).val('');
-                $('#tendered_amount').prop('disabled', false);
+                $('#tendered_amount').prop('hidden', true);
 
                 // Auto-fill tendered amount with payable amount for Mpesa
                 let payableAmount = $('#payable_amount').val().replace(/,/g, '');
@@ -139,7 +141,7 @@
                 $('#cash_amount').prop('required', true);
                 $('#mpesa_amount_field').prop('hidden', false);
                 $('#mpesa_amount').prop('required', true);
-                $('#tendered_amount').prop('disabled', true);
+                $('#tendered_amount').prop('hidden', true);
 
                 // Reset tendered amount and change
                 $('#tendered_amount').val('0');
@@ -158,7 +160,8 @@
                 $('#cash_amount').prop('required', false).val('');
                 $('#mpesa_amount_field').prop('hidden', true);
                 $('#mpesa_amount').prop('required', false).val('');
-                $('#tendered_amount').prop('disabled', false);
+                $('#tendered_amount').prop('hidden', true);
+                $('#tendered_amount').val(payableAmount);
 
                 // Reset tendered amount for cash
                 $('#tendered_amount').val('0');
