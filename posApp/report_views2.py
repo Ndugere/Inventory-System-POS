@@ -494,20 +494,7 @@ def chart_detail(request):
                         output_field=FloatField()
                     )
                 ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                cash_amount=Coalesce(Sum(
-                    Case(
-                        When(payment_method='both', then=F('cash_amount')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                cash_amount=Coalesce(Sum(
-                    Case(
-                        When(payment_method='both', then=F('cash_amount')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+               
                 mpesa=Coalesce(Sum(
                     Case(
                         When(payment_method='mpesa', then=F('grand_total')),
@@ -523,20 +510,7 @@ def chart_detail(request):
                         output_field=FloatField()
                     )
                 ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                mpesa_amount=Coalesce(Sum(
-                    Case(
-                        When(payment_method='both', then=F('mpesa_amount')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                mpesa_amount=Coalesce(Sum(
-                    Case(
-                        When(payment_method='both', then=F('mpesa_amount')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+               
                 total=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
             )
             sales_data = []
