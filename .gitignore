@@ -7,7 +7,6 @@ frontend/
 ui/
 db.sqlite3
 migrations/
-*.json
 tailwindcss3.14
 less/
 scss/
@@ -16,3 +15,7 @@ svgs/
 brands/
 metadata/
 LICENSE.txt
+prod*
+dev*
+data*
+.*

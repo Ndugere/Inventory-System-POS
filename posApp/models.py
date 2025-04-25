@@ -128,7 +128,7 @@ class Sales(models.Model):
         choices=PaymentMethod.choices,
         default=PaymentMethod.CASH
     )
-    mpesa_transaction_code = models.CharField(max_length=20, blank=True)
+    mpesa_transaction_code = models.CharField(max_length=100, blank=True)
     cash_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     mpesa_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     served_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="served_by")
