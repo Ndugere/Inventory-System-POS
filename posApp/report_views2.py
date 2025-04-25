@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Case, When, F, Value, FloatField, OuterRef, Subquery
-from django.db.models.functions import ExtractHour, Coalesce, Round
-from django.db.models import ExpressionWrapper, Value
+from django.db.models import Sum, Case, When, F, Value, FloatField
+from django.db.models.functions import ExtractHour, Coalesce
+from django.db.models import ExpressionWrapper
 from datetime import datetime, timedelta
 from posApp.models import Sales, salesItems, Products, Supplier, Stocks, Category
 from collections import Counter
@@ -297,48 +297,21 @@ def reports_data(request):
 
     def day_report(date_value):
         # Sales trend: group sales by hour.
-        sales = Sales.objects.filter(date_added__date=date_value).annotate(
+        sales = Sales.objects.filter(date_added__date=date_value)
+        hourly_sales = sales.annotate(
             hour=ExtractHour('date_added')
+        ).values('hour').annotate(
+            hourly_total=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+            hourly_cost=Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+            hourly_profit=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()) - 
+                          Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField())
         ).order_by('hour')
 
-        sales_data = sales.annotate(
-            total=Coalesce(Sum('grand_total'), Value(0, output_field=FloatField()), output_field=FloatField())
-        ).values('hour', 'total', 'id')
-
-        costs = []
-        for sale in sales:
-            item_costs = sum(item.product_id.buy_price * item.qty for item in sale.salesitems_set.all())
-            costs.append({'hour': sale.hour, 'sale_id': sale.id, 'cost': item_costs})
-
-        # Combine data into a single structure
-        combined_data = []
-        for sale_data in sales_data:
-            sale_hour = sale_data['hour']
-            sale_total = sale_data['total']
-            sale_cost = next((c['cost'] for c in costs if c['hour'] == sale_hour and c['sale_id'] == sale_data['id']), 0)
-            sale_profit = sale_total - sale_cost
-
-            combined_data.append({'hour': sale_hour, 'total': sale_total, 'cost': sale_cost, 'profit': sale_profit})
-
-        # Aggregate by hour
-        aggregated_data = {}
-        for data in combined_data:
-            hour = data['hour']
-            if hour not in aggregated_data:
-                aggregated_data[hour] = {'total': 0, 'cost': 0, 'profit': 0}
-            aggregated_data[hour]['total'] += data['total']
-            aggregated_data[hour]['cost'] += data['cost']
-            aggregated_data[hour]['profit'] += data['profit']
-
-        # Convert aggregated data back to a list
-        distinct_combined_data = [{'hour': hour, **values} for hour, values in aggregated_data.items()]
-
-        # Now use `distinct_combined_data` to populate sales_trend
         sales_trend = {
-            'hours': [data['hour'] for data in distinct_combined_data],
-            'amounts': [data['total'] for data in distinct_combined_data],
-            'costs': [data['cost'] for data in distinct_combined_data],
-            'profits': [data['profit'] for data in distinct_combined_data],
+            "hours": [record['hour'] for record in hourly_sales],
+            "amounts": [record['hourly_total'] or 0 for record in hourly_sales],  # Handle None
+            "costs": [record['hourly_cost'] or 0 for record in hourly_sales],    # Handle None
+            "profits": [record['hourly_profit'] or 0 for record in hourly_sales] # Handle None
         }
 
         # Revenue breakdown by payment method.
@@ -474,7 +447,6 @@ def chart_detail(request):
             date_value = datetime.strptime(report_date, "%Y-%m-%d").date()
         except ValueError:
             return JsonResponse({"error": "Invalid report_date format. Expected YYYY-MM-DD."}, status=400)
-        
         sales = Sales.objects.filter(date_added__date=date_value)
 
         if chart == 'revenue':
@@ -482,6 +454,7 @@ def chart_detail(request):
                 cash=Coalesce(Sum(
                     Case(
                         When(payment_method='cash', then=F('grand_total')),
+                        When(payment_method='both', then=F('cash_amount')),
                         default=Value(0.0, output_field=FloatField()),
                         output_field=FloatField()
                     )
@@ -496,6 +469,7 @@ def chart_detail(request):
                 mpesa=Coalesce(Sum(
                     Case(
                         When(payment_method='mpesa', then=F('grand_total')),
+                        When(payment_method='both', then=F('mpesa_amount')),
                         default=Value(0.0, output_field=FloatField()),
                         output_field=FloatField()
                     )
@@ -515,65 +489,27 @@ def chart_detail(request):
                     "id": sale.id,
                     "code": sale.code,
                     "payment_method": sale.payment_method,
-                    "cash_amount": sale.cash_amount,
-                    "mpesa_amount": sale.mpesa_amount,
                     "grand_total": sale.grand_total,
                 })
-                
-            full_revenue = {}
-            full_revenue['cash'] = revenue['cash']+ revenue['cash_amount']
-            full_revenue['mpesa'] = revenue['mpesa'] + revenue['mpesa_amount']
-            full_revenue['total'] = revenue['total']
-            
-            print(f"\n")
-            for sale in sales_data:
-                print(f"Sale: {sale}")
-            
             data["chart"] = chart
-            data["revenue"] = full_revenue
+            data["revenue"] = revenue
             data["detail"]["sales"] = sales_data
 
         elif chart == 'sales_trend':
-            
-            sales = Sales.objects.filter(date_added__date=date_value).annotate(
+            cost_expression = ExpressionWrapper(
+                F('salesitems__product_id__buy_price') * F('salesitems__qty'),
+                output_field=FloatField()
+            )
+            hourly_sales = sales.annotate(
                 hour=ExtractHour('date_added')
+            ).values('hour').annotate(
+                sales_revenue=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                cost=Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                profit=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()) - 
+                       Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by('hour')
-
-            sales_data = sales.annotate(
-                total=Coalesce(Sum('grand_total'), Value(0, output_field=FloatField()), output_field=FloatField())
-            ).values('hour', 'total', 'id')
-
-            costs = []
-            for sale in sales:
-                item_costs = sum(item.product_id.buy_price * item.qty for item in sale.salesitems_set.all())
-                costs.append({'hour': sale.hour, 'sale_id': sale.id, 'cost': item_costs})
-
-            # Combine data into a single structure
-            combined_data = []
-            for sale_data in sales_data:
-                sale_hour = sale_data['hour']
-                sale_total = sale_data['total']
-                sale_cost = next((c['cost'] for c in costs if c['hour'] == sale_hour and c['sale_id'] == sale_data['id']), 0)
-                sale_profit = sale_total - sale_cost
-
-                combined_data.append({'hour': sale_hour, 'total': sale_total, 'cost': sale_cost, 'profit': sale_profit})
-
-            # Aggregate by hour
-            aggregated_data = {}
-            for data in combined_data:
-                hour = data['hour']
-                if hour not in aggregated_data:
-                    aggregated_data[hour] = {'sales_revenue': 0, 'cost': 0, 'profit': 0}
-                aggregated_data[hour]['sales_revenue'] += data['total']
-                aggregated_data[hour]['cost'] += data['cost']
-                aggregated_data[hour]['profit'] += data['profit']
-
-            # Convert aggregated data back to a list
-            distinct_combined_data = [{'hour': hour, **values} for hour, values in aggregated_data.items()]
-            
             data["chart"] = chart
-            data['detail'] = {}
-            data["detail"]["hourly"] = list(distinct_combined_data)
+            data["detail"]["hourly"] = list(hourly_sales)
 
         elif chart == 'top_selling':
             top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
@@ -622,122 +558,64 @@ def chart_detail(request):
             current_date += timedelta(days=1)
 
         if chart == 'revenue':
-            # Initialize accumulators
-            revenue_summary = {"cash": 0.0, "mpesa": 0.0, "total": 0.0}
+            revenue = {"cash": 0, "mpesa": 0, "total": 0}
             detail = {}
-
             for date_str, sales_qs in date_sales.items():
-                revenue = sales.aggregate(
-                cash=Coalesce(Sum(
-                    Case(
-                        When(payment_method='cash', then=F('grand_total')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                cash_amount=Coalesce(Sum(
-                    Case(
-                        When(payment_method='both', then=F('cash_amount')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                mpesa=Coalesce(Sum(
-                    Case(
-                        When(payment_method='mpesa', then=F('grand_total')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                mpesa_amount=Coalesce(Sum(
-                    Case(
-                        When(payment_method='both', then=F('mpesa_amount')),
-                        default=Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ), Value(0.0, output_field=FloatField()), output_field=FloatField()),
-                total=Coalesce(Sum('grand_total'), Value(0.0, output_field=FloatField()), output_field=FloatField())
+                daily_revenue = sales_qs.aggregate(
+                    cash=Sum(
+                        Case(
+                            When(payment_method='cash', then=F('grand_total')),
+                            When(payment_method='both', then=F('cash_amount')),
+                            default=Value(0.0, output_field=FloatField()),
+                            output_field=FloatField()
+                        )
+                    ), 
+                    mpesa=Sum(
+                        Case(
+                            When(payment_method='mpesa', then=F('grand_total')),
+                            When(payment_method='both', then=F('mpesa_amount')),
+                            default=Value(0.0, output_field=FloatField()),
+                            output_field=FloatField()
+                        )
+                    ),
+                    total=Sum('grand_total')
                 )
-                sales_data = []
-                
-                daily_rev = {}
-                daily_rev['cash'] = revenue['cash']+ revenue['cash_amount']
-                daily_rev['mpesa'] = revenue['mpesa'] + revenue['mpesa_amount']
-                daily_rev['total'] = revenue['total']
-                
-                print(f"Revenue: {daily_rev}\nSales:{sales}")
-            
-                # Accumulate across the range
-                revenue_summary['cash']  += float(daily_rev['cash'])
-                revenue_summary['mpesa'] += float(daily_rev['mpesa'])
-                revenue_summary['total'] += float(daily_rev['total'])
+                revenue["cash"] += daily_revenue.get("cash") or 0
+                revenue["mpesa"] += daily_revenue.get("mpesa") or 0
+                revenue["total"] += daily_revenue.get("total") or 0
 
-                # (Optional) keep a per-date list of sales if you need detail on each sale:
-                detail[date_str] = list(
-                    sales_qs.values('id', 'code', 'payment_method', 'grand_total')
-                )
-
-                data['chart']   = chart
-                data['revenue'] = revenue_summary
-                data['detail']  = detail
+                sales_list = []
+                for sale in sales_qs:
+                    items_qs = salesItems.objects.filter(sale_id=sale.id)
+                    sale_items = list(items_qs.values())
+                    sales_list.append({
+                        "id": sale.id,
+                        "code": sale.code,
+                        "payment_method": sale.payment_method,
+                        "grand_total": sale.grand_total,
+                        "sale_items": sale_items,
+                    })
+                detail[date_str] = sales_list
+            data["chart"] = chart
+            data["revenue"] = revenue
+            data["detail"] = detail
 
         elif chart == 'sales_trend':
+            cost_expression = ExpressionWrapper(
+                F('salesitems__product_id__buy_price') * F('salesitems__qty'),
+                output_field=FloatField()
+            )
             detail = {}
-
-            # Loop over each date’s Sales queryset
             for date_str, sales_qs in date_sales.items():
-                # 1) Annotate each Sale with its hour and compute per-sale totals
-                hourly_queryset = sales_qs.annotate(
+                hourly_sales = sales_qs.annotate(
                     hour=ExtractHour('date_added')
+                ).values('hour').annotate(
+                    sales_revenue=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                    cost=Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField()),
+                    profit=Coalesce(Sum('grand_total', distinct=True), Value(0.0, output_field=FloatField()), output_field=FloatField()) - 
+                           Coalesce(Sum(cost_expression), Value(0.0, output_field=FloatField()), output_field=FloatField())
                 ).order_by('hour')
-
-                sales_data = hourly_queryset.annotate(
-                    total=Coalesce(
-                        Sum('grand_total'),
-                        Value(0.0, output_field=FloatField()),
-                        output_field=FloatField()
-                    )
-                ).values('hour', 'total', 'id')
-
-                # 2) Compute actual cost per sale by summing its items
-                costs = []
-                for sale in hourly_queryset:
-                    cost_sum = sum(
-                        item.product_id.buy_price * item.qty
-                        for item in sale.salesitems_set.all()
-                    )
-                    costs.append({'hour': sale.hour, 'sale_id': sale.id, 'cost': cost_sum})
-
-                # 3) Build combined list of {hour, sales_revenue, cost, profit}
-                combined = []
-                for sd in sales_data:
-                    h = sd['hour']
-                    revenue = sd['total']
-                    cost = next(
-                        (c['cost'] for c in costs
-                        if c['hour'] == h and c['sale_id'] == sd['id']),
-                        0
-                    )
-                    combined.append({
-                        'hour': h,
-                        'sales_revenue': revenue,
-                        'cost': cost,
-                        'profit': revenue - cost
-                    })
-
-                # 4) Aggregate those entries by hour
-                agg = {}
-                for entry in combined:
-                    h = entry['hour']
-                    if h not in agg:
-                        agg[h] = {'sales_revenue': 0, 'cost': 0, 'profit': 0}
-                    agg[h]['sales_revenue'] += entry['sales_revenue']
-                    agg[h]['cost'] += entry['cost']
-                    agg[h]['profit'] += entry['profit']
-
-                # 5) Turn it back into a list of dicts
-                detail[date_str] = [{'hour': h, **vals} for h, vals in agg.items()]
-
+                detail[date_str] = list(hourly_sales)
             data["chart"] = chart
             data["detail"] = detail
 
@@ -787,7 +665,6 @@ def chart_detail(request):
 
     return JsonResponse(data, safe=False)
 
-
 @login_required
 def wholesale_products(request):
     products = Products.objects.exclude(min_sell_price=F('max_sell_price'))
@@ -795,3 +672,4 @@ def wholesale_products(request):
         "products": products
     }
     return render(request,'posApp/report/snippets/wholesale_products.html', context)
+
