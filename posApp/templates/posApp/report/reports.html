@@ -172,7 +172,10 @@
         const modalTitle = document.getElementById('modal-title');
         const modalBody = document.getElementById('modal-body');
         let html = '';
-
+        
+            function formatNumber(number){
+                return Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number)
+            }
         if (data.chart === 'sales_trend') {
             modalTitle.innerText = 'Sales Trend Details';
 
@@ -198,9 +201,9 @@
                     html += `<tr>
                         <td class="text-left">${++count}</td>
                         <td class="text-left">${formatHour(item.hour)}</td>
-                        <td class="text-left">Ksh. ${parseFloat(item.sales_revenue).toFixed(2)}</td>
-                        <td class="text-left">Ksh. ${parseFloat(item.cost).toFixed(2)}</td>
-                        <td>Ksh. ${parseFloat(item.profit).toFixed(2)}</td>
+                        <td class="text-left">Ksh. ${formatNumber(item.sales_revenue)}</td>
+                        <td class="text-left">Ksh. ${formatNumber(item.cost)}</td>
+                        <td>Ksh. ${formatNumber(item.profit)}</td>
                     </tr>`;
                 });
                 html += `
@@ -264,9 +267,9 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="text-left">Ksh. ${data.revenue.cash}</td>
-                                    <td class="text-left">Ksh. ${data.revenue.mpesa}</td>
-                                    <td>Ksh. ${data.revenue.total}</td>
+                                    <td class="text-left">Ksh. ${parseFloat(data.revenue.cash).toLocaleString()}</td>
+                                    <td class="text-left">Ksh. ${parseFloat(data.revenue.mpesa).toLocaleString()}</td>
+                                    <td>Ksh. ${parseFloat(data.revenue.total).toLocaleString()}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -291,15 +294,18 @@
                             </thead>
                             <tbody>`;
                 let count = 0;
+                let dateTotal = 0;
                 data.detail.sales.forEach(sale => {
+                    dateTotal += parseFloat(sale.grand_total);
                     html += `<tr>
                         <td class="text-left">${++count}</td>
                         <td class="text-left">${sale.code}</td>
                         <td class="text-left">${sale.payment_method}</td>
-                        <td>Ksh. ${sale.grand_total}</td>
+                        <td>Ksh. ${parseFloat(sale.grand_total).toLocaleString()}</td>
                     </tr>`;
                 });
                 html += `
+                    <tr class="fw-bold"><td colspan="3" class="text-left fw-bold">Day Total</td><td class="fw-bold">Ksh. ${dateTotal.toLocaleString()}</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -324,15 +330,18 @@
                                     </thead>
                                     <tbody>`;
                     let count = 0;
+                    let dateTotal = 0;
                     data.detail[date].forEach(sale => {
+                        dateTotal += parseFloat(sale.grand_total);
                         html += `<tr>
                             <td class="text-left">${++count}</td>
                             <td class="text-left">${sale.code}</td>
                             <td class="text-left">${sale.payment_method}</td>
-                            <td>Ksh. ${sale.grand_total}</td>
+                            <td>Ksh. ${parseFloat(sale.grand_total).toLocaleString()}</td>
                         </tr>`;
                     });
                     html += `
+                    <tr class="fw-bold"><td colspan="3" class="text-left fw-bold">Day Total</td><td class="fw-bold">Ksh. ${dateTotal.toLocaleString()}</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -450,7 +459,11 @@
         else if (hour === 12) return "12 PM";
         else return (hour - 12) + " PM";
     }
-
+    
+    function formatNumber(number){
+        return Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number)
+    }
+    
     // Global chart variables to allow chart destruction on refresh
     let salesTrendChart, revenueChart, topSellingChart, stockLevelsChart;
 
@@ -533,8 +546,8 @@
         // Calculate and display total revenue and profit from sales trend data
         const totalRevenueTrend = data.sales_trend.amounts.reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2);
         const totalProfitTrend = data.sales_trend.profits.reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2);
-        document.getElementById("total_revenue_trend").textContent = `Ksh. ${totalRevenueTrend}`;
-        document.getElementById("total_profit_trend").textContent = `Ksh. ${totalProfitTrend}`;
+        document.getElementById("total_revenue_trend").textContent = `Ksh. ${formatNumber(totalRevenueTrend)}`;
+        document.getElementById("total_profit_trend").textContent = `Ksh. ${formatNumber(totalProfitTrend)}`;
 
         // Top Selling Products Chart (Bar)
         topSellingChart = new Chart(document.getElementById("topSellingChart"), {
