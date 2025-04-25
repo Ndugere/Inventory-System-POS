@@ -627,7 +627,7 @@ def chart_detail(request):
             detail = {}
 
             for date_str, sales_qs in date_sales.items():
-                revenue = sales.aggregate(
+                revenue = sales_qs.aggregate(
                 cash=Coalesce(Sum(
                     Case(
                         When(payment_method='cash', then=F('grand_total')),
@@ -665,7 +665,6 @@ def chart_detail(request):
                 daily_rev['mpesa'] = revenue['mpesa'] + revenue['mpesa_amount']
                 daily_rev['total'] = revenue['total']
                 
-                print(f"Revenue: {daily_rev}\nSales:{sales}")
             
                 # Accumulate across the range
                 revenue_summary['cash']  += float(daily_rev['cash'])
