@@ -1,5 +1,6 @@
 {% extends "posApp/base.html" %}
 {% load static %}
+{% load static %}
 {% load humanize %}
 {% block pageContent %}
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
@@ -56,6 +57,7 @@
     </div>
 </div>
 
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
         <div class="mt-4">
@@ -69,9 +71,11 @@
     </div>
 </div>
 
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
         <div class="mt-4">
+            <h5>Top-Selling Products</h5>
             <h5>Top-Selling Products</h5>
             <canvas id="topSellingChart"></canvas>
             <div id="topSellingLegend" class="mt-3"></div> <!-- Legend container -->
@@ -81,6 +85,7 @@
         </div>
     </div>
 </div>
+
 
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
     <div class="mdc-card py-2">
@@ -139,6 +144,8 @@
 {% endblock pageContent%}
 
 {% block ScriptBlock %}
+<!--script src="https://cdn.jsdelivr.net/npm/chart.js"></script-->
+<script src="{% static "posApp/assets/default/js/chart.min.js" %}"></script>
 <!--script src="https://cdn.jsdelivr.net/npm/chart.js"></script-->
 <script src="{% static "posApp/assets/default/js/chart.min.js" %}"></script>
 <script>
@@ -394,6 +401,7 @@
 
                 // Generate table content based on chart type
                 let tableContent = '<div class="table-responsive"><table class="table table-striped">';
+                let tableContent = '<div class="table-responsive"><table class="table table-striped">';
                 tableContent += '<thead><tr><th style="width: 10%; text-align: left;">No.</th>'; // Add "No." column with 10% width and center alignment
 
                 if (chartType === 'expiring_soon') {
@@ -432,12 +440,25 @@
                     data.products.forEach((product, index) => {
                         tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">Ksh. ${data.cost_prices[index].toFixed(2)}</td><td style="text-align: left;">Ksh. ${data.min_profits[index].toFixed(2)}</td><td style="text-align: left;">Ksh. ${data.max_profits[index].toFixed(2)}</td></tr>`;
                     });
+                } else if (chartType === 'most_profitable') {
+                    tableContent += '<th style="text-align: left;">Product</th><th style="text-align: left;">Cost Price</th><th style="text-align: left;">Min Profit</th><th style="text-align: left;">Max Profit</th>';
+                    tableContent += '</tr></thead><tbody>';
+                    data.products.forEach((product, index) => {
+                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">Ksh. ${data.cost_prices[index].toFixed(2)}</td><td style="text-align: left;">Ksh. ${data.min_profits[index].toFixed(2)}</td><td style="text-align: left;">Ksh. ${data.max_profits[index].toFixed(2)}</td></tr>`;
+                    });
+                } else if (chartType === 'least_profitable') {
+                    tableContent += '<th style="text-align: left;">Product</th><th style="text-align: left;">Cost Price</th><th style="text-align: left;">Min Profit</th><th style="text-align: left;">Max Profit</th>';
+                    tableContent += '</tr></thead><tbody>';
+                    data.products.forEach((product, index) => {
+                        tableContent += `<tr><td style="text-align: left;">${index + 1}</td><td style="text-align: left;">${product}</td><td style="text-align: left;">Ksh. ${data.cost_prices[index].toFixed(2)}</td><td style="text-align: left;">Ksh. ${data.min_profits[index].toFixed(2)}</td><td style="text-align: left;">Ksh. ${data.max_profits[index].toFixed(2)}</td></tr>`;
+                    });
                 } else {
                     tableContent += '<th style="text-align: left;">No Data Available</th>';
                     tableContent += '</tr></thead><tbody>';
                     tableContent += '<tr><td colspan="5" style="text-align: left;">No details available for this chart.</td></tr>';
                 }
 
+                tableContent += '</tbody></table></div>'; // Close the table and wrapper div
                 tableContent += '</tbody></table></div>'; // Close the table and wrapper div
                 modalBody.innerHTML = tableContent;
             })
@@ -453,6 +474,8 @@
     document.getElementById('low-stock-detail').addEventListener('click', () => loadChartDetail('low_stock'));
     document.getElementById('top-selling-detail').addEventListener('click', () => loadChartDetail('top_selling'));
     document.getElementById('stock-value-detail').addEventListener('click', () => loadChartDetail('stock_value'));
+    document.getElementById('most-profitable-detail').addEventListener('click', () => loadChartDetail('most_profitable'));
+    document.getElementById('least-profitable-detail').addEventListener('click', () => loadChartDetail('least_profitable'));
     document.getElementById('most-profitable-detail').addEventListener('click', () => loadChartDetail('most_profitable'));
     document.getElementById('least-profitable-detail').addEventListener('click', () => loadChartDetail('least_profitable'));
 </script>

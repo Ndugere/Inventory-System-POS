@@ -52,7 +52,13 @@
                         <td class="px-2 py-1 text-end">{{ sale.grand_total|intcomma }}</td>
                         <td class="px-2 py-1 text-end">({{ sale.tax }}%) {{ sale.tax_amount|intcomma:2 }}</td>
                         <td class="px-2 py-1 text-center">{{ sale.item_count|intcomma }}</td>                        
-                        <td class="px-2 py-1 text-center">{{ sale.payment_method|capfirst}}</td>
+                        <td class="px-2 py-1 text-center">
+                            {% if sale.payment_method %}
+                               {{sale.payment_method|capfirst}}
+                            {% else %}
+                                Cash
+                            {% endif %}
+                        </td>
                         <td class="px-2 py-1 text-center">
                             <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded view-data" type="button" data-id="{{ sale.id }}" title="View Receipt">
                                 <i class="material-icons mdc-button__icon">receipt</i>
