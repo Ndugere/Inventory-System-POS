@@ -58,11 +58,20 @@
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card">
         <div class="row">
-            <div class="col-12">
+            <div class="col-6">
                 <div class="text-start">
                     {% for value in request.user.groups.values_list %}
                         {% if 'Inventory Manager' in value or 'Admin' in value %}
                         <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new"><i class="mdi mdi-plus"></i><span> Add New</span></button>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="text-end">
+                    {% for value in request.user.groups.values_list %}
+                        {% if 'Inventory Manager' in value or 'Admin' in value %}
+                        <button class="btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="view-wholesale"><span>View Wholesale Products</span></button>
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -137,6 +146,15 @@
         </div>
     </div>
 </div>
+
+<!-- Optional: Place to the bottom of scripts -->
+<script>
+    
+    $('#view-wholesale').click(function() {
+        uni_modal("Wholesale Products", "{% url 'wholesale_products' %}", "modal-fullscreen")
+    })
+</script>
+
 {% endblock pageContent %} {% block ScriptBlock %}
 <script>
     $(document).ready(function () {

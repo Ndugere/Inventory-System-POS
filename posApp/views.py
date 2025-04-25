@@ -324,7 +324,7 @@ def save_pos(request):
         tax = safe_decimal(data.get('tax', '0'))
         tax_amount = safe_decimal(data.get('tax_amount', '0'))
         grand_total = safe_decimal(data.get('grand_total', '0'))
-        tendered_amount = safe_decimal(data.get('tendered_amount', '0'))
+        tendered_amount = grand_total
         amount_change = safe_decimal(data.get('amount_change', '0'))
         cash_amount = safe_decimal(data.get('cash_amount', '0'))
         mpesa_amount = safe_decimal(data.get('mpesa_amount', '0'))
@@ -342,7 +342,7 @@ def save_pos(request):
         if payment_method == 'mpesa' and not mpesa_transaction_code:
             resp['msg'] = "M-Pesa transaction code is required for M-Pesa payments."
             return JsonResponse(resp)
-
+                    
         # Save the sale record
         sale = Sales(
             code=generate_sale_code(),
