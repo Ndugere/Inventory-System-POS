@@ -145,7 +145,7 @@ body {
 .bg-dark-alt{
     color: #fff;
     font-weight: 600;
-    background: rgb(3, 114, 66);
+    background: rgb(3, 114, 66) !important;
 }
 
 .mdc-menu-button{
@@ -242,4 +242,9 @@ legend{
 .form-control,
 .text-black{
     color: #000
+}
+
+.table > thead.bg-dark-alt th {
+  background-color: rgb(3, 116, 66) !important;     /* dark green */
+  color: #f8f9fa !important;                /* light text */
 }
