@@ -1,0 +1,26 @@
+{
+    "name": "iPOS System",
+    "short_name": "iPOS",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#049154",
+    "icons": [
+      {
+        "src": "/static/icons/favicon.ico",
+        "type": "image/ico",
+        "sizes": "48x48"
+      },
+      {
+        "src": "/static/icons/android-chrome-192x192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "/static/icons/android-chrome-512x512.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ]
+  }
+  

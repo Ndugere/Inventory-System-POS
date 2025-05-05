@@ -25,13 +25,13 @@ class Products(models.Model):
     class VolumeType(models.TextChoices):
         MILLILITERS = "ml", _("Milliliters")
         LITERS = "L", _("Liters")
-        PACKS = "pack(s)", _("Pack(s)")
+        PIECES = "piece(s)", _("Piece(s)")
         
     code = models.CharField("Product Code", max_length=100, unique=True, blank=False)
     category_id = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField("Product Name", max_length=100, blank=False)
     volume_type = models.CharField("Volume Type", max_length=100, choices=VolumeType.choices, default=VolumeType.MILLILITERS, blank=False)
-    measurement_value = models.PositiveIntegerField("Measurement Value", default=0)
+    measurement_value = models.CharField("Measurement Value", max_length=10, default=0)
     quantity = models.PositiveIntegerField("Quantity", default=0)
     min_sell_price = models.FloatField("Minimum Sell Price", default=0)
     max_sell_price = models.FloatField("Maximum Sell Price", default=0)
@@ -73,12 +73,20 @@ class Stocks(models.Model):
     batch_number = models.CharField(max_length=100, blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
     quantity = models.PositiveIntegerField(default=0)
+    # The quantity when this batch was first added
+    original_quantity = models.PositiveIntegerField(editable=False)
     unit_price = models.FloatField(default=0)
     cost_price = models.FloatField(default=0)
     status = models.IntegerField(default=1)
     delivery_date = models.DateTimeField(auto_now_add=True) 
     date_updated = models.DateTimeField(auto_now=True) 
 
+    def save(self, *args, **kwargs):
+        # On first save, record the original quantity
+        if self._state.adding:
+            self.original_quantity = self.quantity
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return f"{self.product_id.name} - {self.batch_number}"
     
@@ -128,7 +136,7 @@ class Sales(models.Model):
         choices=PaymentMethod.choices,
         default=PaymentMethod.CASH
     )
-    mpesa_transaction_code = models.CharField(max_length=20, blank=True)
+    mpesa_transaction_code = models.CharField(max_length=100, blank=True)
     cash_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     mpesa_amount = models.DecimalField(default=0, max_digits=10, decimal_places=2)
     served_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="served_by")

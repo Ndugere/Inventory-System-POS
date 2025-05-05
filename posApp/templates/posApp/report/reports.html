@@ -116,14 +116,14 @@
         <div class="container">            
             <!-- Top Selling Products -->
             <div class="bg-white p-4 shadow-lg rounded-lg">
-                <h4 class="text-lg font-semibold">Top Selling Products </h4>
+                <h4 class="text-lg font-semibold">Top Selling Products</h4>
                 <canvas id="topSellingChart"></canvas>
             </div>
         </div>
         <div class="container">
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <div class="col-12 text-end">
-                    <button class="btn btn-primary mdc-button" id="product-sales-detail" title="Full Product Sales" data-bs-toggle="modal" data-bs-target="#details-modal">Full Products Sales</button>
+                    <button class="btn btn-primary mdc-button" id="product-sales-detail" title="Full Products Sales" data-bs-toggle="modal" data-bs-target="#details-modal">Full Products Sales</button>
                 </div>
             </div>
         </div>
@@ -167,63 +167,20 @@
 
 <script src="{% static 'posApp/assets/default/js/chart.min.js' %}"></script>
 <script>
-    // Placeholder: Load detailed report data when clicking on a chart point
+    // Load detailed report data when clicking on a chart point
     function renderChartDetail(data) {
         const modalTitle = document.getElementById('modal-title');
         const modalBody = document.getElementById('modal-body');
         let html = '';
-
-        if (data.chart === 'revenue') {
-            modalTitle.innerText = 'Revenue Breakdown';
-            html += `
-                <div class="mb-4">
-                    <h5 class="border-bottom pb-2 p-2">Revenue Summary</h5>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-left">Cash</th>
-                                    <th class="text-left">Mpesa</th>
-                                    <th>Total Revenue</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-left">Ksh. ${data.revenue.cash}</td>
-                                    <td class="text-left">Ksh. ${data.revenue.mpesa}</td>
-                                    <td>Ksh. ${data.revenue.total}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-
-            modalBody.innerHTML = html;
-
-            // Render the chart in the modal
-            const ctx = document.getElementById('revenueDetailChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Cash', 'Mpesa'],
-                    datasets: [{
-                        data: [data.revenue.cash, data.revenue.mpesa],
-                        backgroundColor: ['#2196F3', '#FF9800']
-                    }]
-                },
-                options: {
-                    responsive: true, // Make the chart responsive
-                    maintainAspectRatio: false, // Allow dynamic resizing
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-        }
-        else if(data.chart === 'sales_trend'){
+        
+            function formatNumber(number){
+                return Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number)
+            }
+        if (data.chart === 'sales_trend') {
             modalTitle.innerText = 'Sales Trend Details';
-            
+
             // Assuming data.detail.hourly contains an array of objects with hour, sales_revenue, cost, and profit.
-            if(data.detail && data.detail.hourly){
+            if (data.detail && data.detail.hourly) {
                 html += `
                 <div class="mb-4">
                     <h5 class="border-bottom pb-2">Hourly Sales Trend</h5>
@@ -244,15 +201,19 @@
                     html += `<tr>
                         <td class="text-left">${++count}</td>
                         <td class="text-left">${formatHour(item.hour)}</td>
-                        <td class="text-left">Ksh. ${parseFloat(item.sales_revenue).toFixed(2)}</td>
-                        <td class="text-left">Ksh. ${parseFloat(item.cost).toFixed(2)}</td>
-                        <td>Ksh. ${parseFloat(item.profit).toFixed(2)}</td>
+                        <td class="text-left">Ksh. ${formatNumber(item.sales_revenue)}</td>
+                        <td class="text-left">Ksh. ${formatNumber(item.cost)}</td>
+                        <td>Ksh. ${formatNumber(item.profit)}</td>
                     </tr>`;
                 });
-            }
-            else if(data.detail && typeof data.detail === 'object'){
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            } else if (data.detail && typeof data.detail === 'object') {
                 html += `<div class="mb-4"><h5 class="border-bottom pb-2">Sales Trend Details by Date</h5>`;
-                for(const date in data.detail){
+                for (const date in data.detail) {
                     html += `
                         <div class="mb-3">
                             <h6 class="text-primary">${date}</h6>
@@ -262,7 +223,7 @@
                                         <tr>
                                             <th class="text-left">No.</th>
                                             <th class="text-left">Hour</th>
-                                            <th class="text-left">Sales Revenue</th>
+                                            <th class="text-left">Sales Revenue</</th>
                                             <th class="text-left">Cost</th>
                                             <th>Profit</th>
                                         </tr>
@@ -271,33 +232,127 @@
                     let count = 0;
                     data.detail[date].forEach(item => {
                         html += `<tr>
-                                    <td class="text-left">${++count}</td>
-                                    <td class="text-left">${formatHour(item.hour)}</td>
-                                    <td class="text-left">Ksh. ${parseFloat(item.sales_revenue).toFixed(2)}</td>
-                                    <td class="text-left">Ksh. ${parseFloat(item.cost).toFixed(2)}</td>
-                                    <td>Ksh. ${parseFloat(item.profit).toFixed(2)}</td>
-                                </tr>`;
+                            <td class="text-left">${++count}</td>
+                            <td class="text-left">${formatHour(item.hour)}</td>
+                            <td class="text-left">Ksh. ${parseFloat(item.sales_revenue).toFixed(2)}</td>
+                            <td class="text-left">Ksh. ${parseFloat(item.cost).toFixed(2)}</td>
+                            <td>Ksh. ${parseFloat(item.profit).toFixed(2)}</td>
+                        </tr>`;
                     });
                     html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div><br>`;
-
+                                </tbody>
+                            </table>
+                        </div>
+                    </div><br>`;
                 }
                 html += `</div>`;
             } else {
                 html += `<tr><td colspan="5" class="text-center">No detailed sales trend data available.</td></tr>`;
             }
+            modalBody.innerHTML = html;
+        }
+        else if(data.chart === 'revenue'){
+            modalTitle.innerText = 'Revenue Breakdown';
             html += `
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 p-2">Revenue Summary</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-left">Cash</th>
+                                    <th class="text-left">Mpesa</th>
+                                    <th>Total Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-left">Ksh. ${parseFloat(data.revenue.cash).toLocaleString()}</td>
+                                    <td class="text-left">Ksh. ${parseFloat(data.revenue.mpesa).toLocaleString()}</td>
+                                    <td>Ksh. ${parseFloat(data.revenue.total).toLocaleString()}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            // If details for a single day report exist.
+            if(data.detail && data.detail.sales){
+                html += `
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Sales Details</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-left">No.</th>
+                                    <th class="text-left">Sale Code</th>
+                                    <th class="text-left">Payment Method</th>
+                                    <th>Grand Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                let count = 0;
+                let dateTotal = 0;
+                data.detail.sales.forEach(sale => {
+                    dateTotal += parseFloat(sale.grand_total);
+                    html += `<tr>
+                        <td class="text-left">${++count}</td>
+                        <td class="text-left">${sale.code}</td>
+                        <td class="text-left">${sale.payment_method}</td>
+                        <td>Ksh. ${parseFloat(sale.grand_total).toLocaleString()}</td>
+                    </tr>`;
+                });
+                html += `
+                    <tr class="fw-bold"><td colspan="3" class="text-left fw-bold">Day Total</td><td class="fw-bold">Ksh. ${dateTotal.toLocaleString()}</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>`;
+            }
+            // For a date-range report with details grouped by date.
+            else if(data.detail && typeof data.detail === 'object'){
+                html += `<div class="mb-4"><h5 class="border-bottom pb-2">Sales Details by Date</h5>`;
+                for(const date in data.detail){
+                    html += `
+                        <div class="mb-3">
+                            <h6 class="text-primary">${date}</h6>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-left">No.</th>
+                                            <th class="text-left">Sale Code</th>
+                                            <th class="text-left">Payment Method</th>
+                                            <th>Grand Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    let count = 0;
+                    let dateTotal = 0;
+                    data.detail[date].forEach(sale => {
+                        dateTotal += parseFloat(sale.grand_total);
+                        html += `<tr>
+                            <td class="text-left">${++count}</td>
+                            <td class="text-left">${sale.code}</td>
+                            <td class="text-left">${sale.payment_method}</td>
+                            <td>Ksh. ${parseFloat(sale.grand_total).toLocaleString()}</td>
+                        </tr>`;
+                    });
+                    html += `
+                    <tr class="fw-bold"><td colspan="3" class="text-left fw-bold">Day Total</td><td class="fw-bold">Ksh. ${dateTotal.toLocaleString()}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                }
+                html += `</div>`;
+            }
             modalBody.innerHTML = html;
         }
         else if(data.chart === 'top_selling'){
-            modalTitle.innerText = 'Top Selling Products ';
+            modalTitle.innerText = 'Top Selling Products';
             html += `
                 <div class="mb-4">
                     <h5 class="border-bottom pb-2">Top Selling Products</h5>
@@ -404,11 +459,16 @@
         else if (hour === 12) return "12 PM";
         else return (hour - 12) + " PM";
     }
-
+    
+    function formatNumber(number){
+        return Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number)
+    }
+    
     // Global chart variables to allow chart destruction on refresh
     let salesTrendChart, revenueChart, topSellingChart, stockLevelsChart;
 
     // Function to render all charts given the data
+   // Function to render all charts given the data
     function renderCharts(data) {
         // Clear previous charts if they exist
         if (salesTrendChart) salesTrendChart.destroy();
@@ -486,8 +546,8 @@
         // Calculate and display total revenue and profit from sales trend data
         const totalRevenueTrend = data.sales_trend.amounts.reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2);
         const totalProfitTrend = data.sales_trend.profits.reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2);
-        document.getElementById("total_revenue_trend").textContent = `Ksh. ${formatRevenue(totalRevenueTrend)}`;
-        document.getElementById("total_profit_trend").textContent = `Ksh. ${formatRevenue(totalProfitTrend)}`;
+        document.getElementById("total_revenue_trend").textContent = `Ksh. ${formatNumber(totalRevenueTrend)}`;
+        document.getElementById("total_profit_trend").textContent = `Ksh. ${formatNumber(totalProfitTrend)}`;
 
         // Top Selling Products Chart (Bar)
         topSellingChart = new Chart(document.getElementById("topSellingChart"), {

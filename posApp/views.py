@@ -212,7 +212,7 @@ def save_product(request):
                     name=str.capitalize(data['name']),
                     #description=data['description'],
                     volume_type = data['volume_type'],
-                    measurement_value=int(data['measurement_value']),
+                    measurement_value=data['measurement_value'],
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
@@ -226,7 +226,7 @@ def save_product(request):
                     name=str.capitalize(data['name']),
                     #description=data['description'],
                     volume_type = data['volume_type'],
-                    measurement_value=int(data['measurement_value']),
+                    measurement_value=data['measurement_value'],
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),
                     min_sell_price=float(data['min_sell_price']),
@@ -366,22 +366,34 @@ def save_pos(request):
             price = safe_decimal(data.getlist('price[]')[i])
             product = Products.objects.get(id=product_id)
 
-            stock = Stocks.objects.filter(product_id=product, quantity__gte=qty).order_by('expiry_date').first()
-            if not stock:
+            # Fetch all non‐empty stock batches for this product, oldest first
+            stocks = Stocks.objects.filter(product_id=product, quantity__gt=0).order_by('expiry_date')
+
+            # Total available
+            available_qty = sum(stock.quantity for stock in stocks)
+            if available_qty < qty:
                 raise Exception(f"Insufficient stock for product {product.name}")
 
-            stock.quantity -= qty
-            stock.save()
+            remaining = qty
+            for stock in stocks:
+                if remaining == 0:
+                    break
+                use_qty = min(stock.quantity, remaining)
+                # Decrement this batch
+                stock.quantity -= use_qty
+                stock.save()
+                # Record the sale item for this batch
+                sales_item = salesItems(
+                    sale_id=sale,
+                    product_id=product,
+                    stock_id=stock,
+                    qty=use_qty,
+                    price=price,
+                    total=use_qty * price
+                )
+                sales_item.save()
+                remaining -= use_qty
 
-            sales_item = salesItems(
-                sale_id=sale,
-                product_id=product,
-                stock_id=stock,
-                qty=qty,
-                price=price,
-                total=qty * price
-            )
-            sales_item.save()
 
         resp['status'] = 'success'
         resp['sale_id'] = sale.id
