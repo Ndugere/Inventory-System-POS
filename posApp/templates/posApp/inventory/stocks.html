@@ -88,6 +88,7 @@
                             <th class="text-center py-1">Product</th>
                             <th class="text-center py-1">Supplier</th>
                             <th class="text-center py-1">Batch No.</th>
+                            <th class="text-center py-1">Original Qty</th>
                             <th class="text-center py-1">Quantity</th>
                             <th class="text-center py-1">Unit Price</th>
                             <th class="text-center py-1">Cost Price</th>
@@ -112,7 +113,8 @@
                             <td class="px-2 py-1 text-start">
                                 {% if stock.batch_number == None %}{{''}} {% else %}{{ stock.batch_number }}{% endif %}
                             </td>
-                            <td class="px-2 py-1 text-end">{{ stock.quantity|floatformat:0 }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.original_quantity|floatformat:0 }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.quantity|floatformat:0 }}</td>
                             <td class="px-2 py-1 text-end">{{ stock.unit_price|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-end">{{ stock.cost_price|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-center">{{ stock.delivery_date|date:"Y-m-d" }}</td>
@@ -160,8 +162,8 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addStockModalLabel">Add New Stock</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title ms-auto" id="addStockModalLabel">Add New Stock</h5>
+                <button type="button" class="close ms-auto" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -173,7 +175,7 @@
                             <div class="form-group mb-3">
                                 <label for="product_id">Product</label>
                                 <select class="form-control" id="product_id" name="product_id" required>
-                                    <option value="">Select Product</option>
+                                    <option value=""disabled selected></option>
                                     {% for product in products %}
                                     <option value="{{ product.id }}">{{ product.name }} ({{ product.get_volume }})</option>
                                     {% endfor %}
@@ -235,8 +237,8 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="unregisteredStockModalLabel">Add Unregistered Stock</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title ms-auto" id="unregisteredStockModalLabel">Add Unregistered Stock</h5>
+                <button type="button" class="close ms-auto" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -247,8 +249,8 @@
                         <div class="col-lg-6">
                             <div class="form-group mb-3">
                                 <label for="unregistered_product_id">Product</label>
-                                <select class="form-control" id="unregistered_product_id" name="product_id" required>
-                                    <option value="">Select Product</option>
+                                <select class="form-control form-select-sm" id="unregistered_product_id" name="product_id" required>
+                                    <option value="" disabled selected></option>
                                     {% for product in products %}
                                     <option value="{{ product.id }}">{{ product.name }} ({{ product.get_volume }})</option>
                                     {% endfor %}
@@ -360,6 +362,7 @@
                     $('#product_id').val(data.product_id).trigger('change');
                     $('#supplier_id').val(data.supplier_id).trigger('change');
                     $('#batch_number').val(data.batch_number);
+                    $('#original_quantity').val(data.original_quantity);
                     $('#quantity').val(data.quantity);
                     $('#cost_price').val(data.cost_price);
                     $('#expiry_date').val(data.expiry_date);
@@ -449,6 +452,27 @@
                 $("table tbody").find(".no-results").remove();
             }
         });
+
+        // Attach the dropdown to the modal
+        $('#addStockModal').on('shown.bs.modal', function() {
+            $('#product_id').select2({
+              placeholder: "Please select a product",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)             
+            });
+          });
+        
+          // Also enhance the supplier pick-list:
+          $('#addStockModal').on('shown.bs.modal', function() {
+            $('#supplier_id').select2({
+              placeholder: "Please select a supplier",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)
+            });
+          });
+        
     });
 </script>
 <script>
@@ -485,6 +509,24 @@
                 error: function(error) {
                     console.error(`Error: ${error}`);
                 }
+            });
+        });
+
+        //Attach select2
+        $('#unregisteredStockModal').on('shown.bs.modal', function() {
+            $('#unregistered_product_id').select2({
+              placeholder: "Please select a product",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)
+            });
+        });
+        $('#unregisteredStockModal').on('shown.bs.modal', function() {
+            $('#unregistered_supplier_id').select2({
+              placeholder: "Please select a supplier",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)
             });
         });
     });
