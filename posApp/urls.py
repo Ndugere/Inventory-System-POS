@@ -29,6 +29,7 @@ urlpatterns = [
     path('sales', views.salesList, name="sales-page"),
     path('receipt', views.receipt, name="receipt-modal"),
     path('delete_sale', views.delete_sale, name="delete-sale"),
+    
     path('reports', views.reports, name="reports-page"),
     path('generate_report', views.generate_report, name="generate_report"),
     path('get_report/<int:id>/', views.get_report, name="get_report"),
@@ -41,12 +42,12 @@ urlpatterns = [
     # path('delete_employee', views.delete_employee, name="delete-employee"),
     # path('view_employee', views.view_employee, name="view-employee-page"),
     
-    path("payment/callback", views.payment_callback, name="payment_callback"),
-    path("payment/confirmation", views.payment_confirmation, name="payment_confirmation"),
-    path("payment/validation", views.payment_validation, name="payment_validation"),
-    path("payment/result", views.payment_result, name="payment_result"),
-    path("payment/timeout", views.payment_timeout, name="payment_timeout"),
-    path('payment/check', views.check_payment, name="check_payment"),
+    #path("payment/callback", views.payment_callback, name="payment_callback"),
+    #path("payment/confirmation", views.payment_confirmation, name="payment_confirmation"),
+    #path("payment/validation", views.payment_validation, name="payment_validation"),
+    #path("payment/result", views.payment_result, name="payment_result"),
+    #path("payment/timeout", views.payment_timeout, name="payment_timeout"),
+    #path('payment/check', views.check_payment, name="check_payment"),
     
     path('inventory', report_views2.inventory, name="inventory"),
     path('suppliers', report_views2.suppliers, name="supplier-page"),
