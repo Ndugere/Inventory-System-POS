@@ -749,7 +749,7 @@ def chart_detail(request):
                 for item in daily_top:
                     product_key = f"{item['product_id__name']} ({item['product_id_id__measurement_value']}{item['product_id_id__volume_type']})"
                     top_counter[product_key] += item["total_sold"]
-            sorted_top = top_counter.most_common(10)
+            sorted_top = top_counter.most_common()
             data["chart"] = chart
             data["top_selling"] = {
                 "products": [item[0] for item in sorted_top],
