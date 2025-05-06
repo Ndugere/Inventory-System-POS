@@ -88,7 +88,7 @@
                             <th class="text-center py-1">Product</th>
                             <th class="text-center py-1">Supplier</th>
                             <th class="text-center py-1">Batch No.</th>
-                            <th class="text-center py-1">Original Qty</th>
+                            <!--th class="text-center py-1">Original Qty</th-->
                             <th class="text-center py-1">Quantity</th>
                             <th class="text-center py-1">Unit Price</th>
                             <th class="text-center py-1">Cost Price</th>
@@ -113,7 +113,7 @@
                             <td class="px-2 py-1 text-start">
                                 {% if stock.batch_number == None %}{{''}} {% else %}{{ stock.batch_number }}{% endif %}
                             </td>
-                            <td class="px-2 py-1 text-center">{{ stock.original_quantity|floatformat:0 }}</td>
+                            <!--td class="px-2 py-1 text-center">{{ stock.original_quantity|floatformat:0 }}</td-->
                             <td class="px-2 py-1 text-center">{{ stock.quantity|floatformat:0 }}</td>
                             <td class="px-2 py-1 text-end">{{ stock.unit_price|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-end">{{ stock.cost_price|floatformat:2|intcomma }}</td>
