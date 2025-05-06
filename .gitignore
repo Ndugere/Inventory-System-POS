@@ -20,3 +20,4 @@ dev*
 data*
 .*
 db.*
+*.sqlite3
