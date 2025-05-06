@@ -488,7 +488,13 @@
         // Save Unregistered Stock
         $('#saveUnregisteredStock').click(function() {
             const formData = new FormData($('#unregisteredStockForm')[0]);
+            console.group('Unregistered Stock FormData');
+            for (let [key, value] of formData.entries()) {
+              console.log(`${key}:`, value);
+            }
+            console.groupEnd();
 
+           
             $.ajax({
                 url: "{% url 'save-unregistered-stock' %}",
                 type: "POST",

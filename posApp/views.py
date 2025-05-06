@@ -834,13 +834,15 @@ def save_stock(request):
             stock.supplier_id = None
         else:
             stock.supplier_id_id = request.POST.get('supplier_id')
+        
+        expiry_date = request.POST.get('expiry_date') or None
             
         stock.product_id_id = request.POST.get('product_id')       
         stock.batch_number = request.POST.get('batch_number') or ''
         stock.quantity = float(request.POST.get('quantity'))
         stock.unit_price =  unit_price
         stock.cost_price = float(request.POST.get('cost_price'))
-        stock.expiry_date = request.POST.get('expiry_date') or None
+        stock.expiry_date = expiry_date or None
         
         stock.save()
         
@@ -848,7 +850,6 @@ def save_stock(request):
     except Exception as e:
         return JsonResponse({'status': 'failed', 'msg': str(e)})
 
-from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 @login_required
