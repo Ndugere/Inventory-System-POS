@@ -219,8 +219,8 @@
                     
                     
                     <div class="form-group mb-3">
-                        <label for="expiry_date">Expiry Date</label>
-                        <input type="date" class="form-control" id="expiry_date" name="expiry_date" required>
+                        <label for="expiry_date">Expiry Date (Optional)</label>
+                        <input type="date" class="form-control" id="expiry_date" name="expiry_date">
                     </div>
                 </form>
             </div>
@@ -293,7 +293,7 @@
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="unregistered_expiry_date">Expiry Date</label>
+                        <label for="unregistered_expiry_date">Expiry Date (Optional)</label>
                         <input type="date" class="form-control" id="unregistered_expiry_date" name="expiry_date">
                     </div>
                 </form>
@@ -488,7 +488,13 @@
         // Save Unregistered Stock
         $('#saveUnregisteredStock').click(function() {
             const formData = new FormData($('#unregisteredStockForm')[0]);
+            console.group('Unregistered Stock FormData');
+            for (let [key, value] of formData.entries()) {
+              console.log(`${key}:`, value);
+            }
+            console.groupEnd();
 
+           
             $.ajax({
                 url: "{% url 'save-unregistered-stock' %}",
                 type: "POST",
