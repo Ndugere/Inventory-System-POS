@@ -578,7 +578,7 @@ def chart_detail(request):
         elif chart == 'top_selling':
             top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
                 "product_id__measurement_value", "product_id__volume_type", "product_id__name"
-            ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField())).order_by("-total_sold")[:10]
+            ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField())).order_by("-total_sold")
             data["chart"] = chart
             data["top_selling"] = {
                 "products": [
