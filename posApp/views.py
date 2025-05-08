@@ -4,7 +4,7 @@ from decimal import Decimal, InvalidOperation
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
-from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier, Stocks
+from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier, Stocks, Expense, ExpenseCategory
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value, Q
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -684,10 +684,3 @@ def delete_stock(request):
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'failed', 'msg': str(e)})
-
-# Expenses
-@login_required
-def expenses(request):
-    context = {}
-    template = "expenses.html"
-    return render(request, template, context)

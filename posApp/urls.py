@@ -3,13 +3,14 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from django.views.generic.base import RedirectView
+from expenses.views import expenses
 
 #app_name = "posApp"
 urlpatterns = [
     path('redirect-admin', RedirectView.as_view(url="/admin"),name="redirect-admin"),
     
     path('', views.home, name="home-page"),
-    path('login', auth_views.LoginView.as_view(template_name = 'posApp/login.html',redirect_authenticated_user=True), name="login"),
+    path('login', auth_views.LoginView.as_view(template_name = 'login.html',redirect_authenticated_user=True), name="login"),
     path('userlogin', views.login_user, name="login-user"),
     path('logout', views.logoutuser, name="logout"),
     
@@ -76,5 +77,5 @@ urlpatterns = [
     path('products/wholesale', report_views2.wholesale_products, name='wholesale_products'),
     
     # Expenses
-    path('expenses/', views.expenses, name="expenses"),
+    path('expenses/', expenses, name="expenses"),
 ]
