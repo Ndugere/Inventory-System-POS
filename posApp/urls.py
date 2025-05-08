@@ -7,19 +7,22 @@ from django.views.generic.base import RedirectView
 #app_name = "posApp"
 urlpatterns = [
     path('redirect-admin', RedirectView.as_view(url="/admin"),name="redirect-admin"),
+    
     path('', views.home, name="home-page"),
     path('login', auth_views.LoginView.as_view(template_name = 'posApp/login.html',redirect_authenticated_user=True), name="login"),
     path('userlogin', views.login_user, name="login-user"),
     path('logout', views.logoutuser, name="logout"),
+    
     path('category', views.category, name="category-page"),
     path('manage_category', views.manage_category, name="manage_category-page"),
     path('save_category', views.save_category, name="save-category-page"),
     path('delete_category', views.delete_category, name="delete-category"),
+    
     path('products', views.products, name="product-page"),
     path('manage_products', views.manage_products, name="manage_products-page"),
-    path('test', views.test, name="test-page"),
     path('save_product', views.save_product, name="save-product-page"),
-    path('delete_product', views.delete_product, name="delete-product"),
+    path('delete_product', views.delete_product, name="delete-product"),        
+    path("get_product_json", views.get_product_json, name="get_product_json"),
     
     #path('pos', views.pos, name="pos-page"),
     path('make-sales', views.pos, name="pos-page"),
@@ -30,11 +33,10 @@ urlpatterns = [
     path('receipt', views.receipt, name="receipt-modal"),
     path('delete_sale', views.delete_sale, name="delete-sale"),
     
-    path('reports', views.reports, name="reports-page"),
-    path('generate_report', views.generate_report, name="generate_report"),
-    path('get_report/<int:id>/', views.get_report, name="get_report"),
-    path('delete_report', views.delete_report, name="delete_report"),
-    path("get_product_json", views.get_product_json, name="get_product_json"),
+    #path('reports', views.reports, name="reports-page"),
+    #path('generate_report', views.generate_report, name="generate_report"),
+    #path('get_report/<int:id>/', views.get_report, name="get_report"),
+    #path('delete_report', views.delete_report, name="delete_report"),
     
     # path('employees', views.employees, name="employee-page"),
     # path('manage_employees', views.manage_employees, name="manage_employees-page"),
@@ -56,7 +58,7 @@ urlpatterns = [
     path('inventory/data/detail', report_views2.inventory_chart_detail, name="inventory_chart_detail"),
     path('search', report_views2.search, name="search"),
     
-    path('reports_view', views.reports_view, name="reports_view"),
+    path('reports_view', report_views2.reports_view, name="reports_view"),
     path('reports_data', report_views2.reports_data, name="reports_data"),
     path('chart_detail', report_views2.chart_detail, name="chart_detail"),
     

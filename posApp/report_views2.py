@@ -14,7 +14,7 @@ from django.utils import timezone
 @login_required
 def home(request):
         context = {}        
-        return render(request, "posApp/home-alt.html", context)
+        return render(request, "home-alt.html", context)
         return redirect("pos-page")
 
 @login_required
@@ -23,7 +23,7 @@ def inventory(request):
     context = {
         "stocks": stocks
     }
-    return render(request, "posApp/inventory/inventory.html", context)
+    return render(request, "inventory/inventory.html", context)
 
 @login_required
 def inventory_data(request):
@@ -192,7 +192,7 @@ def suppliers(request):
             #"json": json.dumps(supplier_list),
             "page": "Suppliers"
         }
-        return render(request, "posApp/inventory/suppliers.html", context)
+        return render(request, "inventory/suppliers.html", context)
     else:
         return redirect("pos-page")
 
@@ -219,7 +219,7 @@ def stocks(request):
             "page": "Stocks",
             #"json": json.dumps(stock_list),
         }
-        return render(request, "posApp/inventory/stocks.html", context)
+        return render(request, "inventory/stocks.html", context)
     else:
         return redirect("pos-page")
 
@@ -280,6 +280,14 @@ def search(request):
         return JsonResponse(list(categories), safe=False)
     else:
         return JsonResponse([], safe=False)
+
+
+@login_required
+def reports_view(request):
+    context = {
+        "page_title": "Reports"
+    }
+    return render(request, "report/reports.html", context)
 
 @login_required
 def reports_data(request):
@@ -793,4 +801,4 @@ def wholesale_products(request):
     context ={  
         "products": products
     }
-    return render(request,'posApp/report/snippets/wholesale_products.html', context)
+    return render(request,'report/snippets/wholesale_products.html', context)

@@ -5,7 +5,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
 from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier, Stocks
-from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value
+from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value, Q
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
 from datetime import date, datetime, timedelta
 from django.template.loader import render_to_string
+from django.core.paginator import Paginator
 from .mpesa import MpesaClient
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ def home(request):
             'total_sales' : total_sales,
             "today": datetime.now().date(),
         }
-        return render(request, 'posApp/home-alt.html',context)
+        return render(request, 'home-alt.html',context)
 
     else:
         return redirect("pos-page")
@@ -81,7 +82,7 @@ def about(request):
     context = {
         'page_title':'About',
     }
-    return render(request, 'posApp/about.html',context)
+    return render(request, 'about.html',context)
 
 #Categories
 @login_required
@@ -92,7 +93,7 @@ def category(request):
         'page_title':'Category List',
         'category':category_list,
     }
-    return render(request, 'posApp/category.html',context)
+    return render(request, 'inventory/category.html',context)
 
 @login_required
 def manage_category(request):
@@ -108,7 +109,7 @@ def manage_category(request):
     context = {
         'category' : category,
     }
-    return render(request, 'posApp/manage_category.html',context)
+    return render(request, 'inventory/manage_category.html',context)
 
 @login_required
 def save_category(request):
@@ -158,7 +159,7 @@ def products(request):
         'page_title':'Product List',
         'products':product_list,
     }
-    return render(request, 'posApp/products.html',context)
+    return render(request, 'inventory/products.html',context)
 
 @login_required
 def manage_products(request):
@@ -178,14 +179,14 @@ def manage_products(request):
         'volume_type': volume_type,
         'categories' : categories
     }
-    return render(request, 'posApp/manage_product.html',context)
+    return render(request, 'inventory/manage_product.html',context)
 
 def test(request):
     categories = Category.objects.all()
     context = {
         'categories' : categories
     }
-    return render(request, 'posApp/test.html',context)
+    return render(request, 'test.html',context)
 
 @login_required
 def save_product(request):
@@ -270,7 +271,7 @@ def pos(request):
         'page_title': "Point of Sale",
         'products': products,
     }
-    return render(request, 'posApp/pos.html', context)
+    return render(request, 'pos/pos.html', context)
 
 @login_required
 def get_product_json(request):     
@@ -290,7 +291,7 @@ def checkout_modal(request):
     context = {
         'grand_total': grand_total,
     }
-    return render(request, 'posApp/checkout.html', context)
+    return render(request, 'pos/checkout.html', context)
 
 def generate_sale_code():
     pref = datetime.now().year + datetime.now().year
@@ -405,14 +406,28 @@ def save_pos(request):
 
 @login_required
 def salesList(request):
-    payment_method = request.GET.get('payment_method', '')  # Get filter parameter
-    sales = Sales.objects.all()
+    payment_method = request.GET.get('payment_method', '')  # Get filter parameter    
+    search_query   = request.GET.get('search', '').strip()
+    date_str       = request.GET.get('date', '').strip()  # expects YYYY-MM-DD
+    page_number = request.GET.get('page', 1)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    sales = Sales.objects.all().order_by('-date_added')
     
     if payment_method and payment_method in dict(Sales.PaymentMethod.choices):  # Validate filter
         sales = sales.filter(payment_method=payment_method)
+    
+    # filter by transaction code search
+    if search_query:
+        sales = sales.filter(code__icontains=search_query)
 
+    # filter by exact date
+    if date_str:
+        sales = sales.filter(date_added__date=date_str)
+
+    paginator = Paginator(sales, 10)  # Show 10 sales per page
+    page_obj = paginator.get_page(page_number)
     sale_data = []
-    for sale in sales:
+    for sale in page_obj.object_list:
         data = {field.name: getattr(sale, field.name) for field in sale._meta.get_fields(include_parents=False) if field.related_model is None}
         data['items'] = salesItems.objects.filter(sale_id=sale).all()
         data['item_count'] = len(data['items'])
@@ -421,12 +436,22 @@ def salesList(request):
         sale_data.append(data)
 
     context = {
-        'page_title': 'Sales Transactions',
         'sale_data': sale_data,
-        'payment_methods': Sales.PaymentMethod.choices,  # Pass payment methods for dropdown
-        'selected_method': payment_method  # Keep track of selected method
+        'page_obj': page_obj,
+        'selected_method': payment_method,        
+        'search_query':    search_query,
+        'search_date':     date_str,
     }
-    return render(request, 'posApp/sales.html', context)
+
+    if is_ajax:
+        html = render_to_string('pos/tables/sales_table.html', context, request=request)
+        return JsonResponse({'html': html})
+
+    context.update({
+        'page_title': 'Sales Transactions',
+        'payment_methods': Sales.PaymentMethod.choices,
+    })
+    return render(request, 'pos/sales.html', context)
 
 @login_required
 def receipt(request):
@@ -443,7 +468,7 @@ def receipt(request):
         "transaction": transaction,
         "salesItems": ItemList
     }
-    return render(request, 'posApp/receipt.html', context)
+    return render(request, 'pos/receipt.html', context)
 
 @login_required
 def delete_sale(request):
@@ -458,258 +483,6 @@ def delete_sale(request):
         resp['msg'] = 'An error occurred while deleting the sale.'
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
-@login_required
-def reports(request):
-    try:
-        reports = Report.objects.all()
-    
-    except:        
-        reports = Report.objects.none()
-     
-    context = {
-        'reports': reports,
-    }
-    return render(request, 'posApp/reports.html', context)
-
-
-@login_required
-def reports_view(request):
-    context = {
-        "page_title": "Reports"
-    }
-    return render(request, "posApp/report/reports.html", context)
-
-@login_required
-def reports_data(request):
-    today = datetime.today().astimezone()
-    
-    # Sales Trends (Last 7 Days)
-    sales_trends = Sales.objects.filter(date_added__gte= today - timedelta(days=1))
-    trends_data = sales_trends.values_list("date_added__date").annotate(amount=Sum("grand_total"))
-    sales_trends_data = {
-        "dates": [str(data[0]) for data in trends_data],
-        "amounts": [data[1] for data in trends_data]
-    }
-    
-    # Revenue Breakdown
-    revenue_breakdown = Sales.objects.aggregate(
-        cash=Sum(Case(When(payment_method="cash", then=F("grand_total")), default=Value(0), output_field=FloatField())),
-        mpesa=Sum(Case(When(payment_method="mpesa", then=F("grand_total")), default=Value(0), output_field=FloatField()))
-    )
-    
-    # Top Selling Products
-    top_selling = salesItems.objects.values("product_id__code").annotate(total_sold=Sum("qty")).order_by("-total_sold")[:10]
-    top_selling_data = {
-        "products": [item["product_id__code"] for item in top_selling],
-        "quantities": [item["total_sold"] for item in top_selling]
-    }
-    
-    # Stock Levels
-    stock_levels = Products.objects.values("code").annotate(stock=Sum("available_quantity")).order_by("stock")
-    stock_levels_data = {
-        "products": [item["code"] for item in stock_levels],
-        "quantities": [item["stock"] for item in stock_levels]
-    }
-    
-    data = {
-        "sales_trends": sales_trends_data,
-        "revenue_breakdown": [revenue_breakdown["cash"] or 0, revenue_breakdown["mpesa"] or 0],
-        "top_selling": top_selling_data,
-        "stock_levels": stock_levels_data,
-    }
-    return JsonResponse(data)
-
-@login_required
-def generate_report(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        report_type = data.get('report_type', 'sales')
-        time_period = data.get('time_period', 'daily')
-        payment_method = data.get('payment_method', 'all')  # Default to all
-
-        today = datetime.now().astimezone()
-
-        # Set time period range
-        if time_period == 'daily':
-            time_range = Report.ReportTimeRange.DAILY
-            start_date = today - timedelta(days=1)
-        elif time_period == 'weekly':
-            time_range = Report.ReportTimeRange.WEEKLY
-            start_date = today - timedelta(weeks=1)
-        elif time_period == 'monthly':
-            time_range = Report.ReportTimeRange.MONTHLY 
-            start_date = today - timedelta(weeks=4)
-        elif time_period == 'annual':
-            time_range = Report.ReportTimeRange.ANNUAL
-            start_date = today - timedelta(weeks=52)
-        else:
-            start_date = today
-
-        if report_type == "inventory":
-            products = Products.objects.all()
-            report_data = [
-                {
-                    "product_code": product.code,
-                    "product_name": product.name,
-                    "category": product.category_id.name,
-                    "description": product.description,
-                    "measurement_type": product.measurement_value.name if product.measurement_value else "",
-                    "buy_price": product.buy_price,
-                    "min_sell_price": product.min_sell_price,
-                    "max_sell_price": product.max_sell_price,
-                    "available_quantity": product.quantity,
-                    "status": product.status,
-                    "date_added": product.date_added.isoformat(),
-                    "date_updated": product.date_updated.isoformat(),
-                }
-                for product in products
-            ]
-
-            report = Report(
-                name="Inventory Report " + str(today),
-                generated_by=request.user,
-                type=Report.ReportType.INVENTORY,
-                json=json.dumps(report_data)
-            )
-            report.save()
-        else:
-            # Sales Report
-            # Filter sales based on the time range
-            sales = Sales.objects.filter(date_added__gte=start_date)
-            
-            # Apply payment method filter if needed
-            if (payment_method in dict(Sales.PaymentMethod.choices)):
-                sales = sales.filter(payment_method=payment_method)
-
-            total_sales_amount = sales.aggregate(total_sales=Sum('grand_total'))['total_sales'] or 0
-
-            # Filter salesItems to only include items belonging to the filtered sales
-            filtered_salesitems = salesItems.objects.filter(sale_id__in=sales)
-
-            # Calculate Most Profitable Products
-            most_profitable_products = filtered_salesitems.values(
-                'product_id__code', 'product_id__name', 'product_id__description', 
-                'product_id__buy_price', 'price'
-            ).annotate(
-                total_quantity=Sum('qty'),
-                total_amount=Sum(F('qty') * F('price')),
-                total_profit=Sum(ExpressionWrapper(
-                    F('qty') * (F('price') - F('product_id__buy_price')),
-                    output_field=FloatField()
-                )),
-                total_percentage_profit=ExpressionWrapper(
-                    (Sum(ExpressionWrapper(
-                        F('qty') * (F('price') - F('product_id__buy_price')),
-                        output_field=FloatField()
-                    )) / Sum(F('qty') * F('product_id__buy_price'))) * 100,
-                    output_field=FloatField()
-                )
-            ).order_by('-total_percentage_profit')
-
-            # Calculate Products with Most Sold Quantity
-            products_with_most_sales = filtered_salesitems.values(
-                'product_id__code', 'product_id__name', 'product_id__description', 
-                'product_id__buy_price', 'price'
-            ).annotate(
-                total_quantity=Sum('qty'),
-                total_amount=Sum(F('qty') * F('price')),
-                total_profit=Sum(ExpressionWrapper(
-                    F('qty') * (F('price') - F('product_id__buy_price')),
-                    output_field=FloatField()
-                )),
-                total_percentage_profit=ExpressionWrapper(
-                    (Sum(ExpressionWrapper(
-                        F('qty') * (F('price') - F('product_id__buy_price')),
-                        output_field=FloatField()
-                    )) / Sum(F('qty') * F('product_id__buy_price'))) * 100,
-                    output_field=FloatField()
-                )
-            ).order_by('-total_quantity')
-
-            report_data = {
-                "total_sales_amount": total_sales_amount,
-                "most_profitable_products": list(most_profitable_products),
-                "products_with_most_sales": list(products_with_most_sales),
-                "sales": [
-                    {
-                        "sale_code": sale.code,
-                        "date_of_sale": sale.date_added.isoformat(),
-                        "sub_total": sale.sub_total,
-                        "grand_total": sale.grand_total,
-                        "tax": (sale.tax_amount / sale.sub_total * 100) if sale.sub_total > 0 else 0,
-                        "tax_amount": sale.tax_amount,
-                        "tendered_amount": sale.tendered_amount,
-                        "amount_change": sale.amount_change,
-                        "payment_method": sale.payment_method,
-                        "items": [
-                            {
-                                "product_code": item.product_id.code,
-                                "product_name": item.product_id.name,
-                                "quantity": item.qty,
-                                "buy_price": item.product_id.buy_price,
-                                "price": item.price,
-                                "total": item.total
-                            }
-                            for item in sale.salesitems_set.all()
-                        ]
-                    }
-                    for sale in sales
-                ]
-            }
-
-            report = Report(
-                name=f"{time_range.capitalize()} Sales Report  - {payment_method.capitalize()} {today}",
-                generated_by=request.user,
-                type=Report.ReportType.SALES,
-                time_range=time_range,
-                json=json.dumps(report_data)
-            )
-            report.save()
-
-        messages.success(request, 'Report Successfully Generated')
-        return JsonResponse({"status": "success", "msg": "Report generated successfully."})
-    
-    return JsonResponse({"status": "failed", "msg": "Invalid request method."}, status=400)
-
-@login_required
-def get_report(request, id: int):
-    try:
-        report = Report.objects.get(id=id)
-        report_data = {
-            "name": report.name,
-            "generated_on": report.generated_on.strftime("%Y-%m-%d %H:%M:%S"),
-            "generated_by": report.generated_by,
-            "type": report.type,
-            "time_range": report.time_range,
-            "json": json.loads(report.json)
-        }
-        if report.type == Report.ReportType.SALES:
-            html = render_to_string('posApp/report/sales_report.html', {'report': report_data}, request)
-        else:
-            html = render_to_string('posApp/report/inventory_report.html', {'report': report_data}, request)
-        
-        return HttpResponse(html)
-    except Report.DoesNotExist:
-        return JsonResponse({"status": "failed", "msg": "Report not found"})
-    except Exception as e:
-        return JsonResponse({"error": str(e)})
-
-@login_required
-def delete_report(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        report_id = data.get('id')
-        try:            
-            Report.objects.filter(id=report_id).delete()            
-            messages.success(request, 'Report Successfully deleted.')
-            return HttpResponse(json.dumps({"status": "success", "msg": f"Report Deleted"}), content_type="application/json")
-        except:
-            return HttpResponse(json.dumps({"status": "failed", "msg": f"Could not delete report!"}), content_type="application/json") 
-    
-    else:
-        
-        messages.error(request, 'Could not delete report.')
-        return HttpResponse(json.dumps({"status": "failed", "msg": "Invalid request method"}), content_type="application/json")
 
 @login_required
 def get_supplier(request):
@@ -786,7 +559,7 @@ def stocks_page(request):
         'products': Products.objects.filter(status=1),
         'suppliers': Supplier.objects.filter(status=1)
     }
-    return render(request, 'posApp/inventory/stocks.html', context)
+    return render(request, 'inventory/stocks.html', context)
 
 @login_required
 def get_stock(request):
@@ -916,5 +689,5 @@ def delete_stock(request):
 @login_required
 def expenses(request):
     context = {}
-    template = "posApp/expenses.html"
+    template = "expenses.html"
     return render(request, template, context)
