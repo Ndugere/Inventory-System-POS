@@ -238,3 +238,47 @@ class MpesaPaymentTransaction(models.Model):
     status = models.CharField(max_length=50, choices=StatusChoices.choices, default=StatusChoices.PENDING)  # "Pending", "Success", "Failed"
     mpesa_response = models.JSONField(null=True, blank=True)  # Store the full response from M-Pesa\n    \n    # New field to distinguish payment types\n    transaction_method = models.CharField(\n        max_length=10, \n        choices=(\n            ('STK', 'STK'),\n            ('C2B', 'C2B'),\n            ('B2C', 'B2C'),\n            ('B2B', 'B2B')\n        ),\n        default='STK'\n    )\n    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)  # Link to a user if applicable\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\n    def __str__(self):\n        return f\"Transaction {self.account_reference} - {self.status}\"\n        \n    class Meta:\n        verbose_name = \"Mpesa Payment\"\n        verbose_name_plural = \"Mpesa Payments\"\n        ordering = ['-transaction_time']\n
 
+
+# Expense tracking
+class ExpenseCategory(models.Model):
+    name = models.CharField(_("Expense Type Name"), max_length=100, unique=True)
+    description = models.TextField(_("Description"), blank=True, null=True)
+    status = models.BooleanField(_("Active"), default=True)
+    date_added = models.DateTimeField(_("Date Added"), auto_now_add=True)
+    date_updated = models.DateTimeField(_("Date Updated"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("Expense Category")
+        verbose_name_plural = _("Expense Categories")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Expense(models.Model):
+    class PaymentMethod(models.TextChoices):
+        CASH = "cash", _("Cash")
+        MPESA = "mpesa", _("M-Pesa")
+        CARD = "card", _("Card")
+        OTHER = "other", _("Other")
+
+    category = models.ForeignKey(ExpenseCategory, on_delete=models.PROTECT, related_name="expenses", verbose_name=_("Category"))
+    title = models.CharField(_("Title"), max_length=200)
+    amount = models.DecimalField( _("Amount"), max_digits=10, decimal_places=2, help_text=_("Total cost of the expense"))
+    date_incurred = models.DateField(_("Date Incurred"), default=timezone.now)
+    payment_method = models.CharField( _("Payment Method"), max_length=10, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
+    payee = models.CharField(_("Payee / Vendor"), max_length=200, blank=True, null=True)
+    note = models.TextField(_("Notes"), blank=True, null=True, help_text=_("Optional additional details (e.g. receipt number)"))
+    receipt = models.FileField(_("Receipt Upload"), upload_to="expenses/receipts/", blank=True, null=True)
+    incurred_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="expenses_incurred", verbose_name=_("Incurred By"))
+    date_added = models.DateTimeField(_("Date Added"), auto_now_add=True)
+    date_updated = models.DateTimeField(_("Date Updated"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("Expense")
+        verbose_name_plural = _("Expenses")
+        ordering = ["-date_incurred", "-date_added"]
+
+    def __str__(self):
+        return f"{self.title} – {self.amount} on {self.date_incurred}"

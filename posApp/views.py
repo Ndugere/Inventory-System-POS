@@ -77,7 +77,6 @@ def home(request):
     else:
         return redirect("pos-page")
 
-
 def about(request):
     context = {
         'page_title':'About',
@@ -850,7 +849,6 @@ def save_stock(request):
     except Exception as e:
         return JsonResponse({'status': 'failed', 'msg': str(e)})
 
-
 @csrf_exempt
 @login_required
 def save_unregistered_stock(request):
@@ -913,3 +911,10 @@ def delete_stock(request):
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'failed', 'msg': str(e)})
+
+# Expenses
+@login_required
+def expenses(request):
+    context = {}
+    template = "posApp/expenses.html"
+    return render(request, template, context)

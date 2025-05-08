@@ -60,7 +60,7 @@
                     {% endif %}
                 {% endfor %}
                 {% for value in request.user.groups.values_list %}
-                    {% if 'Sales Person' in value or 'Admin' in value %}    
+                    {% if 'Admin' in value %}    
                         <div class="mdc-list-item mdc-drawer-item">
                             <a class="mdc-drawer-link" href="{% url 'inventory' %}"title="Inventory">
                                 <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">label</i> 
@@ -70,7 +70,17 @@
                     {% endif %}
                 {% endfor %}
                 {% for value in request.user.groups.values_list %}
-                    {% if 'Sales Manager' in value or 'Sales Person' in value or 'Admin' in value %}                    
+                    {% if 'Admin' in value %}    
+                        <div class="mdc-list-item mdc-drawer-item">
+                            <a class="mdc-drawer-link" href="{% url 'expenses' %}"title="Expenses">
+                                <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">money_off</i> 
+                                <span class="text-dark-alt">Expenses</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% for value in request.user.groups.values_list %}
+                    {% if 'Sales Person' in value or 'Admin' in value %}                    
                     <div class="mdc-list-item mdc-drawer-item">
                         <a class="mdc-drawer-link" href="{% url 'pos-page' %}" title="Point of Sales">
                             <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">payment</i> 

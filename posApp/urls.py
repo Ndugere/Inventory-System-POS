@@ -72,4 +72,7 @@ urlpatterns = [
     
     # wholesale
     path('products/wholesale', report_views2.wholesale_products, name='wholesale_products'),
+    
+    # Expenses
+    path('expenses/', views.expenses, name="expenses"),
 ]
