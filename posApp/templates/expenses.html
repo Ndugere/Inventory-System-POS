@@ -1,0 +1,106 @@
+{% extends "base.html" %} {% load humanize %} {% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card p-2">
+        <div class="d-flex justify-content-between">
+            <h4 class="card-title mb-0">Expenses</h4>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <div class="row">
+            <div class="col-6">
+                <div class="text-start">
+                    
+                </div>
+            </div> 
+            <div class="col-6">
+                <div class="text-end">
+                    {% for value in request.user.groups.values_list %}
+                        {% if 'Inventory Manager' in value or 'Admin' in value %}
+                        <button class="ms-auto btn btn-secondary btn-new bg-gradient btn-sm rounded-0" id="create_unregistered_stock">
+                            <i class="mdi mdi-plus"></i><span> Add Expense</span>
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="text-center py-1">#</th>
+                            <th class="text-center py-1">Expense</th>
+                            <th class="text-center py-1"></th>
+                            <th class="text-center py-1">Batch No.</th>
+                            <th class="text-center py-1">Received Qty</th>
+                            <th class="text-center py-1">Remaining Qty</th>
+                            <th class="text-center py-1">Unit Price</th>
+                            <th class="text-center py-1">Cost Price</th>
+                            <th class="text-center py-1">Delivery Date</th>
+                            <th class="text-center py-1">Expiry Date</th>
+                            <th class="text-center py-1">Status</th>
+                            {% for value in request.user.groups.values_list %}
+                                {% if 'Inventory Manager' in value or 'Admin' in value %}
+                                <th class="text-center py-1">Action</th>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in stocks %}
+                        <tr>
+                            <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                            <td class="px-2 py-1 text-start">{{ stock.product_id.name }} {{stock.product_id.get_volume}}</td>
+                            <td class="px-2 py-1 text-start">
+                                {% if stock.supplier_id == None %} {{''}} {% else %}{{ stock.supplier_id.name }} {% endif %}
+                            </td>
+                            <td class="px-2 py-1 text-start">
+                                {% if stock.batch_number == None %}{{''}} {% else %}{{ stock.batch_number }}{% endif %}
+                            </td>
+                            <td class="px-2 py-1 text-center">{{ stock.original_quantity|floatformat:0 }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.quantity|floatformat:0 }}</td>
+                            <td class="px-2 py-1 text-end">{{ stock.unit_price|floatformat:2|intcomma }}</td>
+                            <td class="px-2 py-1 text-end">{{ stock.cost_price|floatformat:2|intcomma }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.delivery_date|date:"Y-m-d" }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.expiry_date|date:"Y-m-d" }}</td>
+                            <td class="px-2 py-1 text-center">
+                                {% if stock.status == 1 %}
+                                    {% if stock.is_expired %}
+                                        <span class="badge bg-danger rounded-pill px-3">Expired</span>
+                                    {% elif stock.is_expiring_soon %}
+                                        <span class="badge bg-warning rounded-pill px-3">Expiring Soon</span>
+                                    {% elif stock.is_new %}
+                                        <span class="badge bg-success rounded-pill px-3">New Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-primary rounded-pill px-3">Available</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill px-3">Inactive</span>
+                                {% endif %}
+                            </td>
+                            {% for value in request.user.groups.values_list %}
+                                {% if 'Inventory Manager' in value or 'Admin' in value %}
+                                <td class="px-2 py-1 text-center">
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" 
+                                            type="button" data-id="{{ stock.id }}" title="Edit">
+                                        <i class="material-icons mdc-button__icon">edit</i>
+                                    </button>
+                                    <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" 
+                                            type="button" data-id="{{ stock.id }}" title="Delete">
+                                        <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                    </button>
+                                </td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}

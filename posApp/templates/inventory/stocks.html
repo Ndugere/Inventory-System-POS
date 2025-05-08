@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">Stocks</h4>
+            <!--ul class="nav flex-row">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'inventory' %}">
+                        Inventory
+                    </a>
+                </li>
+                <!--li class="nav-item">
+                    <a class="nav-link" href="{% url 'stocks-page' %}">
+                        Stock
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product-page' %}">
+                        Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'category-page' %}">
+                        Categories
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier-page' %}">
+                        Suppliers
+                    </a>
+                </li-->
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-1">
+        <div class="d-flex justify-content-between align-items-center">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search stocks...">
+                            <div class="input-group-prepend">
+                                <button type="submit" class="input-group-text btn btn-primary mdc-button py-2" id="submit">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+        </div>
+    </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <div class="row">
+            <div class="col-6">
+                <div class="text-start">
+                    {% for value in request.user.groups.values_list %}
+                        {% if 'Inventory Manager' in value or 'Admin' in value %}
+                        <button class="ms-auto btn btn-primary btn-new bg-gradient btn-sm rounded-0" id="create_new">
+                            <i class="mdi mdi-plus"></i><span> New Stock</span>
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+            </div> 
+            <div class="col-6">
+                <div class="text-end">
+                    {% for value in request.user.groups.values_list %}
+                        {% if 'Inventory Manager' in value or 'Admin' in value %}
+                        <button class="ms-auto btn btn-secondary btn-new bg-gradient btn-sm rounded-0" id="create_unregistered_stock">
+                            <i class="mdi mdi-plus"></i><span> Unregistered Stock</span>
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="text-center py-1">#</th>
+                            <th class="text-center py-1">Product</th>
+                            <th class="text-center py-1">Supplier</th>
+                            <th class="text-center py-1">Batch No.</th>
+                            <th class="text-center py-1">Received Qty</th>
+                            <th class="text-center py-1">Remaining Qty</th>
+                            <th class="text-center py-1">Unit Price</th>
+                            <th class="text-center py-1">Cost Price</th>
+                            <th class="text-center py-1">Delivery Date</th>
+                            <th class="text-center py-1">Expiry Date</th>
+                            <th class="text-center py-1">Status</th>
+                            {% for value in request.user.groups.values_list %}
+                                {% if 'Inventory Manager' in value or 'Admin' in value %}
+                                <th class="text-center py-1">Action</th>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in stocks %}
+                        <tr>
+                            <td class="px-2 py-1 text-center">{{ forloop.counter }}</td>
+                            <td class="px-2 py-1 text-start">{{ stock.product_id.name }} {{stock.product_id.get_volume}}</td>
+                            <td class="px-2 py-1 text-start">
+                                {% if stock.supplier_id == None %} {{''}} {% else %}{{ stock.supplier_id.name }} {% endif %}
+                            </td>
+                            <td class="px-2 py-1 text-start">
+                                {% if stock.batch_number == None %}{{''}} {% else %}{{ stock.batch_number }}{% endif %}
+                            </td>
+                            <td class="px-2 py-1 text-center">{{ stock.original_quantity|floatformat:0 }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.quantity|floatformat:0 }}</td>
+                            <td class="px-2 py-1 text-end">{{ stock.unit_price|floatformat:2|intcomma }}</td>
+                            <td class="px-2 py-1 text-end">{{ stock.cost_price|floatformat:2|intcomma }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.delivery_date|date:"Y-m-d" }}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.expiry_date|date:"Y-m-d" }}</td>
+                            <td class="px-2 py-1 text-center">
+                                {% if stock.status == 1 %}
+                                    {% if stock.is_expired %}
+                                        <span class="badge bg-danger rounded-pill px-3">Expired</span>
+                                    {% elif stock.is_expiring_soon %}
+                                        <span class="badge bg-warning rounded-pill px-3">Expiring Soon</span>
+                                    {% elif stock.is_new %}
+                                        <span class="badge bg-success rounded-pill px-3">New Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-primary rounded-pill px-3">Available</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill px-3">Inactive</span>
+                                {% endif %}
+                            </td>
+                            {% for value in request.user.groups.values_list %}
+                                {% if 'Inventory Manager' in value or 'Admin' in value %}
+                                <td class="px-2 py-1 text-center">
+                                    <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded edit-data" 
+                                            type="button" data-id="{{ stock.id }}" title="Edit">
+                                        <i class="material-icons mdc-button__icon">edit</i>
+                                    </button>
+                                    <button class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" 
+                                            type="button" data-id="{{ stock.id }}" title="Delete">
+                                        <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                    </button>
+                                </td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stock Modal -->
+<div class="modal fade" id="addStockModal" tabindex="-1" role="dialog" aria-labelledby="addStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title ms-auto" id="addStockModalLabel">Add New Stock</h5>
+                <button type="button" class="close ms-auto" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="stockForm">
+                    <input type="hidden" name="id" id="stock_id">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="product_id">Product</label>
+                                <select class="form-control" id="product_id" name="product_id" required>
+                                    <option value=""disabled selected></option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product.name }} ({{ product.get_volume }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="supplier_id">Supplier</label>
+                                <select class="form-control" id="supplier_id" name="supplier_id" required>
+                                    <option value="">Select Supplier</option>
+                                    <option value=""> None </option>
+                                    {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-12">                                
+                            <div class="form-group mb-3">
+                                <label for="batch_number">Batch Number (Optional)</label>
+                                <input type="text" class="form-control" id="batch_number" name="batch_number" value="">
+                            </div>  
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="quantity">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="0" step="0.01" required>
+                            </div>  
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="cost_price">Cost Price</label>
+                                <input type="number" class="form-control" id="cost_price" name="cost_price" min="0" step="0.01" required>
+                            </div>        
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="form-group mb-3">
+                        <label for="expiry_date">Expiry Date (Optional)</label>
+                        <input type="date" class="form-control" id="expiry_date" name="expiry_date">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary mdc-button me-auto" id="saveStock">Save</button>
+                <button type="button" class="btn btn-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unregistered Stock Modal -->
+<div class="modal fade" id="unregisteredStockModal" tabindex="-1" role="dialog" aria-labelledby="unregisteredStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title ms-auto" id="unregisteredStockModalLabel">Add Unregistered Stock</h5>
+                <button type="button" class="close ms-auto" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="unregisteredStockForm">
+                    <input type="hidden" name="id" id="unregistered_stock_id">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="unregistered_product_id">Product</label>
+                                <select class="form-control form-select-sm" id="unregistered_product_id" name="product_id" required>
+                                    <option value="" disabled selected></option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product.name }} ({{ product.get_volume }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="unregistered_supplier_id">Supplier</label>
+                                <select class="form-control" id="unregistered_supplier_id" name="supplier_id">
+                                    <option value="">Select Supplier</option>
+                                    <option value="">None</option>
+                                    {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-group mb-3">
+                                <label for="unregistered_batch_number">Batch Number (Optional)</label>
+                                <input type="text" class="form-control" id="unregistered_batch_number" name="batch_number">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="unregistered_quantity">Quantity</label>
+                                <input type="number" class="form-control" id="unregistered_quantity" name="quantity" min="0" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="unregistered_unit_price">Unit Price</label>
+                                <input type="number" class="form-control" id="unregistered_unit_price" name="unit_price" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="unregistered_expiry_date">Expiry Date (Optional)</label>
+                        <input type="date" class="form-control" id="unregistered_expiry_date" name="expiry_date">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary mdc-button me-auto" id="saveUnregisteredStock">Save</button>
+                <button type="button" class="btn btn-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteStockModal" tabindex="-1" role="dialog" aria-labelledby="deleteStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteStockModalLabel">Delete Stock</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this stock entry?
+            </div>
+            <div class="modal-footer">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-6">
+                            <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                        </div>
+                        <div class="col-6 text-right">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+    $(document).ready(function() {
+        let stockIdToDelete = null;
+
+        // Add/Edit Stock
+        $('#create_new').click(function() {
+            $('#stock_id').val('');
+            $('#stockForm')[0].reset();
+            $('#addStockModalLabel').text('Add New Stock');
+            $('#addStockModal').modal('show');
+        });
+
+        $('.edit-data').click(function() {
+            const stockId = $(this).data('id');
+            $('#stock_id').val(stockId);
+            $('#addStockModalLabel').text('Edit Stock');
+            
+            // Fetch stock data
+            $.ajax({
+                url: "{% url 'get-stock' %}",
+                type: "GET",
+                data: { id: stockId },
+                success: function(data) {
+                    $('#product_id').val(data.product_id).trigger('change');
+                    $('#supplier_id').val(data.supplier_id).trigger('change');
+                    $('#batch_number').val(data.batch_number);
+                    $('#original_quantity').val(data.original_quantity);
+                    $('#quantity').val(data.quantity);
+                    $('#cost_price').val(data.cost_price);
+                    $('#expiry_date').val(data.expiry_date);
+                    $('#addStockModal').modal('show');
+                }
+            });
+        });
+
+        // Save Stock
+        $('#saveStock').click(function() {
+            const formData = new FormData($('#stockForm')[0]);
+            
+            $.ajax({
+                url: "{% url 'save-stock' %}",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $('#addStockModal').modal('hide');
+                        location.reload();
+                    } else {
+                        console.error(`Error: ${response.error}`);
+                    }
+                },
+                error: function(error) {
+                    console.error(`Error: ${error}`);
+                }
+            });
+        });
+
+        // Delete Stock
+        $('.delete-data').click(function() {
+            stockIdToDelete = $(this).data('id');
+            $('#deleteStockModal').modal('show');
+        });
+
+        $('#confirmDelete').click(function() {
+            if (stockIdToDelete) {
+                $.ajax({
+                    url: "{% url 'delete-stock' %}",
+                    type: "POST",
+                    data: {
+                        id: stockIdToDelete
+                    },
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    success: function(response) {
+                        $('#deleteStockModal').modal('hide');
+                        if (response.status === 'success') {
+                            location.reload();
+                        } else {
+                            console.error(`Error: ${response.error}`);
+                        }
+                    },
+                    error: function(error) {
+                        console.error(`Error: ${error}`);
+                    }
+                });
+            }
+        });
+
+        // Search functionality
+        $("#searchInput").on("keyup", function() {
+            const value = $(this).val().toLowerCase();
+            $("table tbody tr").filter(function() {
+                const rowText = $(this).text().toLowerCase();
+                $(this).toggle(rowText.indexOf(value) > -1);
+            });
+
+            // Show "No results found" message if no rows are visible
+            const visibleRows = $("table tbody tr:visible").length;
+            if (visibleRows === 0) {
+                if (!$("table tbody").find(".no-results").length) {
+                    $("table tbody").append(`
+                        <tr class="no-results">
+                            <td class="text-center" colspan="10">No results found</td>
+                        </tr>
+                    `);
+                }
+            } else {
+                $("table tbody").find(".no-results").remove();
+            }
+        });
+
+        // Attach the dropdown to the modal
+        $('#addStockModal').on('shown.bs.modal', function() {
+            $('#product_id').select2({
+              placeholder: "Please select a product",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)             
+            });
+          });
+        
+          // Also enhance the supplier pick-list:
+          $('#addStockModal').on('shown.bs.modal', function() {
+            $('#supplier_id').select2({
+              placeholder: "Please select a supplier",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)
+            });
+          });
+        
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        // Add Unregistered Stock
+        $('#create_unregistered_stock').click(function() {
+            $('#unregistered_stock_id').val('');
+            $('#unregisteredStockForm')[0].reset();
+            $('#unregisteredStockModalLabel').text('Add Unregistered Stock');
+            $('#unregisteredStockModal').modal('show');
+        });
+
+        // Save Unregistered Stock
+        $('#saveUnregisteredStock').click(function() {
+            const formData = new FormData($('#unregisteredStockForm')[0]);
+            console.group('Unregistered Stock FormData');
+            for (let [key, value] of formData.entries()) {
+              console.log(`${key}:`, value);
+            }
+            console.groupEnd();
+
+           
+            $.ajax({
+                url: "{% url 'save-unregistered-stock' %}",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $('#unregisteredStockModal').modal('hide');
+                        location.reload();
+                    } else {
+                        console.error(`Error: ${response.error}`);
+                    }
+                },
+                error: function(error) {
+                    console.error(`Error: ${error}`);
+                }
+            });
+        });
+
+        //Attach select2
+        $('#unregisteredStockModal').on('shown.bs.modal', function() {
+            $('#unregistered_product_id').select2({
+              placeholder: "Please select a product",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)
+            });
+        });
+        $('#unregisteredStockModal').on('shown.bs.modal', function() {
+            $('#unregistered_supplier_id').select2({
+              placeholder: "Please select a supplier",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(this)
+            });
+        });
+    });
+</script>
+{% endblock ScriptBlock %}

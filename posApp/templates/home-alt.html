@@ -1,0 +1,699 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block pageContent %}
+<!--div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Home</h3>
+        </div>
+    </div>
+</div-->
+
+{% if 'Sales Manager' in request.user.groups.values_list or request.user.is_superuser%}
+<a href="{% url 'sales-page'%}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Sales">
+    <div class="mdc-card info-card info-card--warning">
+        <div class="card-inner">
+            <h5 class="card-title">Today's Sales</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_sales|intcomma }}</h5>
+            <p class="tx-12 text-muted">Today's Total Sales </p>
+            <div class="card-icon-wrapper">
+                <i class="mdi mdi-cash-multiple"></i>
+            </div>
+        </div>
+    </div>
+</a>
+{% endif %}
+
+<a  href="{% url 'category-page' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Categories">
+    <div class="mdc-card info-card info-card--success">
+        <div class="card-inner">
+            <h5 class="card-title">Categories</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ categories|intcomma }}</h5>
+            <p class="tx-12 text-muted">Product Categories</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">list</i>
+            </div>
+        </div>
+    </div>
+</a>
+<a href="{% url 'product-page' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Products">
+    <div class="mdc-card info-card info-card--primary">
+        <div class="card-inner">
+            <h5 class="card-title">Products</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ products|intcomma }}</h5>
+            <p class="tx-12 text-muted">Available Products</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">label</i>
+            </div>
+        </div>
+    </div>
+</a>
+{%if 'Inventory Manager' in request.user.groups.values_list or 'Sales Manager' in request.user.groups.values_list or request.user.is_superuser%}
+<a href="{% url 'reports_view' %}" class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-4-tablet" title="View Reports">
+    <div class="mdc-card info-card info-card--info">
+        <div class="card-inner">
+            <h5 class="card-title">Reports</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">Reports</h5>
+            <p class="tx-12 text-muted">Inventory & Sales Reports</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">book</i>
+            </div>
+        </div>
+    </div>
+</a>
+
+{% endif %}
+<!-- Filters -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12" hidden="true">
+    <div class="mdc-card">
+        <form id="reports-filter-form" class="row align-items-end">
+            <!-- Selection Mode -->
+            <div class="col-sm-3 mb-3">
+                <label class="control-label">Filter By</label>
+                <select id="filter-type" class="form-control form-control-sm rounded-0">
+                    <option value="day">Date</option>
+                    <option value="date_range">Date Range</option>
+                </select>
+            </div>
+
+            <!-- Single Day Picker (Shown when filtering by day) -->
+            <div class="col-sm-4 col-md-3 mb-3" id="single-day-filter">
+                <label for="report-date" class="control-label">Select Day</label>
+                <input type="date" class="form-control form-control-sm rounded-0" id="report-date" name="report_date">
+            </div>
+
+            <!-- Date Range Pickers (Shown when filtering by range) -->
+            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter">
+                <label for="start-date" class="control-label">Start Date</label>
+                <input type="date" class="form-control form-control-sm rounded-0" id="start-date" name="start_date">
+            </div>
+            <div class="col-sm-4 col-md-3 mb-3 d-none" id="date-range-filter-end">
+                <label for="end-date" class="control-label">End Date</label>
+                <input type="date" class="form-control form-control-sm rounded-0" id="end-date" name="end_date">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-md-3 text-end">
+                <button type="submit" id="generate-report-btn" class="btn btn-primary btn-sm">Generate Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Revenue Breakdown -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-5" hidden="true">
+    <div class="mdc-card">
+        <div class="container">
+            <!-- Revenue Breakdown -->
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <h4 class="text-lg font-semibold">Revenue Breakdown</h4>
+                <canvas id="revenueBreakdownChart"></canvas>
+            </div>
+        </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="row">
+                    <div class="col-md-4 p-0">
+                        <h5 class="text-lg font-semibold">Cash</h5>
+                        <p id="cash_revenue" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-md-4 p-0">
+                        <h5 class="text-lg font-semibold">Mpesa</h5>
+                        <p id="mpesa_revenue" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-md-4 p-0">
+                        <h5 class="text-lg font-semibold">Total</h5>
+                        <p id="total_revenue" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <!--div class="col-12 text-end">
+                        <button class="btn btn-primary" id="revenue-detail" title="Full Revenue Breakdown" data-bs-toggle="modal" data-bs-target="#details-modal">Full Revenue Breakdown</button>
+                    </div-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>   
+
+<!-- Sales Trends -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12" hidden="true">
+    <div class="mdc-card">
+        <div class="container">  
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <h4 class="text-lg font-semibold">Sales Trends</h4>
+                <canvas id="salesTrendChart"></canvas>
+            </div>
+        </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="row">
+                    <div class="col-6">
+                        <h5 class="text-lg font-semibold">Total Sales Revenue</h5>
+                        <p id="total_revenue_trend" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-lg font-semibold">Total Profit</h5>
+                        <p id="total_profit_trend" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <!--div class="col-12 text-end">
+                        <button class="btn btn-primary" id="sales-trend-detail" title="Full Sales Trend" data-bs-toggle="modal" data-bs-target="#details-modal">Full Sales Trend</button>
+                    </div-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Selling -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6" hidden="true">
+    <div class="mdc-card">
+        <div class="container">            
+            <!-- Top Selling Products-->
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <h4 class="text-lg font-semibold">Top Selling Products</h4>
+                <canvas id="topSellingChart"></canvas>
+            </div>
+        </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <!--div class="col-12 text-end">
+                    <button class="btn btn-primary" id="product-sales-detail" title="Full Product Sales" data-bs-toggle="modal" data-bs-target="#details-modal">Full Product Sales</button>
+                </div-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Stock Levels -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <div class="container">            
+            <!-- Stock Levels -->
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <h4 class="text-lg font-semibold">Stock Levels</h4>
+                <canvas id="stockLevelsChart"></canvas>
+            </div>
+        </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="row">
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary mdc-button" id="stock-detail" title="Full Stock Details" data-bs-toggle="modal" data-bs-target="#details-modal">Full Stock Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Body -->
+<div class="modal" id="details-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-fullscreen-md-down modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close" id="close-modal"></button>
+            </div>
+            <div class="modal-body bg-light" id="modal-body"></div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/default/js/chart.min.js' %}"></script>
+<script>
+    // Placeholder: Load detailed report data when clicking on a chart point
+    function renderChartDetail(data) {
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        let html = '';
+        
+        if(data.chart === 'revenue'){
+            modalTitle.innerText = 'Revenue Breakdown';
+            html += `
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 p-2">Revenue Summary</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-left">Cash</th>
+                                    <th class="text-left">Mpesa</th>
+                                    <th>Total Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-left">Ksh. ${data.revenue.cash}</td>
+                                    <td class="text-left">Ksh. ${data.revenue.mpesa}</td>
+                                    <td>Ksh. ${data.revenue.total}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            // If details for a single day report exist.
+            if(data.detail && data.detail.sales){
+                html += `
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Sales Details</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-left">No.</th>
+                                    <th class="text-left">Sale Code</th>
+                                    <th class="text-left">Payment Method</th>
+                                    <th>Grand Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                let count = 0;
+                data.detail.sales.forEach(sale => {
+                    html += `<tr>
+                        <td class="text-left">${++count}</td>
+                        <td class="text-left">${sale.code}</td>
+                        <td class="text-left">${sale.payment_method}</td>
+                        <td>Ksh. ${sale.grand_total}</td>
+                    </tr>`;
+                });
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            }
+            // For a date-range report with details grouped by date.
+            else if(data.detail && typeof data.detail === 'object'){
+                html += `<div class="mb-4"><h5 class="border-bottom pb-2">Sales Details by Date</h5>`;
+                for(const date in data.detail){
+                    html += `
+                        <div class="mb-3">
+                            <h6 class="text-primary">${date}</h6>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-left">No.</th>
+                                            <th class="text-left">Sale Code</th>
+                                            <th class="text-left">Payment Method</th>
+                                            <th>Grand Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    let count = 0;
+                    data.detail[date].forEach(sale => {
+                        html += `<tr>
+                            <td class="text-left">${++count}</td>
+                            <td class="text-left">${sale.code}</td>
+                            <td class="text-left">${sale.payment_method}</td>
+                            <td>Ksh. ${sale.grand_total}</td>
+                        </tr>`;
+                    });
+                    html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                }
+                html += `</div>`;
+            }
+            modalBody.innerHTML = html;
+        }
+        else if(data.chart === 'sales_trend'){
+            modalTitle.innerText = 'Sales Trend Details';
+            
+            // Assuming data.detail.hourly contains an array of objects with hour, sales_revenue, cost, and profit.
+            if(data.detail && data.detail.hourly){
+                html += `
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Hourly Sales Trend</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-left">No.</th>
+                                    <th class="text-left">Hour</th>
+                                    <th class="text-left">Sales Revenue</th>
+                                    <th class="text-left">Cost</th>
+                                    <th>Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                let count = 0;
+                data.detail.hourly.forEach(item => {
+                    html += `<tr>
+                        <td class="text-left">${++count}</td>
+                        <td class="text-left">${formatHour(item.hour)}</td>
+                        <td class="text-left">Ksh. ${item.sales_revenue}</td>
+                        <td class="text-left">Ksh. ${item.cost}</td>
+                        <td>Ksh. ${item.profit}</td>
+                    </tr>`;
+                });
+            }
+            else if(data.detail && typeof data.detail === 'object'){
+                html += `<div class="mb-4"><h5 class="border-bottom pb-2">Sales Trend Details by Date</h5>`;
+                for(const date in data.detail){
+                    html += `
+                        <div class="mb-3">
+                            <h6 class="text-primary">${date}</h6>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-left">No.</th>
+                                            <th class="text-left">Hour</th>
+                                            <th class="text-left">Sales Revenue</th>
+                                            <th class="text-left">Cost</th>
+                                            <th>Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    let count = 0;
+                    data.detail[date].forEach(item => {
+                        html += `<tr>
+                                    <td class="text-left">${++count}</td>
+                                    <td class="text-left">${formatHour(item.hour)}</td>
+                                    <td class="text-left">Ksh. ${item.sales_revenue}</td>
+                                    <td class="text-left">Ksh. ${item.cost}</td>
+                                    <td>Ksh. ${item.profit}</td>
+                                </tr>`;
+                    });
+                    html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div><br>`;
+
+                }
+                html += `</div>`;
+            } else {
+                html += `<tr><td colspan="5" class="text-center">No detailed sales trend data available.</td></tr>`;
+            }
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            modalBody.innerHTML = html;
+        }
+        else if(data.chart === 'top_selling'){
+            modalTitle.innerText = 'Top Selling Products Details';
+            html += `
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Top Selling Products</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-left">No.</th>
+                                    <th class="text-left">Product</th>
+                                    <th>Units Sold</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            // Use the top_selling data returned from the reports_data view.
+            if(data.top_selling && data.top_selling.products && data.top_selling.quantities){
+                let count = 0 ;
+                for(let i = 0; i < data.top_selling.products.length; i++){
+                    html += `<tr>
+                        <td class="text-left">${++count}</td>
+                        <td class="text-left">${data.top_selling.products[i]}</td>
+                        <td>${data.top_selling.quantities[i]}</td>
+                    </tr>`;
+                }
+            } else {
+                html += `<tr><td colspan="3" class="text-center">No top selling product data available.</td></tr>`;
+            }
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            modalBody.innerHTML = html;
+        }
+        else if(data.chart === 'stock'){
+            modalTitle.innerText = 'Stock Details';
+            html += `
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Stock Levels</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-left">No.</th>
+                                    <th class="text-left">Product</th>
+                                    <th>Available Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            // Use the stock_levels data returned from the reports_data view.
+            if(data.stock_levels && data.stock_levels.products && data.stock_levels.quantities){
+                let count = 0;
+                for(let i = 0; i < data.stock_levels.products.length; i++){
+                    html += `<tr>
+                        <td class="text-left">${++count}</td>
+                        <td class="text-left">${data.stock_levels.products[i]}</td>
+                        <td>${data.stock_levels.quantities[i]}</td>
+                    </tr>`;
+                }
+            } else {
+                html += `<tr><td colspan="3" class="text-center">No stock level data available.</td></tr>`;
+            }
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            modalBody.innerHTML = html;
+        }
+        else {
+            modalTitle.innerText = '';
+            modalBody.innerHTML = '<div class="alert alert-secondary">No details available.</div>';
+        }
+    }
+
+    function loadChartDetail(chart) {
+        const form = document.getElementById("reports-filter-form");
+        const formData = new FormData(form);
+        const filterType = document.getElementById("filter-type").value;
+        let queryParams = "";
+
+        if (filterType === "day") {
+            queryParams = new URLSearchParams({
+                report_date: formData.get("report_date"),
+                chart: chart
+            }).toString();
+        } else {
+            queryParams = new URLSearchParams({
+                start_date: formData.get("start_date"),
+                end_date: formData.get("end_date"),
+                chart: chart
+            }).toString();
+        }
+        fetch("{% url 'chart_detail' %}?" + queryParams)
+        .then(response => response.json())
+        .then(data => renderChartDetail(data))
+        .catch(error => console.error("Error loading chart data"));
+    }
+    
+    // Helper: Format hour for display
+    function formatHour(hour) {
+        hour = parseInt(hour);
+        if (hour === 0) return "12 AM";
+        else if (hour < 12) return hour + " AM";
+        else if (hour === 12) return "12 PM";
+        else return (hour - 12) + " PM";
+    }
+
+    // Global chart variables to allow chart destruction on refresh
+    let salesTrendChart, revenueChart, topSellingChart, stockLevelsChart;
+
+    // Function to render all charts given the data
+    function renderCharts(data) {
+        // Clear previous charts if they exist
+        if (salesTrendChart) salesTrendChart.destroy();
+        if (revenueChart) revenueChart.destroy();
+        if (topSellingChart) topSellingChart.destroy();
+        if (stockLevelsChart) stockLevelsChart.destroy();
+
+        // Determine label key: either "hours" or "dates"
+        let trendLabels = [];
+        if (data.sales_trend.hours) {
+            trendLabels = data.sales_trend.hours.map(formatHour);
+        } else if (data.sales_trend.dates) {
+            trendLabels = data.sales_trend.dates;
+        }
+
+        // Sales Trend Chart
+        salesTrendChart = new Chart(document.getElementById("salesTrendChart"), {
+            type: "line",
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: "Sales Revenue",
+                    data: data.sales_trend.amounts,
+                    borderColor: "#0c8959",
+                    fill: true
+                },{
+                    label: "Profit",
+                    data: data.sales_trend.profits,
+                    borderColor: "#FF9800",
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: { display: true, text: (data.sales_trend.hours ? "Hour of Day" : "Date") }
+                    },
+                    y: {
+                        title: { display: true, text: "Sales Revenue (Ksh)" }
+                    }
+                },
+                onClick: function(evt) {
+                    const points = salesTrendChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+                    if (points.length) {
+                        // Use the proper chart type "sales_trend"
+                        loadChartDetail("sales_trend");
+                    }
+                }
+            }
+        });
+
+        // Revenue Breakdown Chart (Pie)
+        revenueChart = new Chart(document.getElementById("revenueBreakdownChart"), {
+            type: "pie",
+            data: {
+                labels: ["Cash", "Mpesa"],
+                datasets: [{
+                    data: [data.revenue_breakdown.cash, data.revenue_breakdown.mpesa],
+                    backgroundColor: ["#2196F3", "#FF9800"]
+                }]
+            },
+            options: { plugins: { legend: { position: "bottom" } } }
+        });
+
+        // Update Revenue Figures for breakdown
+        const formatRevenue = (value) => new Intl.NumberFormat().format(value);
+        document.getElementById("cash_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.cash)}`;
+        document.getElementById("mpesa_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.mpesa)}`;
+        document.getElementById("total_revenue").textContent = `Ksh. ${formatRevenue(data.revenue_breakdown.cash + data.revenue_breakdown.mpesa)}`;
+
+        // Calculate and display total revenue and profit from sales trend data
+        const totalRevenueTrend = data.sales_trend.amounts.reduce((sum, val) => sum + val, 0);
+        const totalProfitTrend = data.sales_trend.profits.reduce((sum, val) => sum + val, 0);
+        document.getElementById("total_revenue_trend").textContent = `Ksh. ${formatRevenue(totalRevenueTrend)}`;
+        document.getElementById("total_profit_trend").textContent = `Ksh. ${formatRevenue(totalProfitTrend)}`;
+
+        // Top Selling Products Chart (Bar)
+        topSellingChart = new Chart(document.getElementById("topSellingChart"), {
+            type: "bar",
+            data: {
+                labels: data.top_selling.products,
+                datasets: [{
+                    label: "Units Sold",
+                    data: data.top_selling.quantities,
+                    backgroundColor: "#673AB7"
+                }]
+            },
+            options: {
+                scales: { x: { title: { display: true, text: "Products" } } }
+            }
+        });
+
+        // Stock Levels Chart (Bar)
+        stockLevelsChart = new Chart(document.getElementById("stockLevelsChart"), {
+            type: "bar",
+            data: {
+                labels: data.stock_levels.products,
+                datasets: [{
+                    label: "Stock Available",
+                    data: data.stock_levels.quantities,
+                    backgroundColor: "#E91E63"
+                }]
+            },
+            options: {
+                scales: { 
+                    x: { title: { display: true, text: "Products" } }, 
+                    y: { title: { display: true, text: "No. Available" } }
+                }
+            }
+        });
+    }
+
+    // Function to load chart data based on current filter selections
+    function loadChartData() {
+        const form = document.getElementById("reports-filter-form");
+        const formData = new FormData(form);
+        const filterType = document.getElementById("filter-type").value;
+        let queryParams = "";
+
+        if (filterType === "day") {
+            queryParams = new URLSearchParams({
+                report_date: formData.get("report_date")
+            }).toString();
+        } else {
+            queryParams = new URLSearchParams({
+                start_date: formData.get("start_date"),
+                end_date: formData.get("end_date")
+            }).toString();
+        }
+
+        fetch("{% url 'reports_data' %}?" + queryParams)
+        .then(response => response.json())
+        .then(data => renderCharts(data))
+        .catch(error => console.error("Error loading report data:", error));
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        let todayStr = new Date().toISOString().split("T")[0];
+        document.getElementById("report-date").value = todayStr;
+        document.getElementById("start-date").value = todayStr;
+        document.getElementById("end-date").value = todayStr;
+        
+        const filterType = document.getElementById("filter-type");
+        const singleDayFilter = document.getElementById("single-day-filter");
+        const dateRangeFilter = document.getElementById("date-range-filter");
+        const dateRangeFilterEnd = document.getElementById("date-range-filter-end");
+
+        function toggleFilters() {
+            if (filterType.value === "day") {
+                singleDayFilter.classList.remove("d-none");
+                dateRangeFilter.classList.add("d-none");
+                dateRangeFilterEnd.classList.add("d-none");
+            } else {
+                singleDayFilter.classList.add("d-none");
+                dateRangeFilter.classList.remove("d-none");
+                dateRangeFilterEnd.classList.remove("d-none");
+            }
+        }
+        filterType.addEventListener("change", toggleFilters);
+        toggleFilters();
+
+        loadChartData();
+
+        document.getElementById("reports-filter-form").addEventListener("submit", function(e) {
+            e.preventDefault();
+            loadChartData();
+        });
+
+        /**       
+        document.getElementById('revenue-detail').addEventListener('click', function(e){
+            loadChartDetail('revenue');
+        });
+        document.getElementById('sales-trend-detail').addEventListener('click', function(e){
+            loadChartDetail('sales_trend');
+        });
+        document.getElementById('product-sales-detail').addEventListener('click', function(e){
+            loadChartDetail('top_selling');
+        });
+        **/
+        document.getElementById('stock-detail').addEventListener('click', function(e){
+            loadChartDetail('stock');
+        });
+    });
+</script>
+{% endblock %}
