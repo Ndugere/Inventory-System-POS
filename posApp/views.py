@@ -716,10 +716,10 @@ def expenses(request):
         
         if form.is_valid():
             form.save()
-            messages(request, "Expense saved")
+            messages.success(request, "Expense saved")
             return redirect('expenses') 
         else:
-            messages(request, "Couldn't save expense")
+            messages.error(request, "Couldn't save expense")
             
     q = request.GET.get('q', '').strip()
     # Base queryset: all expenses
