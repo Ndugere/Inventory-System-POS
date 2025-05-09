@@ -47,7 +47,7 @@
                 </div>
                 <div class="col-4">
                     <h6 for="measurement_value" class="form-label fw-bold">Value</h6>
-                    <input type="number" name="measurement_value" id="measurement_value" class="form-control form-control-sm rounded-0" value="{% if product.measurement_value %}{{product.measurement_value}}{% endif %}" min="0" step="any" required>
+                    <input type="text" name="measurement_value" id="measurement_value" class="form-control form-control-sm rounded-0" value="{% if product.measurement_value %}{{product.measurement_value}}{% endif %}" min="0" step="any">
                 </div>
             </div>
         </div>
