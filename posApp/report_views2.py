@@ -30,29 +30,29 @@ def inventory_data(request):
     """
     Returns inventory data for the products.
     """
-    data_type = request.GET.get('type', '')
+    data_unit = request.GET.get('type', '')
 
-    if data_type == 'expiring_soon':
+    if data_unit == 'expiring_soon':
         stocks = Stocks.objects.filter(expiry_date__lte=timezone.now().date() + timedelta(days=7), status=1)[:5]
         data = {
             "products": [f"{stock.product_id.name}" for stock in stocks],
             "quantities": [stock.quantity for stock in stocks]
         }
-    elif data_type == 'low_stock':
+    elif data_unit == 'low_stock':
         products = Products.objects.filter(quantity__lte=10).order_by('quantity')[:5]
         data = {
             "products": [f"{product.name}({product.get_volume()})" for product in products],
             "quantities": [product.quantity for product in products]
         }
-    elif data_type == 'top_selling':
+    elif data_unit == 'top_selling':
         top_selling = salesItems.objects.values(
-            "product_id__name", "product_id__measurement_value", "product_id__volume_type"
+            "product_id__name", "product_id__measurement_value", "product_id__measurement_unit"
         ).annotate(total_sold=Sum("qty")).order_by("-total_sold")[:5]
         data = {
-            "products": [f'{item["product_id__name"]} ({item["product_id__measurement_value"]}{item["product_id__volume_type"]})' for item in top_selling],
+            "products": [f'{item["product_id__name"]} ({item["product_id__measurement_value"]}{item["product_id__measurement_unit"]})' for item in top_selling],
             "quantities": [item["total_sold"] for item in top_selling]
         }
-    elif data_type == 'stock_value':
+    elif data_unit == 'stock_value':
         categories = Category.objects.all()
         data = {
             "categories": [category.name for category in categories],
@@ -69,24 +69,24 @@ def inventory_data(request):
                 )['total_value'] or 0 for category in categories
             ]
         }
-    elif data_type == 'most_profitable':
+    elif data_unit == 'most_profitable':
         products = Products.objects.annotate(
             max_profit=(F('max_sell_price') - F('buy_price')),
             min_profit=(F('min_sell_price') - F('buy_price'))
         ).order_by('-max_profit')[:3]
         data = {
-            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "products": [f"{product.name} ({product.measurement_value}{product.measurement_unit})" for product in products],
             "cost_prices": [product.buy_price for product in products],
             "max_profits": [product.max_profit for product in products],
             "min_profits": [product.min_profit for product in products]
         }
-    elif data_type == 'least_profitable':
+    elif data_unit == 'least_profitable':
         products = Products.objects.annotate(
             max_profit=(F('max_sell_price') - F('buy_price')),
             min_profit=(F('min_sell_price') - F('buy_price'))
         ).order_by('max_profit')[:3]
         data = {
-            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "products": [f"{product.name} ({product.measurement_value}{product.measurement_unit})" for product in products],
             "cost_prices": [product.buy_price for product in products],
             "max_profits": [product.max_profit for product in products],
             "min_profits": [product.min_profit for product in products]
@@ -103,9 +103,9 @@ def inventory_chart_detail(request):
     Expected GET parameter:
       - chart: The type of chart (e.g., 'expiring_soon', 'low_stock', 'top_selling', 'stock_value', 'most_profitable', 'least_profitable').
     """
-    chart_type = request.GET.get('chart', '')
+    chart_unit = request.GET.get('chart', '')
 
-    if chart_type == 'expiring_soon':
+    if chart_unit == 'expiring_soon':
         stocks = Stocks.objects.filter(expiry_date__lte=timezone.now().date() + timedelta(days=7), status=1)
         data = {
             "products": [f"{stock.product_id.name}" for stock in stocks],
@@ -114,7 +114,7 @@ def inventory_chart_detail(request):
             "expiry_dates": [stock.expiry_date.strftime('%Y-%m-%d') for stock in stocks]
         }
 
-    elif chart_type == 'low_stock':
+    elif chart_unit == 'low_stock':
         stocks = Stocks.objects.filter(quantity__lte=10).order_by('quantity')
         data = {
             "products": [f"{stock.product_id.name} ({stock.product_id.get_volume()})" for stock in stocks],
@@ -123,16 +123,16 @@ def inventory_chart_detail(request):
             "suppliers": [stock.supplier_id.name if stock.supplier_id else "Unknown" for stock in stocks]
         }
 
-    elif chart_type == 'top_selling':
+    elif chart_unit == 'top_selling':
         top_selling = salesItems.objects.values(
-            "product_id__name", "product_id__measurement_value", "product_id__volume_type"
+            "product_id__name", "product_id__measurement_value", "product_id__measurement_unit"
         ).annotate(total_sold=Sum("qty")).order_by("-total_sold")
         data = {
-            "products": [f'{item["product_id__name"]} ({item["product_id__measurement_value"]}{item["product_id__volume_type"]})' for item in top_selling],
+            "products": [f'{item["product_id__name"]} ({item["product_id__measurement_value"]}{item["product_id__measurement_unit"]})' for item in top_selling],
             "quantities": [item["total_sold"] for item in top_selling]
         }
 
-    elif chart_type == 'stock_value':
+    elif chart_unit == 'stock_value':
         categories = Category.objects.all()
         data = {
             "categories": [category.name for category in categories],
@@ -149,25 +149,25 @@ def inventory_chart_detail(request):
             ]
         }
 
-    elif chart_type == 'most_profitable':
+    elif chart_unit == 'most_profitable':
         products = Products.objects.filter(quantity__gt=0).annotate(
             max_profit=(F('max_sell_price') - F('buy_price')),
             min_profit=(F('min_sell_price') - F('buy_price'))
         ).order_by('-max_profit')
         data = {
-            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "products": [f"{product.name} ({product.measurement_value}{product.measurement_unit})" for product in products],
             "cost_prices": [product.buy_price for product in products],
             "max_profits": [product.max_profit for product in products],
             "min_profits": [product.min_profit for product in products]
         }
 
-    elif chart_type == 'least_profitable':
+    elif chart_unit == 'least_profitable':
         products = Products.objects.annotate(
             max_profit=(F('max_sell_price') - F('buy_price')),
             min_profit=(F('min_sell_price') - F('buy_price'))
         ).order_by('max_profit')
         data = {
-            "products": [f"{product.name} ({product.measurement_value}{product.volume_type})" for product in products],
+            "products": [f"{product.name} ({product.measurement_value}{product.measurement_unit})" for product in products],
             "cost_prices": [product.buy_price for product in products],
             "max_profits": [product.max_profit for product in products],
             "min_profits": [product.min_profit for product in products]
@@ -260,12 +260,12 @@ def search(request):
         return JsonResponse(list(stocks), safe=False)
     elif search_query and search_scope == "products":
         products = Products.objects.filter(name__icontains=search_query).values(
-            "id", "name", "measurement_value", "volume_type", "quantity", "buy_price", "sell_price"
+            "id", "name", "measurement_value", "measurement_unit", "quantity", "buy_price", "sell_price"
         )
         return JsonResponse(list(products), safe=False)
     elif search_scope == "products":
         products = Products.objects.all().values(
-            "id", "name", "measurement_value", "volume_type", "quantity", "buy_price", "sell_price"
+            "id", "name", "measurement_value", "measurement_unit", "quantity", "buy_price", "sell_price"
         )
         return JsonResponse(list(products), safe=False)
     elif search_query and search_scope == "categories":
@@ -373,11 +373,11 @@ def reports_data(request):
         
         # Top selling products for the day.
         top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
-            "product_id__measurement_value", "product_id__volume_type", "product_id__name"
+            "product_id__measurement_value", "product_id__measurement_unit", "product_id__name"
         ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField())).order_by("-total_sold")[:5]
         top_selling_data = {
             "products": [
-                f"{item['product_id__name']} ({item['product_id__measurement_value']}{item['product_id__volume_type']})"
+                f"{item['product_id__name']} ({item['product_id__measurement_value']}{item['product_id__measurement_unit']})"
                 for item in top_selling
             ],
             "quantities": [item["total_sold"] for item in top_selling]
@@ -449,12 +449,12 @@ def reports_data(request):
         top_selling_data = report["top_selling"]
 
     # Stock Levels: fetch products with the lowest quantity.
-    stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
+    stock_levels = Products.objects.values("code", "name", "measurement_value", "measurement_unit").annotate(
         stock=Coalesce(Sum("quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
     ).order_by("stock")[:5]
     stock_levels_data = {
         "products": [
-            f"{item['name']} ({item['measurement_value']}{item['volume_type']})"
+            f"{item['name']} ({item['measurement_value']}{item['measurement_unit']})"
             for item in stock_levels
         ],
         "quantities": [item["stock"] for item in stock_levels]
@@ -585,25 +585,25 @@ def chart_detail(request):
 
         elif chart == 'top_selling':
             top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
-                "product_id__measurement_value", "product_id__volume_type", "product_id__name"
+                "product_id__measurement_value", "product_id__measurement_unit", "product_id__name"
             ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField())).order_by("-total_sold")
             data["chart"] = chart
             data["top_selling"] = {
                 "products": [
-                    f"{item['product_id__name']} ({item['product_id__measurement_value']}{item['product_id__volume_type']})"
+                    f"{item['product_id__name']} ({item['product_id__measurement_value']}{item['product_id__measurement_unit']})"
                     for item in top_selling
                 ],
                 "quantities": [item["total_sold"] for item in top_selling]
             }
 
         elif chart == 'stock':
-            stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
+            stock_levels = Products.objects.values("code", "name", "measurement_value", "measurement_unit").annotate(
                 stock=Coalesce(Sum("quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by("stock")
             data["chart"] = chart
             data["stock_levels"] = {
                 "products": [
-                    f"{item['name']} ({item['measurement_value']}{item['volume_type']})"
+                    f"{item['name']} ({item['measurement_value']}{item['measurement_unit']})"
                     for item in stock_levels
                 ],
                 "quantities": [item["stock"] for item in stock_levels]
@@ -752,10 +752,10 @@ def chart_detail(request):
             top_counter = Counter()
             for date_str, sales_qs in date_sales.items():
                 daily_top = salesItems.objects.filter(sale_id__in=sales_qs).values(
-                    "product_id_id__measurement_value", "product_id_id__volume_type", "product_id__name"
+                    "product_id_id__measurement_value", "product_id_id__measurement_unit", "product_id__name"
                 ).annotate(total_sold=Coalesce(Sum("qty"), Value(0.0, output_field=FloatField()), output_field=FloatField()))
                 for item in daily_top:
-                    product_key = f"{item['product_id__name']} ({item['product_id_id__measurement_value']}{item['product_id_id__volume_type']})"
+                    product_key = f"{item['product_id__name']} ({item['product_id_id__measurement_value']}{item['product_id_id__measurement_unit']})"
                     top_counter[product_key] += item["total_sold"]
             sorted_top = top_counter.most_common()
             data["chart"] = chart
@@ -765,13 +765,13 @@ def chart_detail(request):
             }
 
         elif chart == 'stock':
-            stock_levels = Products.objects.values("code", "name", "measurement_value", "volume_type").annotate(
+            stock_levels = Products.objects.values("code", "name", "measurement_value", "measurement_unit").annotate(
                 stock=Coalesce(Sum("quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
             ).order_by("stock")[:5]
             data["chart"] = chart
             data["stock_levels"] = {
                 "products": [
-                    f"{item['name']} ({item['measurement_value']}{item['volume_type']})"
+                    f"{item['name']} ({item['measurement_value']}{item['measurement_unit']})"
                     for item in stock_levels
                 ],
                 "quantities": [item["stock"] for item in stock_levels]
