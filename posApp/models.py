@@ -41,11 +41,13 @@ class Products(models.Model):
     buy_price = models.FloatField("Buy Price", default=0)
     status = models.IntegerField("Status", default=0)
     
-    def get_measurement(self):
-        return f"{self.measurement_value}{self.measurement_type}"
+    def get_measurement(self):        
+        unit = self.measurement_unit or ''
+        return f"{self.measurement_value}{unit}"
 
     def __str__(self):
-        return f"{str.capitalize(self.name)} ({self.measurement_value}{self.measurement_type})"
+        unit = self.measurement_unit or ''
+        return f"{str.capitalize(self.name)} ({self.measurement_value}{unit})"
     
     class Meta:
         verbose_name = "Product"

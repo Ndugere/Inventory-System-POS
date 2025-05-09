@@ -291,7 +291,7 @@ def pos(request):
 def get_product_json(request):     
     try:
         products = Products.objects.filter(status=1)
-        product_json = [{'id': product.id, 'name': product.name, 'meaurement_unit': product.measurement_unit, 'value': product.measurement_value, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
+        product_json = [{'id': product.id, 'name': product.name, 'measurement_unit': product.measurement_unit or '', 'value': product.measurement_value, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
         return JsonResponse(product_json, safe=False)
     
     except Exception as e:
