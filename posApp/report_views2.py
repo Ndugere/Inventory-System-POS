@@ -150,7 +150,7 @@ def inventory_chart_detail(request):
         }
 
     elif chart_type == 'most_profitable':
-        products = Products.objects.annotate(
+        products = Products.objects.filter(quantity__gt=0).annotate(
             max_profit=(F('max_sell_price') - F('buy_price')),
             min_profit=(F('min_sell_price') - F('buy_price'))
         ).order_by('-max_profit')
