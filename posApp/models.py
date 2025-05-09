@@ -23,32 +23,34 @@ class Category(models.Model):
         ordering = ['name']
 
 class Products(models.Model):
-    class VolumeType(models.TextChoices):
-        MILLILITERS = "ml", _("Milliliters")
-        LITERS = "L", _("Liters")
-        PACKS = "pack(s)", _("Pack(s)")
+    class MeasurementType(models.TextChoices):
+        LENGTH = 'length', _('Length')
+        WEIGHT = 'weight', _('Weight')
+        SIZE = 'size', _('Size')
+        VOLUME = 'volume', _('Volume')
         
     code = models.CharField("Product Code", max_length=100, unique=True, blank=False)
     category_id = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField("Product Name", max_length=100, blank=False)
-    volume_type = models.CharField("Volume Type", max_length=100, choices=VolumeType.choices, default=VolumeType.MILLILITERS, blank=False)
-    measurement_value = models.CharField("Measurement Value", max_length=10, default=0)
+    measurement_type = models.CharField("Measurement Type", max_length=100, choices=MeasurementType.choices, default=MeasurementType.LENGTH, blank=False)
+    measurement_unit = models.CharField("Measurement Unit", max_length=10, default='', blank=True)
+    measurement_value = models.CharField("Measurement Value", max_length=10, default='', blank=True)
     quantity = models.PositiveIntegerField("Quantity", default=0)
     min_sell_price = models.FloatField("Minimum Sell Price", default=0)
     max_sell_price = models.FloatField("Maximum Sell Price", default=0)
     buy_price = models.FloatField("Buy Price", default=0)
     status = models.IntegerField("Status", default=0)
     
-    def get_volume(self):
-        return f"{self.measurement_value}{self.volume_type}"
+    def get_measurement(self):
+        return f"{self.measurement_value}{self.measurement_type}"
 
     def __str__(self):
-        return f"{str.capitalize(self.name)} ({self.measurement_value}{self.volume_type})"
+        return f"{str.capitalize(self.name)} ({self.measurement_value}{self.measurement_type})"
     
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"
-        unique_together = (("name", "measurement_value", "volume_type"))
+        unique_together = (("name", "measurement_value", "measurement_type"))
         ordering = ["name"]
 
 class Supplier(models.Model):

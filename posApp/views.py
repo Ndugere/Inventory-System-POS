@@ -165,9 +165,19 @@ def products(request):
 @login_required
 def manage_products(request):
     product = {}
-    categories = Category.objects.filter(status = 1).all()
-    volume_type = Products.VolumeType
-    if request.method == 'GET':
+    categories = Category.objects.filter(status = 1).all() 
+    
+    if request.method == 'GET' and 'measurement_type' in request.GET:
+        mtype = request.GET['measurement_type']
+        # filter by the field name (measurement_type), not measurement_types
+        found_units =(Products.objects.filter(measurement_type=mtype).values_list('measurement_unit', flat=True))
+        units = list(dict.fromkeys(u for u in found_units if u))
+                
+        # return a simple JSON list, e.g. ["kg","g","lb"]
+        units.sort(key=lambda x: x.lower())
+        return JsonResponse(list(units), safe=False)
+
+    if request.method == 'GET':        
         data =  request.GET
         id = ''
         if 'id' in data:
@@ -177,7 +187,7 @@ def manage_products(request):
     
     context = {
         'product' : product,
-        'volume_type': volume_type,
+        'measurement_types': Products.MeasurementType.choices,
         'categories' : categories
     }
     return render(request, 'inventory/manage_product.html',context)
@@ -212,7 +222,8 @@ def save_product(request):
                     category_id=category,
                     name=str.capitalize(data['name']),
                     #description=data['description'],
-                    volume_type = data['volume_type'],
+                    measurement_type = data['measurement_type'],
+                    measurement_unit=data['measurement_unit'],
                     measurement_value=data['measurement_value'],
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),
@@ -226,7 +237,8 @@ def save_product(request):
                     category_id=category,
                     name=str.capitalize(data['name']),
                     #description=data['description'],
-                    volume_type = data['volume_type'],
+                    measurement_type = data['measurement_type'],
+                    measurement_unit=data['measurement_unit'],
                     measurement_value=data['measurement_value'],
                     #quantity=data['available_quantity'],
                     #buy_price=float(data['buy_price']),

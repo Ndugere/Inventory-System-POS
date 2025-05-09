@@ -15,10 +15,10 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     model = Products
     fieldsets =[
-        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "volume_type", "measurement_value"]})
+        ("Product Info: ", {"fields": ['code', 'name', 'category_id', "measurement_type", "measurement_unit", "measurement_value"]})
     ]
-    list_display = ['name', 'category_id', "volume_type", ]
-    list_filter = ['category_id', 'name', "volume_type", ]
+    list_display = ['name', 'category_id', "measurement_type", ]
+    list_filter = ['category_id', 'name', "measurement_type", ]
     search_fields = ['name', 'category_id__name']
     ordering = ['name']
     list_per_page = 10

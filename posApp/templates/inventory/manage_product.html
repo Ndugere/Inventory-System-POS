@@ -3,11 +3,11 @@
     <form action="" id="product-form">
         <input type="hidden" name="id" value="{% if product.pk %}{{product.pk}}{% endif %}">
         <div class="form-group mb-3">
-            <label for="code" class="control-label">Code</label>
+            <label for="code" class="control-label fw-bold">Code</label>
             <input type="text" name="code" id="code" class="form-control form-control-sm rounded-0" value="{% if product.code %}{{product.code}}{% endif %}" required>
         </div>
         <div class="form-group mb-3">
-            <label for="category_id" class="control-label">Category</label>
+            <label for="category_id" class="control-label fw-bold">Category</label>
             <select name="category_id" id="category_id" class="form-select form-select-sm rounded-0" required>            
                 {% for category in categories %}
                     {% if product.category_id == category %}
@@ -19,45 +19,55 @@
             </select>
         </div>
         <div class="form-group mb-3">
-            <label for="name" class="control-label">Product Name</label>
+            <label for="name" class="control-label fw-bold">Product Name</label>
             <input type="text" name="name" id="name" class="form-control form-control-sm rounded-0" value="{% if product.name %}{{product.name}}{% endif %}" required>
         </div>
         <div class="form-group mb-3">
-            <label for="measurement_value" class="control-label">Volume</label>
-            <div class="row">
-                <div class="col-6">
-                    <input type="number" name="measurement_value" id="measurement_value" class="form-control form-control-sm rounded-0" value="{% if product.measurement_value %}{{product.measurement_value}}{% endif %}" min="0" step="any" required>
-                </div>
-                <div class="col-6">
-                    <select name="volume_type" id="volume_type" class="form-select form-select-sm rounded-0" required>
-                        {% for volume in volume_type %}
-                            {% if product.volume_type == volume %}
-                            <option value="{{ volume}}" selected>{{ volume }}</option>
-                            {% else %}
-                            <option value="{{ volume }}">{{ volume }}</option>
-                            {% endif %}
-                        {% endfor %}
+            <label class="form-label control-label fw-bold">Measurement</label>
+            <div class="row">                
+                <div class="col-4">
+                    <h6 for="measurement_type" class="form-label fw-bold">Type</h6>
+                    <select name="measurement_type" id="measurement_type" class="form-select form-select-sm rounded-0" required>
+                        {% for value, label in measurement_types %}
+                            <option value="{{ value }}" {% if product.measurement_type == value %}selected{% endif %} >{{ label }}</option>
+                      {% endfor %}
                     </select>
+                </div>
+                <div class="col-4">
+                    <h6 for="measurement_unit" class="form-label fw-bold">Unit</h6>
+                    <input name="measurement_unit" id="measurement_unit" class="form-control form-control-sm rounded-0" list="unit-list" value="{% if product.measurement_unit %}{{ product.measurement_unit }}{% endif %}" required>
+                    <datalist id="unit-list"></datalist>
+                    <!--
+                        {% if product.measurement_unit%}
+                            <option value="{{ measurement}}" selected>{{ measurement }}</option>
+                        {% else %}
+                            <option value="{{ measurement }}">{{ measurement }}</option>
+                        {% endif %}
+                    </select-->
+                </div>
+                <div class="col-4">
+                    <h6 for="measurement_value" class="form-label fw-bold">Value</h6>
+                    <input type="number" name="measurement_value" id="measurement_value" class="form-control form-control-sm rounded-0" value="{% if product.measurement_value %}{{product.measurement_value}}{% endif %}" min="0" step="any" required>
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="col-6">
                 <div class="form-group mb-3">
-                    <label for="available_quantity" class="control-label">Available Quantity</label>
+                    <label for="available_quantity" class="control-label fw-bold">Available Quantity</label>
                     <input disabled type="number" name="available_quantity" id="available_quantity" class="form-control form-control-sm rounded-0" value="{% if product.quantity %}{{product.quantity}}{% else %}0{% endif %}" min="0" step="1">
                 </div>
         
             </div>
             <div class="col-6"> 
                 <div class="form-group mb-3">
-                    <label for="buy_price" class="control-label"> Average Unit Cost</label>
+                    <label for="buy_price" class="control-label fw-bold"> Average Unit Cost</label>
                     <input disabled type="number" name="buy_price" id="buy_price" class="form-control form-control-sm rounded-0" value="{% if product.buy_price %}{{product.buy_price|floatformat:2}}{% else %}0.00{% endif %}" min="0.00" step="0.01">
                 </div>
             </div>
         </div>
         <div class="form-group mb-3">
-            <h6 for="sell_price" class="control-label">Selling Price Range</h6>
+            <label for="sell_price" class="control-label fw-bold">Selling Price Range</label>
             <div class="row">
                 <div class="col-6">
                     <h6 for="min_sell_price" class="control-label">Min</h6>
@@ -88,6 +98,26 @@
 </div>
 <script>
     $(function() {
+        // When the measurement type changes, reload the datalist
+        $('#measurement_type').on('change', function(){
+            const mtype = $(this).val();
+            // clear any old options
+            $('#unit-list').empty();
+            // hit your same view (but passing ?measurement_type=…)
+            $.get("{% url 'manage_products-page' %}", { measurement_type: mtype })
+            .done(function(units){
+                // units is e.g. ["kg","g","lb"]
+                if(units.length > 0){
+                    units.forEach(u => {
+                        $('#unit-list').append(`<option value="${u}">`);
+                        });
+                }
+            })
+            .fail(function(){
+                console.error('Failed to fetch units for', mtype);
+            });
+        });
+  
         $('#product-form').submit(function(e) {
             e.preventDefault();
             var _this = $(this)

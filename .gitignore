@@ -15,7 +15,7 @@ svgs/
 brands/
 metadata/
 LICENSE.txt
-prod*
+prod_*
 dev*
 data*
 .*
