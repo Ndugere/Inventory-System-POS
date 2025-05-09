@@ -3,9 +3,9 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Case, When, F, Value, FloatField, OuterRef, Subquery
 from django.db.models.functions import ExtractHour, Coalesce, Round
-from django.db.models import ExpressionWrapper, Value
+from django.db.models import ExpressionWrapper, Value, DecimalField
 from datetime import datetime, timedelta
-from posApp.models import Sales, salesItems, Products, Supplier, Stocks, Category
+from posApp.models import Sales, salesItems, Products, Supplier, Stocks, Category, Expense
 from collections import Counter
 from decimal import Decimal
 import json
@@ -302,6 +302,13 @@ def reports_data(request):
         F('salesitems__product_id__buy_price') * F('salesitems__qty'),
         output_field=FloatField()
     )
+    # Add expense calculation
+    def get_expenses(date_value):
+        return Expense.objects.filter(date_incurred=date_value).aggregate(
+            total_expenses=Coalesce(Sum('amount'),
+                Value(Decimal('0.00'),  # Use Decimal instead of float
+                output_field=DecimalField(max_digits=10, decimal_places=2)))
+        )['total_expenses']
 
     def day_report(date_value):
         # Sales trend: group sales by hour.
@@ -395,6 +402,11 @@ def reports_data(request):
         sales_trend = report["sales_trend"]
         revenue = report["revenue"]
         top_selling_data = report["top_selling"]
+        
+        day_expenses = get_expenses(report_date_obj)
+        net_profit = float(sum(sales_trend['profits'])) - float(day_expenses)
+        total_profit = float(sum(sales_trend['profits']))
+        expenses = {"total_expenses": day_expenses, "total_profit": total_profit,"net_profit": net_profit}
 
     elif 'start_date' in request.GET and 'end_date' in request.GET:
         start_date_str = request.GET.get('start_date')
@@ -415,8 +427,9 @@ def reports_data(request):
         # Aggregate daily results.
         sales_trend = {"dates": [], "amounts": [], "costs": [], "profits": []}
         revenue = {"cash": 0, "mpesa": 0, "revenue": 0}
+        
+        expenses = {"dates": [], "amounts": [], "net_profits": [], "total_expenses": 0, "total_profit": 0, "net_profit": 0}
         top_counter = Counter()
-
         for date_str, data in date_reports.items():
             sales_trend["dates"].append(date_str)
             daily_trend = data["sales_trend"]
@@ -429,6 +442,22 @@ def reports_data(request):
             revenue["mpesa"] += daily_revenue.get("mpesa", 0)
             revenue["revenue"] += daily_revenue.get("revenue", 0)
 
+            daily_expense = Expense.objects.filter(date_incurred=date_str).aggregate(
+                total=Coalesce(
+                    Sum('amount'),
+                    Value(Decimal('0.00')),
+                    output_field=DecimalField(max_digits=10, decimal_places=2)
+                )
+            )['total'] or Decimal('0.00')
+            
+            # Sum daily profits
+            daily_profit = Decimal(sum(filter(None, daily_trend["profits"])))
+
+            expenses["dates"].append(date_str)
+            expenses["amounts"].append(daily_expense)
+            expenses["net_profits"].append(daily_profit - daily_expense)
+            expenses["total_profit"] = (float(sum(sales_trend['profits'])))
+            
             # Update the counter for top-selling products.
             daily_top = data["top_selling"]
             for product, qty in zip(daily_top["products"], daily_top["quantities"]):
@@ -438,7 +467,10 @@ def reports_data(request):
         top_selling_data = {
             "products": [item[0] for item in sorted_top],
             "quantities": [item[1] for item in sorted_top]
-        }
+        }        
+        
+        expenses["total_expenses"] += sum(expenses["amounts"])
+        expenses["net_profit"] += sum(expenses["net_profits"])
 
     else:
         # Default to today's date.
@@ -447,7 +479,11 @@ def reports_data(request):
         sales_trend = report["sales_trend"]
         revenue = report["revenue"]
         top_selling_data = report["top_selling"]
-
+        
+        net_profit = float(sales_trend['profit']) - float( get_expenses(today))
+        total_profit = float(sales_trend['profit'])
+        expenses = {{"total_expenses": float( get_expenses(today)), "net_profit": net_profit, "total_profit":total_profit}}
+        
     # Stock Levels: fetch products with the lowest quantity.
     stock_levels = Products.objects.values("code", "name", "measurement_value", "measurement_unit").annotate(
         stock=Coalesce(Sum("quantity"), Value(0.0, output_field=FloatField()), output_field=FloatField())
@@ -462,12 +498,13 @@ def reports_data(request):
 
     # Convert Decimal values to float for JSON serialization.
     revenue = {k: float(v) if v is not None else 0 for k, v in revenue.items()}
-
     data = {
         "sales_trend": sales_trend,
         "revenue_breakdown": revenue, 
         "top_selling": top_selling_data,
-        "stock_levels": stock_levels_data
+        "stock_levels": stock_levels_data,
+        "expenses": expenses
+        #"net_profit": net_profit,
     }
     return JsonResponse(data, safe=False)
 
@@ -583,6 +620,15 @@ def chart_detail(request):
             data['detail'] = {}
             data["detail"]["hourly"] = list(distinct_combined_data)
 
+        if chart == 'expenses':            
+            expenses = Expense.objects.filter(date_incurred=date_value)
+            data["chart"] = chart
+            data["detail"] = {
+                "expenses": list(expenses.values(
+                    'date_incurred', 'title', 'category', 'amount', 'payment_method', 'note', 'payee', 'receipt'
+                )),
+            }
+        
         elif chart == 'top_selling':
             top_selling = salesItems.objects.filter(sale_id__date_added__date=date_value).values(
                 "product_id__measurement_value", "product_id__measurement_unit", "product_id__name"
@@ -748,6 +794,18 @@ def chart_detail(request):
             data["chart"] = chart
             data["detail"] = detail
 
+        if chart == 'expenses':
+            expenses = Expense.objects.filter(
+                date_incurred__gte=start_date,
+                date_incurred__lte=end_date
+            )
+                
+            data["chart"] = chart
+            data["detail"] = {
+                "expenses": list(expenses.values(
+                    'date_incurred', 'title', 'category', 'amount', 'payment_method', 'note', 'payee', 'receipt'
+                ))
+            }
         elif chart == 'top_selling':
             top_counter = Counter()
             for date_str, sales_qs in date_sales.items():

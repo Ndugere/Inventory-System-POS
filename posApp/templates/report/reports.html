@@ -60,15 +60,15 @@
         <div class="container">
             <div class="bg-white p-4 shadow-lg rounded-lg">
                 <div class="row">
-                    <div class="col-4 p-0">
+                    <div class="col-md-4 p-0">
                         <h5 class="text-lg font-semibold">Cash</h5>
                         <p id="cash_revenue" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
-                    <div class="col-4 p-0">
+                    <div class="col-md-4 p-0">
                         <h5 class="text-lg font-semibold">Mpesa</h5>
                         <p id="mpesa_revenue" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
-                    <div class="col-4 p-0">
+                    <div class="col-md-4 p-0">
                         <h5 class="text-lg font-semibold">Total</h5>
                         <p id="total_revenue" class="text-2xl font-semibold">Ksh. 0</p>
                     </div>
@@ -103,6 +103,43 @@
                     </div>
                     <div class="col-12 text-end">
                         <button class="btn btn-primary mdc-button" id="sales-trend-detail" title="Full Sales Trend" data-bs-toggle="modal" data-bs-target="#details-modal">Full Sales Trend</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expenses vs Profit -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
+    <div class="mdc-card">
+        <div class="container">            
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <h4 class="text-lg font-semibold">Expenses vs Net Profit</h4>
+                <canvas id="expensesProfitChart"></canvas>
+            </div>
+        </div>
+        <div class="container">
+            <div class="bg-white p-4 shadow-lg rounded-lg">
+                <div class="row">
+                    <div class="col-6 col-md-4">
+                        <h5 class="text-lg font-semibold">Total Profit</h5>
+                        <p id="total_profit" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <h5 class="text-lg font-semibold">Total Expenses</h5>
+                        <p id="total_expenses" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <h5 class="text-lg font-semibold">Net Profit</h5>
+                        <p id="net_profit" class="text-2xl font-semibold">Ksh. 0</p>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary mdc-button" id="expenses-detail" 
+                                title="Expense Details" data-bs-toggle="modal" 
+                                data-bs-target="#details-modal">
+                            Expense Details
+                        </button>
                     </div>
                 </div>
             </div>
@@ -351,6 +388,36 @@
             }
             modalBody.innerHTML = html;
         }
+        else if(data.chart === 'expenses') {
+            modalTitle.innerText = 'Expense Details';
+            html += `
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">Expense Records</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="bg-dark">
+                            <tr>
+                                <th class="text-left">Date</th>
+                                <th class="text-left">Title</th>
+                                <th class="text-left">Category</th>
+                                <th class="text-center">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            data.detail.expenses.forEach(expense => {
+                html += `
+                <tr>
+                    <td class="text-left">${expense.date_incurred}</td>
+                    <td class="text-left">${expense.title}</td>
+                    <td class="text-left">${expense.category}</td>
+                    <td class="text-center">Ksh. ${parseFloat(expense.amount).toFixed(2)}</td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div>`;
+            modalBody.innerHTML = html;
+        }
         else if(data.chart === 'top_selling'){
             modalTitle.innerText = 'Top Selling Products';
             html += `
@@ -465,9 +532,10 @@
     }
     
     // Global chart variables to allow chart destruction on refresh
-    let salesTrendChart, revenueChart, topSellingChart, stockLevelsChart;
+    let salesTrendChart, revenueChart, topSellingChart, stockLevelsChart, expensesProfitChart;
+    
+    // In renderCharts function:;
 
-    // Function to render all charts given the data
    // Function to render all charts given the data
     function renderCharts(data) {
         // Clear previous charts if they exist
@@ -475,7 +543,7 @@
         if (revenueChart) revenueChart.destroy();
         if (topSellingChart) topSellingChart.destroy();
         if (stockLevelsChart) stockLevelsChart.destroy();
-
+        if (expensesProfitChart) expensesProfitChart.destroy();
         // Determine label key: either "hours" or "dates"
         let trendLabels = [];
         if (data.sales_trend.hours) {
@@ -549,6 +617,45 @@
         document.getElementById("total_revenue_trend").textContent = `Ksh. ${formatNumber(totalRevenueTrend)}`;
         document.getElementById("total_profit_trend").textContent = `Ksh. ${formatNumber(totalProfitTrend)}`;
 
+        // Expenses vs Profit Chart
+        expensesProfitChart = new Chart(document.getElementById("expensesProfitChart"), {
+            type: 'bar',
+            data: {
+                labels: ['Financials'],
+                datasets: [{
+                    label: 'Total Profit',
+                    data: [data.expenses.total_profit],
+                    backgroundColor: 'goldenrod'
+                },{
+                    label: 'Expenses',
+                    data: [data.expenses.total_expenses],
+                    backgroundColor: '#E91E63'
+                }, {
+                    label: 'Net Profit',
+                    data: [data.expenses.net_profit],
+                    backgroundColor: '#4CAF50'
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Update figures
+        document.getElementById("total_expenses").textContent = 
+            `Ksh. ${formatNumber(data.expenses.total_expenses)}`;
+            // Update figures
+        document.getElementById("total_profit").textContent = 
+        `Ksh. ${formatNumber(data.expenses.total_profit)}`;
+        document.getElementById("net_profit").textContent = 
+            `Ksh. ${formatNumber(data.expenses.net_profit)}`;
+
+        // Add event listener for detail button
+        document.getElementById('expenses-detail').addEventListener('click', function(e){
+            loadChartDetail('expenses');
+        });
         // Top Selling Products Chart (Bar)
         topSellingChart = new Chart(document.getElementById("topSellingChart"), {
             type: "bar",
