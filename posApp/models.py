@@ -298,7 +298,14 @@ class Expense(models.Model):
         CARD = "card", _("Card")
         OTHER = "other", _("Other")
 
-    category = models.ForeignKey(ExpenseCategory, on_delete=models.PROTECT, related_name="expenses", verbose_name=_("Category"))
+    class ExpenseCategory(models.TextChoices):
+        TRANSPORT = "transport", _('Transport')
+        FUEL = "fuel", _('Fuel')
+        FOOD = "food", _('Food')
+        UTILITIES = "utilities", _('Utilities')
+        
+    #category = models.ForeignKey(ExpenseCategory, on_delete=models.PROTECT, related_name="expenses", verbose_name=_("Category"))
+    category = models.CharField(_('Category'), max_length=10, default = ExpenseCategory.TRANSPORT, choices=ExpenseCategory.choices)
     title = models.CharField(_("Title"), max_length=200)
     amount = models.DecimalField( _("Amount"), max_digits=10, decimal_places=2, help_text=_("Total cost of the expense"))
     date_incurred = models.DateField(_("Date Incurred"), default=timezone.now)

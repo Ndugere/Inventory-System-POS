@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+  <div class="mdc-card p-2 d-flex justify-content-between align-items-center">
+    <h4 class="card-title mb-0 me-auto">Expenses</h4>
+  </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+  <div class="mdc-card">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <div class="input-group">
+            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search expenses...">
+            <div class="input-group-prepend">
+              <button type="submit" class="input-group-text btn btn-primary mdc-button" id="submit">
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 text-right">
+        {% for group in request.user.groups.all %}
+          {% if group.name in 'Inventory Manager Admin' %}
+            <button type="button"
+                    class="ms-auto btn btn-secondary btn-new bg-gradient btn-sm rounded-0 my-4"
+                    data-bs-toggle="modal"
+                    data-bs-target="#expenseModal">
+              <i class="mdi mdi-plus"></i> Add Expense
+            </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="col-12">
+        <div class="table-responsive p-3">
+          <table class="table table-striped table-bordered mb-0">
+            <thead>
+              <tr>
+                <th class="text-start text-center py-1">#</th>
+                <th class="text-start py-1">Category</th>
+                <th class="text-start py-1">Title</th>
+                <th class="text-end py-1">Amount</th>
+                <th class="text-center py-1">Date</th>
+                <th class="text-start py-1">Method</th>
+                <th class="text-start py-1">Payee</th>
+                <th class="text-start py-1">Note</th>
+                <th class="text-start py-1">Receipt</th>
+                {% for group in request.user.groups.all %}
+                  {% if group.name in 'Inventory Manager Admin' %}
+                    <th class="text-center py-1">Actions</th>
+                  {% endif %}
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for exp in expenses %}
+                <tr>
+                  <td class="text-start ">{{ forloop.counter }}</td>
+                  <td class="text-start">{{ exp.category|capfirst }}</td>
+                  <td class="text-start">{{ exp.title|capfirst }}</td>
+                  <td class="text-end">{{ exp.amount|floatformat:2|intcomma }}</td>
+                  <td class="text-center">{{ exp.date_incurred|date:"Y-m-d" }}</td>
+                  <td class="text-start">{{ exp.get_payment_method_display }}</td>
+                  <td class="text-start">{{ exp.payee|capfirst }}</td>
+                  <td class="text-start">{{ exp.note|default:"—" }}</td>
+                  <td>
+                    {% if exp.receipt %}
+                      <a href="{{ exp.receipt.url }}" target="_blank">View</a>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  {% for group in request.user.groups.all %}
+                    {% if group.name in 'Inventory Manager Admin' %}
+                      <td class="px-2 py-1 text-center">
+                        <button type="button"
+                                class="mdc-button mdc-button--raised p-1 icon-button filled-button--light edit-data"
+                                data-id="{{ exp.id }}"
+                                title="Edit">
+                          <i class="material-icons mdc-button__icon">edit</i>
+                        </button>
+                        <button type="button"
+                                class="mdc-button mdc-button-danger mdc-button--raised p-1 icon-button filled-button--danger delete-data"
+                                data-id="{{ exp.id }}"
+                                title="Delete">
+                          <i class="material-icons mdc-button__icon">deleteoutline</i>
+                        </button>
+                      </td>
+                    {% endif %}
+                  {% endfor %}
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="10" class="text-center py-3">
+                    No expenses recorded yet.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">&laquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&laquo;</span>
+                </li>
+              {% endif %}
+
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">&raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&raquo;</span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Expense Modal -->
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" enctype="multipart/form-data" id="expenseForm" action="{% url 'expenses' %}">
+        {% csrf_token %}
+        <input type="hidden" name="expense" value="1">
+        <div class="modal-header">
+          <h5 class="modal-title" id="expenseModalLabel">Add Expense</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="row modal-body">
+          <div class="col-md-6 mb-3">
+            <h5 class="form-label fw-bold">Category</h5>
+            <select name="category" id="category" class="form-select" required>
+              <option value="" disabled selected></option>
+              {% for cat, label in categories %}
+                <option value="{{ cat }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h5 class="form-label fw-bold">Title</h5>
+            <input type="text" name="title" class="form-control" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h5 class="form-label fw-bold">Amount</h5>
+            <input type="number" step="0.01" name="amount" class="form-control" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h5 class="form-label fw-bold">Date Incurred</h5>
+            <input type="date" name="date_incurred" class="form-control" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h5 class="form-label fw-bold">Payment Method</h5>
+            <select name="payment_method" class="form-select" required>
+              {% for method, label in payment_methods %}
+                <option value="{{ method }}">{{ label|capfirst }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h5 class="form-label fw-bold">Payee</h5>
+            <input type="text" name="payee" class="form-control" required>
+          </div>
+          <div class="col-md-7 mb-3">
+            <h5 class="form-label fw-bold">Note</h5>
+            <textarea name="note" class="form-control"></textarea>
+          </div>
+          <div class="col-md-5 mb-3">
+            <h5 class="form-label fw-bold">Receipt (optional)</h5>
+            <input type="file" name="receipt" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary me-auto mdc-button">Save Expense</button>
+          <button type="button" class="btn btn-secondary ms-auto" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-0">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteLabel">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this expense?
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="confirmDeleteBtn" class="me-auto btn btn-danger">Delete</button>
+        <button type="button" class="ms-auto btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block ScriptBlock %}
+<script>
+  $(function() {
+    // Initialize Select2 inside modal
+    $('#category').select2({
+      placeholder: "Select expense category",
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#expenseModal')
+    });
+
+    var $expenseModal = $('#expenseModal'),
+        $expenseForm  = $('#expenseForm'),
+        deleteExpenseId;
+
+    // Edit button handler
+    $('.edit-data').on('click', function() {
+      var id = $(this).data('id');
+      $.getJSON(`/expenses/${id}/`, function(data) {
+        $expenseForm.attr('action', `/expenses/${id}/edit/`);
+        $expenseForm.find('select[name="category"]').val(data.category).trigger('change');
+        $expenseForm.find('input[name="title"]').val(data.title);
+        $expenseForm.find('input[name="amount"]').val(data.amount);
+        $expenseForm.find('input[name="date_incurred"]').val(data.date_incurred);
+        $expenseForm.find('select[name="payment_method"]').val(data.payment_method);
+        $expenseForm.find('input[name="payee"]').val(data.payee);
+        $expenseForm.find('textarea[name="note"]').val(data.note || '');
+        $expenseForm.find('input[name="receipt"]').val('');
+        $expenseModal.modal('show');
+      });
+    });
+
+    // Form submit (add & edit)
+    $expenseForm.on('submit', function(e) {
+      e.preventDefault();
+      var url = $expenseForm.attr('action'),
+          fd  = new FormData(this);
+
+      $.ajax({
+        url: url,
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        success: function() { location.reload(); },
+        error:   function() { alert('Failed to save expense.'); }
+      });
+    });
+
+    // Reset form on modal close
+    $expenseModal.on('hidden.bs.modal', function() {
+      $expenseForm[0].reset();
+      $expenseForm.attr('action', '{% url "expenses" %}');
+      $expenseForm.find('#category').val(null).trigger('change');
+    });
+
+    // Delete button opens confirmation modal
+    $('.delete-data').on('click', function() {
+      deleteExpenseId = $(this).data('id');
+      $('#confirmDeleteModal').modal('show');
+    });
+
+    // Confirm delete
+    $('#confirmDeleteBtn').on('click', function() {
+      if (!deleteExpenseId) return;
+      $.ajax({
+        url: `/expenses/${deleteExpenseId}/delete/`,
+        type: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        success: function() { location.reload(); },
+        error:   function() { alert('Failed to delete.'); }
+      });
+    });
+  });
+</script>
+{% endblock %}

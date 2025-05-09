@@ -15,6 +15,7 @@ from django.shortcuts import redirect
 from datetime import date, datetime, timedelta
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator
+from .forms import ExpenseCategoryForm, ExpenseForm
 from .mpesa import MpesaClient
 
 logger = logging.getLogger(__name__)
@@ -707,3 +708,66 @@ def delete_stock(request):
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'failed', 'msg': str(e)})
+
+@login_required
+def expenses(request):
+    if request.method == "POST":
+        form = ExpenseForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Expense added.")    
+        else:
+            messages.error(request, 'Failed to save expense')
+        
+     # Paginate expenses (20 per page)
+    expense_list = Expense.objects.all().order_by('-date_incurred')
+    #paginator = Paginator(expense_list, 20)  # 20 items per page
+    #page_number = request.GET.get('page')
+    #page_obj = paginator.get_page(page_number)
+
+    context = {
+        "categories": Expense.ExpenseCategory.choices,
+        #"expenses": page_obj,  # send paginated page
+        "payment_methods": Expense.PaymentMethod.choices,
+        #"page_obj": page_obj,  # for template pagination controls
+    }
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    context = {
+        "categories":  sorted(Expense.ExpenseCategory.choices, key=lambda x: x[1]),
+        "expenses": Expense.objects.all(),
+        "payment_methods": Expense.PaymentMethod.choices
+    }
+    template = "expenses/expenses.html"
+    return render(request, template, context)
+
+def get_expense(request, pk):
+    exp = Expense.objects.get(pk=pk)
+    data = {
+        'category': exp.category,
+        'title': exp.title,
+        'amount': str(exp.amount),
+        'date_incurred': exp.date_incurred.strftime('%Y-%m-%d'),
+        'payment_method': exp.payment_method,
+        'payee': exp.payee,
+        'note': exp.note,
+    }
+    return JsonResponse(data)
+
+@csrf_exempt
+def edit_expense(request, pk):
+    exp = Expense.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = ExpenseForm(request.POST, request.FILES, instance=exp)
+        if form.is_valid():
+            form.save()
+            return HttpResponse(status=200)
+    return HttpResponse(status=400)
+
+@csrf_exempt
+def delete_expense(request, pk):
+    exp = Expense.objects.get(pk=pk)
+    if request.method == 'POST':
+        exp.delete()
+        return HttpResponse(status=200)
+    return HttpResponse(status=400)

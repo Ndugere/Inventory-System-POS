@@ -1,9 +1,8 @@
 from . import views, reports_views, report_views2
-from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import path
 from django.views.generic.base import RedirectView
-from expenses.views import expenses
+from django.contrib import admin
+from django.urls import path
 
 #app_name = "posApp"
 urlpatterns = [
@@ -77,5 +76,9 @@ urlpatterns = [
     path('products/wholesale', report_views2.wholesale_products, name='wholesale_products'),
     
     # Expenses
-    path('expenses/', expenses, name="expenses"),
+    path('expenses/', views.expenses, name="expenses"),
+    path('expenses/<int:pk>/', views.get_expense, name='get-expense'),
+    path('expenses/<int:pk>/edit/', views.edit_expense, name='edit-expense'),
+    path('expenses/<int:pk>/delete/', views.delete_expense, name='delete-expense'),
+
 ]
