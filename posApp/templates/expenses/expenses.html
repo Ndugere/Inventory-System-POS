@@ -13,14 +13,19 @@
     <div class="row">
       <div class="col-md-6">
         <div class="form-group">
-          <div class="input-group">
-            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search expenses...">
-            <div class="input-group-prepend">
-              <button type="submit" class="input-group-text btn btn-primary mdc-button" id="submit">
+          <form method="get" action="{% url 'expenses' %}" class="col-md-6">
+            <div class="input-group">
+              <input type="text"
+                     name="q"
+                     value="{{ q }}"
+                     class="form-control form-control-sm"
+                     placeholder="Search expenses…">
+              <button type="submit"
+                      class="input-group-text btn btn-primary mdc-button">
                 Search
               </button>
             </div>
-          </div>
+          </form>          
         </div>
       </div>
       <div class="col-md-6 text-right">
@@ -59,7 +64,7 @@
             <tbody>
               {% for exp in expenses %}
                 <tr>
-                  <td class="text-start ">{{ forloop.counter }}</td>
+                  <td class="text-start ">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                   <td class="text-start">{{ exp.category|capfirst }}</td>
                   <td class="text-start">{{ exp.title|capfirst }}</td>
                   <td class="text-end">{{ exp.amount|floatformat:2|intcomma }}</td>
@@ -227,9 +232,10 @@
 </div>
 {% endblock %}
 
+
 {% block ScriptBlock %}
 <script>
-  $(function() {
+  $(function(){
     // Initialize Select2 inside modal
     $('#category').select2({
       placeholder: "Select expense category",
@@ -238,69 +244,83 @@
       dropdownParent: $('#expenseModal')
     });
 
-    var $expenseModal = $('#expenseModal'),
-        $expenseForm  = $('#expenseForm'),
-        deleteExpenseId;
+    // Debounce helper
+    function debounce(fn, ms){ let t; return function(...args){
+      clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), ms);
+    }};
 
-    // Edit button handler
-    $('.edit-data').on('click', function() {
+    // Live-search AJAX
+    $('#searchInput').on('input', debounce(function(){
+      var q = $(this).val();
+      $.getJSON("{% url 'search-expenses' %}", {q:q})
+        .done(resp => { $('#expensesTbody').html(resp.html); });
+    }, 300));
+
+    // Clear search
+    $('#clearSearch').on('click', function(){
+      $(this).siblings('input').val('').trigger('input');
+    });
+
+    var $expenseModal = $('#expenseModal'),
+        $form = $('#expenseForm'),
+        deleteId;
+
+    // Edit handler (delegated)
+    $(document).on('click','.edit-data',function(){
       var id = $(this).data('id');
-      $.getJSON(`/expenses/${id}/`, function(data) {
-        $expenseForm.attr('action', `/expenses/${id}/edit/`);
-        $expenseForm.find('select[name="category"]').val(data.category).trigger('change');
-        $expenseForm.find('input[name="title"]').val(data.title);
-        $expenseForm.find('input[name="amount"]').val(data.amount);
-        $expenseForm.find('input[name="date_incurred"]').val(data.date_incurred);
-        $expenseForm.find('select[name="payment_method"]').val(data.payment_method);
-        $expenseForm.find('input[name="payee"]').val(data.payee);
-        $expenseForm.find('textarea[name="note"]').val(data.note || '');
-        $expenseForm.find('input[name="receipt"]').val('');
+      $.getJSON(`/expenses/${id}/`, data => {
+        $form.attr('action', `/expenses/${id}/edit/`);
+        $form.find('[name=category]').val(data.category).trigger('change');
+        $form.find('[name=title]').val(data.title);
+        $form.find('[name=amount]').val(data.amount);
+        $form.find('[name=date_incurred]').val(data.date_incurred);
+        $form.find('[name=payment_method]').val(data.payment_method);
+        $form.find('[name=payee]').val(data.payee);
+        $form.find('[name=note]').val(data.note||'');
+        $form.find('[name=receipt]').val('');
         $expenseModal.modal('show');
       });
     });
 
-    // Form submit (add & edit)
-    $expenseForm.on('submit', function(e) {
+    // Add/Edit submit
+    $form.on('submit', function(e){
       e.preventDefault();
-      var url = $expenseForm.attr('action'),
+      var url = $form.attr('action'),
           fd  = new FormData(this);
-
       $.ajax({
-        url: url,
-        type: 'POST',
-        data: fd,
-        processData: false,
-        contentType: false,
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-        success: function() { location.reload(); },
-        error:   function() { alert('Failed to save expense.'); }
+        url:url, type:'POST', data:fd,
+        processData:false, contentType:false,
+        headers:{'X-CSRFToken':'{{ csrf_token }}'},
+        success:()=>location.reload(),
+        error:()=>alert('Failed to save expense.')
       });
     });
 
-    // Reset form on modal close
-    $expenseModal.on('hidden.bs.modal', function() {
-      $expenseForm[0].reset();
-      $expenseForm.attr('action', '{% url "expenses" %}');
-      $expenseForm.find('#category').val(null).trigger('change');
+    // Reset form on close
+    $expenseModal.on('hidden.bs.modal', function(){
+      $form[0].reset();
+      $form.attr('action','{% url "expenses" %}');
+      $form.find('[name=category]').val(null).trigger('change');
     });
 
-    // Delete button opens confirmation modal
-    $('.delete-data').on('click', function() {
-      deleteExpenseId = $(this).data('id');
+    // Delete handler
+    $(document).on('click','.delete-data',function(){
+      deleteId = $(this).data('id');
       $('#confirmDeleteModal').modal('show');
     });
 
     // Confirm delete
-    $('#confirmDeleteBtn').on('click', function() {
-      if (!deleteExpenseId) return;
+    $('#confirmDeleteBtn').on('click', function(){
+      if(!deleteId) return;
       $.ajax({
-        url: `/expenses/${deleteExpenseId}/delete/`,
-        type: 'POST',
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-        success: function() { location.reload(); },
-        error:   function() { alert('Failed to delete.'); }
+        url:`/expenses/${deleteId}/delete/`,
+        type:'POST',
+        headers:{'X-CSRFToken':'{{ csrf_token }}'},
+        success:()=>location.reload(),
+        error:()=>alert('Failed to delete.')
       });
     });
   });
 </script>
 {% endblock %}
+

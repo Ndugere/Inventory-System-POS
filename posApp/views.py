@@ -711,34 +711,32 @@ def delete_stock(request):
 
 @login_required
 def expenses(request):
-    if request.method == "POST":
-        form = ExpenseForm(request.POST, request.FILES)
-        
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Expense added.")    
-        else:
-            messages.error(request, 'Failed to save expense')
-        
-     # Paginate expenses (20 per page)
-    expense_list = Expense.objects.all().order_by('-date_incurred')
-    #paginator = Paginator(expense_list, 20)  # 20 items per page
-    #page_number = request.GET.get('page')
-    #page_obj = paginator.get_page(page_number)
+    q = request.GET.get('q', '').strip()
+    # Base queryset: all expenses
+    qs = Expense.objects.all().order_by('-date_incurred')
 
-    context = {
-        "categories": Expense.ExpenseCategory.choices,
-        #"expenses": page_obj,  # send paginated page
-        "payment_methods": Expense.PaymentMethod.choices,
-        #"page_obj": page_obj,  # for template pagination controls
+    if q:
+        # Filter by title, category, payee or note
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(category__icontains=q) |
+            Q(payee__icontains=q) |
+            Q(note__icontains=q)
+        )
+
+    # Paginate as before (e.g. 10 per page)
+    paginator = Paginator(qs, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context ={
+        'expenses': page_obj.object_list,
+        'page_obj': page_obj,
+        'q': q,                    # pass the search term back
+        'categories': Expense.ExpenseCategory.choices,
+        'payment_methods': Expense.PaymentMethod.choices,
     }
-    user_groups = list(request.user.groups.values_list('name', flat=True))
-    context = {
-        "categories":  sorted(Expense.ExpenseCategory.choices, key=lambda x: x[1]),
-        "expenses": Expense.objects.all(),
-        "payment_methods": Expense.PaymentMethod.choices
-    }
-    template = "expenses/expenses.html"
+    template = 'expenses/expenses.html'
     return render(request, template, context)
 
 def get_expense(request, pk):
@@ -771,3 +769,27 @@ def delete_expense(request, pk):
         exp.delete()
         return HttpResponse(status=200)
     return HttpResponse(status=400)
+
+@login_required
+def search_expenses(request):
+    q = request.GET.get('q', '').strip()
+    qs = Expense.objects.all().order_by('-date_incurred')
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(category__icontains=q) |
+            Q(payee__icontains=q) |
+            Q(note__icontains=q)
+        )
+
+    # You can page results if you want; here we take first page of 10
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(1)
+
+    # Render only the rows
+    html = render_to_string('expenses/_expense_rows.html', {
+        'expenses': page_obj.object_list,
+        'page_obj': page_obj
+    }, request)
+
+    return JsonResponse({'html': html})

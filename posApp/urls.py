@@ -77,6 +77,7 @@ urlpatterns = [
     
     # Expenses
     path('expenses/', views.expenses, name="expenses"),
+    path('expenses/search/', views.search_expenses, name='search-expenses'),
     path('expenses/<int:pk>/', views.get_expense, name='get-expense'),
     path('expenses/<int:pk>/edit/', views.edit_expense, name='edit-expense'),
     path('expenses/<int:pk>/delete/', views.delete_expense, name='delete-expense'),
