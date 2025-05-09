@@ -94,6 +94,8 @@
                             <th class="text-center py-1">Cost Price</th>
                             <th class="text-center py-1">Delivery Date</th>
                             <th class="text-center py-1">Expiry Date</th>
+                            <th class="text-center py-1">Received By </th>
+                            <th class="text-center py-1">Last Updated By</th>
                             <th class="text-center py-1">Status</th>
                             {% for value in request.user.groups.values_list %}
                                 {% if 'Inventory Manager' in value or 'Admin' in value %}
@@ -119,6 +121,8 @@
                             <td class="px-2 py-1 text-end">{{ stock.cost_price|floatformat:2|intcomma }}</td>
                             <td class="px-2 py-1 text-center">{{ stock.delivery_date|date:"Y-m-d" }}</td>
                             <td class="px-2 py-1 text-center">{{ stock.expiry_date|date:"Y-m-d" }}</td>
+                            <td class="px-2 py-1 text-center">{{stock.added_by|capfirst}}</td>
+                            <td class="px-2 py-1 text-center">{{stock.updated_by|capfirst}}</td>
                             <td class="px-2 py-1 text-center">
                                 {% if stock.status == 1 %}
                                     {% if stock.is_expired %}
