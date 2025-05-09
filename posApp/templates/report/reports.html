@@ -400,6 +400,7 @@
                                 <th class="text-left">Date</th>
                                 <th class="text-left">Title</th>
                                 <th class="text-left">Category</th>
+                                <th class="text-left">Note</th>
                                 <th class="text-center">Amount</th>
                             </tr>
                         </thead>
@@ -409,9 +410,10 @@
                 html += `
                 <tr>
                     <td class="text-left">${expense.date_incurred}</td>
-                    <td class="text-left">${expense.title}</td>
-                    <td class="text-left">${expense.category}</td>
-                    <td class="text-center">Ksh. ${parseFloat(expense.amount).toFixed(2)}</td>
+                    <td class="text-left">${expense.title ? expense.title.charAt(0).toUpperCase() + expense.title.slice(1) : ''}</td>
+                    <td class="text-left">${expense.category ? expense.category.charAt(0).toUpperCase() + expense.category.slice(1) : ''}</td>
+                    <td class="text-left">${expense.note ? expense.note.charAt(0).toUpperCase() + expense.note.slice(1) : ''}</td>
+                    <td class="text-center">Ksh. ${formatNumber(parseFloat(expense.amount).toFixed(2))}</td>
                 </tr>`;
             });
             
