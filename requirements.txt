@@ -3,6 +3,7 @@ python-decouple
 psycopg2-binary
 requests
 whitenoise
+django-crum
 django-cors-headers
 djangorestframework
 pyotp

@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+from crum import get_current_user, get_current_request
 
 # Create your models here.
 
@@ -68,6 +69,11 @@ class Supplier(models.Model):
         ordering = ['name']
 
 class Stocks(models.Model):
+    class StockChangeType(models.TextChoices):
+        ADDITION = 'addition', _("Addition")
+        REDUCTION = 'reduction', _('Reduction')
+        SALE = 'sale', _('Sale')
+    
     product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.RESTRICT, null=True, blank=True)
     batch_number = models.CharField(max_length=100, blank=True, null=True)
@@ -79,13 +85,39 @@ class Stocks(models.Model):
     cost_price = models.FloatField(default=0)
     status = models.IntegerField(default=1)
     delivery_date = models.DateTimeField(auto_now_add=True) 
-    date_updated = models.DateTimeField(auto_now=True) 
+    date_updated = models.DateTimeField(auto_now=True)
+    change_type = models.CharField(max_length=20, choices=StockChangeType.choices, default=StockChangeType.ADDITION)
+    added_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="stock_added_by", blank=True, null=True)
+    updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="stock_updated_by", blank=True, null=True)
 
     def save(self, *args, **kwargs):
         # On first save, record the original quantity
-        if self._state.adding:
+        is_new = self._state.adding
+        if is_new:
             self.original_quantity = self.quantity
+            delta = self.quantity
+        else:
+            # existing: compute change vs database
+            old_qty = Stocks.objects.get(pk=self.pk).quantity
+            delta = self.quantity - old_qty
+            
         super().save(*args, **kwargs)
+        if delta:
+            mov_type = (
+                StockMovement.MovementType.ADDITION
+                if delta > 0 else StockMovement.MovementType.SUBTRACTION
+            )
+            user = get_current_user()
+            StockMovement.objects.create(
+                stock=self,
+                movement_type=mov_type,
+                quantity=abs(delta),
+                made_by=user,
+                note="Auto-logged via save() override"
+            )
+            # Update your updated_by
+            if user and not is_new:
+                Stocks.objects.filter(pk=self.pk).update(updated_by=user)
         
     def __str__(self):
         return f"{self.product_id.name} - {self.batch_number}"
@@ -168,6 +200,26 @@ class salesItems(models.Model):
         verbose_name = "Sale Item"
         verbose_name_plural = "Sale Items"
 
+class StockMovement(models.Model):
+    class MovementType(models.TextChoices):
+        ADDITION = 'addition', _('Addition')
+        SUBTRACTION = 'subtraction', _('Subtraction')
+
+    stock = models.ForeignKey(Stocks, on_delete=models.CASCADE)
+    movement_type = models.CharField(max_length=20, choices=MovementType.choices)
+    made_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="stock_changed_by", null=True, blank=True)
+    quantity = models.PositiveIntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.stock.product_id} | {self.movement_type} of {self.quantity} by {self.user}"
+
+    class Meta:
+        verbose_name = "Stock Movement"
+        verbose_name_plural = "Stock Movements"
+        ordering = ['-timestamp']
+
 class Report(models.Model):
     class ReportType(models.TextChoices):
         INVENTORY = "inventory", _("Inventory Report")
@@ -199,25 +251,6 @@ class Report(models.Model):
         verbose_name_plural = "Reports"
         unique_together = (("name", "generated_on"))
         ordering = ['-generated_on']
-
-class StockMovement(models.Model):
-    class MovementType(models.TextChoices):
-        ADDITION = 'addition', _('Addition')
-        SUBTRACTION = 'subtraction', _('Subtraction')
-
-    stock = models.ForeignKey(Stocks, on_delete=models.CASCADE)
-    movement_type = models.CharField(max_length=20, choices=MovementType.choices)
-    quantity = models.FloatField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    description = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.product.name} - {self.movement_type} - {self.quantity}"
-
-    class Meta:
-        verbose_name = "Stock Movement"
-        verbose_name_plural = "Stock Movements"
-        ordering = ['-timestamp']
 
 class MpesaPaymentTransaction(models.Model):
     class StatusChoices(models.TextChoices):

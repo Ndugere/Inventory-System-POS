@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from flask import jsonify
+from django.contrib.auth.models import User
 from posApp.models import Category, Products, Sales, salesItems, Report, MpesaPaymentTransaction, Supplier, Stocks, Expense, ExpenseCategory
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Case, When, Value, Q
 from django.contrib import messages
@@ -588,11 +589,14 @@ def save_stock(request):
         return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
 
     stock_id = request.POST.get('id')
-    
+    user = get_object_or_404(User, id=request.user.id)
+    if user  == None:
+        return redirect("posApp:login")
     try:
         if stock_id:
             # Update existing stock
-            stock = Stocks.objects.get(id=stock_id)
+            stock = Stocks.objects.get(id=stock_id)            
+            stock.updated_by = user
             if stock.unit_price == 0 and request.POST.get('cost_price') != 0 or request.POST.get('quantity') !=0:
                 unit_price =  float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
             else:
@@ -601,6 +605,8 @@ def save_stock(request):
             # Create new stock
             stock = Stocks()
             unit_price = float(float(request.POST.get('cost_price'))/float(request.POST.get('quantity')))
+            stock.added_by = user
+            stock.updated_by = None
         
         if request.POST.get('supplier_id') == '':
             stock.supplier_id = None
@@ -629,7 +635,9 @@ def save_unregistered_stock(request):
         return JsonResponse({'status': 'failed', 'msg': 'Invalid request method'})
 
     stock_id = request.POST.get('id')
-
+    user = get_object_or_404(User, id=request.user.id)
+    if user  == None:
+        return redirect("posApp:login")
     try:
         # Validate required fields
         product_id = request.POST.get('product_id')
@@ -648,8 +656,11 @@ def save_unregistered_stock(request):
         # Check if updating an existing stock
         if stock_id:
             stock = Stocks.objects.get(id=stock_id)
+            stock.updated_by = user
         else:
             stock = Stocks()
+            stock.added_by = user
+            stock.updated_by = None
             
         if request.POST.get('supplier_id') == '':
             stock.supplier_id = None
