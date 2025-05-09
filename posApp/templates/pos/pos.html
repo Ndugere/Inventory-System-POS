@@ -18,7 +18,7 @@
                             <select id="product-id" class="form-select form-select-sm">
                                 <option value="" disabled selected></option>
                                 {% for product in products %}
-                                    <option value="{{ product.pk }}" data-volume="{{product.measurement_value}}{{product.volume_type}}" data-available-qty="{{ product.quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
+                                    <option value="{{ product.pk }}" data-volume="{{product.measurement_value}}{{product.measurement_unit}}" data-available-qty="{{ product.quantity }}" data-min-price="{{product.min_sell_price}}" data-max-price="{{product.max_sell_price}}">{{ product }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -218,7 +218,7 @@
             });
     
             tr.find('.rem-item').click(function() {
-                if (confirm(`Are you sure to remove ${data.name} (${data.measurement_type}${data.volume_type}) product from list?`) == true) {
+                if (confirm(`Are you sure to remove ${data.name} (${data.measurement_type}${data.measurement_unit}) product from list?`) == true) {
                     tr.remove();
                     calc();
                 }

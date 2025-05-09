@@ -291,7 +291,7 @@ def pos(request):
 def get_product_json(request):     
     try:
         products = Products.objects.filter(status=1)
-        product_json = [{'id': product.id, 'name': product.name, 'volume': product.volume_type, 'value': product.measurement_value, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
+        product_json = [{'id': product.id, 'name': product.name, 'meaurement_unit': product.measurement_unit, 'value': product.measurement_value, 'buy_price': float(product.buy_price), 'min_sell_price': float(product.min_sell_price), 'max_sell_price': float(product.max_sell_price)} for product in products]
         return JsonResponse(product_json, safe=False)
     
     except Exception as e:
@@ -711,6 +711,16 @@ def delete_stock(request):
 
 @login_required
 def expenses(request):
+    if request.method == "POST":
+        form = ExpenseForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            form.save()
+            messages(request, "Expense saved")
+            return redirect('expenses') 
+        else:
+            messages(request, "Couldn't save expense")
+            
     q = request.GET.get('q', '').strip()
     # Base queryset: all expenses
     qs = Expense.objects.all().order_by('-date_incurred')
